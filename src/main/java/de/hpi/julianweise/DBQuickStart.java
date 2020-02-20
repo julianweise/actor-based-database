@@ -26,7 +26,7 @@ public class DBQuickStart {
     private static Behavior<Void> rootBehavior(ConfigurationBase configuration) {
         return Behaviors.setup(context -> {
             if (configuration.role().equals(ConfigurationBase.OperationRole.MASTER)) {
-                context.spawn(DBMasterSupervisor.create(), "DBMasterSupervisor");
+                context.spawn(DBMasterSupervisor.create((MasterConfiguration) configuration), "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
                 context.spawn(DBSlaveSupervisor.create(), "DBSlaveSupervisor");
             }
