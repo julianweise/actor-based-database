@@ -2,7 +2,6 @@ package de.hpi.julianweise.slave;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
@@ -27,11 +26,7 @@ public class ADBSlaveSupervisor extends AbstractBehavior<Void> {
 
     @Override
     public Receive<Void> createReceive() {
-        return newReceiveBuilder().onSignal(PostStop.class, signal -> onPostStop()).build();
-    }
-
-    private ADBSlaveSupervisor onPostStop() {
-        this.getContext().getLog().info("DBSlave stopped");
-        return this;
+        return newReceiveBuilder()
+                .build();
     }
 }
