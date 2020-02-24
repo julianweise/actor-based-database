@@ -55,7 +55,6 @@ public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Re
     @Override
     public Receive<Response> createReceive() {
         return newReceiveBuilder()
-                .onSignal(PostStop.class, signal -> onPostStop())
                 .onMessage(CSVParsingActor.CSVReadyForParsing.class, this::handleCSVReadyForParsing)
                 .onMessage(CSVParsingActor.DomainDataChunk.class, this::handleCSVChunk)
                 .onMessage(ADBShardDistributor.BatchDistributed.class, this::handleBatchDistributed)
@@ -63,13 +62,8 @@ public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Re
                 .build();
     }
 
-    private ADBMasterSupervisor onPostStop() {
-        this.getContext().getLog().info("DBMaster stopped");
-        return this;
-    }
-
     private Behavior<Response> handleCSVReadyForParsing(CSVParsingActor.CSVReadyForParsing response) {
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.getContext().getSelf()));
+        response.getRespondTo().tell(new CSVParsingActor.ParseNextCSVChunk(this.getContext().getSelf()));
         return this;
     }
 

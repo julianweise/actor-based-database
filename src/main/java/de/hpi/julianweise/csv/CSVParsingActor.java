@@ -48,9 +48,11 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
         private final ActorRef<ADBMasterSupervisor.Response> client;
     }
 
+    @Builder
     @Getter
-    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CSVReadyForParsing implements ADBMasterSupervisor.Response {
+        private final ActorRef<Command> respondTo;
     }
 
     @Getter
@@ -96,7 +98,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
             command.getClient().tell(new ADBMasterSupervisor.ErrorResponse("Unable to parse CSV"));
             return this;
         }
-        command.getClient().tell(new CSVReadyForParsing());
+        command.getClient().tell(new CSVReadyForParsing(this.getContext().getSelf()));
         return this;
     }
 

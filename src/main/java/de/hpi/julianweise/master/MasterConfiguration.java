@@ -6,12 +6,14 @@ import com.beust.jcommander.Parameters;
 import de.hpi.julianweise.utility.ConfigurationBase;
 import de.hpi.julianweise.utility.FileValidator;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Parameters(commandDescription = "start a master actor system")
 @Getter
+@Setter
 public class MasterConfiguration implements ConfigurationBase {
 
     private static class StringToPathConverter implements IStringConverter<Path> {

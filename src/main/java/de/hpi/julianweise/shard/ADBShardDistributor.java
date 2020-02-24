@@ -48,13 +48,13 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     @AllArgsConstructor
     @Getter
     public static class DistributeBatchToShards implements Command {
-        ActorRef<ADBMasterSupervisor.Response> client;
-        List<ADBEntityType> entities;
+        private final ActorRef<ADBMasterSupervisor.Response> client;
+        private final List<ADBEntityType> entities;
     }
 
+    @Getter
     @AllArgsConstructor
-    public static class BatchDistributed implements ADBMasterSupervisor.Response {
-    }
+    public static class BatchDistributed implements ADBMasterSupervisor.Response { }
 
     @AllArgsConstructor
     @Getter
