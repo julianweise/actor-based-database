@@ -8,7 +8,6 @@ import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.master.MasterConfiguration;
 import main.de.hpi.julianweise.csv.TestEntityFactory;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
