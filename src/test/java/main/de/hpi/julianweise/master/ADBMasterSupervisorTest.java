@@ -9,6 +9,7 @@ import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.master.MasterConfiguration;
 import main.de.hpi.julianweise.csv.TestEntityFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -26,8 +27,8 @@ public class ADBMasterSupervisorTest {
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
 
-    @After
-    public void after() {
+    @AfterClass
+    public static void after() {
         folder.delete();
     }
 
