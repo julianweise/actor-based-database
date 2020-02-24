@@ -101,7 +101,7 @@
                     <arguments>
                         <argument>-classpath</argument>
                         <classpath />
-                        <argument>de.hpi.julianweise.DBQuickStart</argument>
+                        <argument>de.hpi.julianweise.ADBQuickStart</argument>
                     </arguments>
                 </configuration>
             </plugin>

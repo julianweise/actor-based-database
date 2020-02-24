@@ -28,6 +28,10 @@ public class MasterConfiguration implements ConfigurationBase {
     @Parameter(names = {"-p", "--port"}, description = "port to run application on")
     int port;
 
+    @Parameter(names = {"-d", "--data-loading-strategy"}, description = "fully-qualified class-name of loading " +
+            "strategy")
+    String dataLoadingStrategy;
+
     public OperationRole role() {
         return OperationRole.MASTER;
     }

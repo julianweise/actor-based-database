@@ -18,13 +18,8 @@ public class CSVRow implements CborSerializable {
     public static String ID_IDENTIFIER = "_PSID";
 
     private List<Tuple<String, String>> tuples = new ArrayList<>();
-    private String id = "";
 
     public void addTuple(Tuple<String, String> tuple) {
-        if (tuple.getKey().contains(ID_IDENTIFIER)) {
-            this.id = tuple.getValue();
-        }
-
         this.tuples.add(tuple);
     }
 }

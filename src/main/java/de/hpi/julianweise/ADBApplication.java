@@ -2,36 +2,50 @@ package de.hpi.julianweise;
 
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
+import akka.serialization.SerializationExtension;
+import akka.serialization.jackson.JacksonCborSerializer;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import de.hpi.julianweise.master.DBMasterSupervisor;
+import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.master.MasterConfiguration;
-import de.hpi.julianweise.slave.DBSlaveSupervisor;
+import de.hpi.julianweise.slave.ADBSlaveSupervisor;
 import de.hpi.julianweise.slave.SlaveConfiguration;
+import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.ConfigurationBase;
 
+import java.io.NotSerializableException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DBQuickStart {
-    public static void main(String[] args) {
-        ConfigurationBase configuration = DBQuickStart.parseArgument(args);
-        Config config = configWithPort(configuration.getPort());
-        ActorSystem<Void> system = ActorSystem.create(rootBehavior(configuration), "ActorDatabaseSystem", config);
-    }
+public class ADBApplication {
 
-    private static Behavior<Void> rootBehavior(ConfigurationBase configuration) {
+    private Behavior<Void> rootBehavior(ConfigurationBase configuration) {
         return Behaviors.setup(context -> {
+            ADBApplication.setCorrectDeserializerForADBEntityType(context, this.entityFactory);
             if (configuration.role().equals(ConfigurationBase.OperationRole.MASTER)) {
-                context.spawn(DBMasterSupervisor.create((MasterConfiguration) configuration), "DBMasterSupervisor");
+                context.spawn(ADBMasterSupervisor.create((MasterConfiguration) configuration, this.entityFactory),
+                        "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
-                context.spawn(DBSlaveSupervisor.create(), "DBSlaveSupervisor");
+                context.spawn(ADBSlaveSupervisor.create(), "DBSlaveSupervisor");
             }
             return Behaviors.empty();
         });
+    }
+
+    private static void setCorrectDeserializerForADBEntityType(ActorContext<Void> context, ADBEntityFactory entityFactory) throws NotSerializableException {
+        // TODO: Discuss better solution to bind custom deserializer
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(ADBEntityType.class, entityFactory.buildDeserializer());
+        JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
+                .get(context.getSystem()).serializerFor(CborSerializable.class);
+        serializer.objectMapper().registerModule(module);
     }
 
     private static ConfigurationBase parseArgument(String[] args) {
@@ -70,7 +84,18 @@ public class DBQuickStart {
     private static Config configWithPort(int port) {
         Map<String, Object> overrides = new HashMap<>();
         overrides.put("akka.remote.artery.canonical.port", port);
-
         return ConfigFactory.parseMap(overrides).withFallback(ConfigFactory.load());
+    }
+
+    private final ADBEntityFactory entityFactory;
+
+    public ADBApplication(ADBEntityFactory entityFactory) {
+        this.entityFactory = entityFactory;
+    }
+
+    public void run(String[] args) {
+        ConfigurationBase configuration = ADBApplication.parseArgument(args);
+        Config config = configWithPort(configuration.getPort());
+        ActorSystem<Void> system = ActorSystem.create(rootBehavior(configuration), "ActorDatabaseSystem", config);
     }
 }

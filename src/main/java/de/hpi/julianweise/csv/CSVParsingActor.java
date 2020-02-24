@@ -6,8 +6,9 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.entity.Tuple;
-import de.hpi.julianweise.master.DBMasterSupervisor;
+import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.master.ADBMasterSupervisor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,10 +27,8 @@ import java.util.List;
 
 public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
-    private static int MAX_ROWS_PER_CHUNK = 100;
-
     public interface Command {
-        ActorRef<DBMasterSupervisor.Response> getClient();
+        ActorRef<ADBMasterSupervisor.Response> getClient();
     }
 
     @Builder
@@ -37,29 +36,33 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     @Getter
     public static class OpenCSVForParsing implements CSVParsingActor.Command {
         private final String filePath;
-        private final ActorRef<DBMasterSupervisor.Response> client;
+        private final ActorRef<ADBMasterSupervisor.Response> client;
+        private ADBEntityFactory domainFactory;
+        private int chunkSize;
     }
 
     @Builder
     @AllArgsConstructor
     @Getter
     public static class ParseNextCSVChunk implements CSVParsingActor.Command {
-        private final ActorRef<DBMasterSupervisor.Response> client;
+        private final ActorRef<ADBMasterSupervisor.Response> client;
     }
 
     @Getter
     @NoArgsConstructor
-    public static class CSVReadyForParsing implements DBMasterSupervisor.Response {
+    public static class CSVReadyForParsing implements ADBMasterSupervisor.Response {
     }
 
     @Getter
     @NoArgsConstructor
-    public static class CSVChunk implements DBMasterSupervisor.Response {
-        private final List<CSVRow> chunk = new ArrayList<>();
+    public static class DomainDataChunk implements ADBMasterSupervisor.Response {
+        private final List<ADBEntityType> chunk = new ArrayList<>();
     }
 
     private InputStreamReader inputStreamReader;
     private CSVParser csvParser;
+    private ADBEntityFactory domainFactory;
+    private int chunkSize;
 
     public static Behavior<CSVParsingActor.Command> create() {
         return Behaviors.setup(CSVParsingActor::new);
@@ -80,15 +83,17 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
         FileInputStream csvFileInputStream = this.locateCSVFile(command.getFilePath());
 
         if (csvFileInputStream == null) {
-            command.getClient().tell(new DBMasterSupervisor.ErrorResponse("Invalid File provided"));
+            command.getClient().tell(new ADBMasterSupervisor.ErrorResponse("Invalid File provided"));
             return this;
         }
 
         this.inputStreamReader = new InputStreamReader(csvFileInputStream);
+        this.domainFactory = command.domainFactory;
         this.csvParser = this.openCSVForParsing(command.getFilePath());
+        this.chunkSize = command.getChunkSize();
 
         if (this.csvParser == null) {
-            command.getClient().tell(new DBMasterSupervisor.ErrorResponse("Unable to parse CSV"));
+            command.getClient().tell(new ADBMasterSupervisor.ErrorResponse("Unable to parse CSV"));
             return this;
         }
         command.getClient().tell(new CSVReadyForParsing());
@@ -122,21 +127,15 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
         if (this.csvParser == null) {
             this.getContext().getLog().error("Unable to parse without open CSV file.");
-            command.getClient().tell(new DBMasterSupervisor.ErrorResponse("Open CSV before parsing"));
+            command.getClient().tell(new ADBMasterSupervisor.ErrorResponse("Open CSV before parsing"));
             return this;
         }
-
-        List<String> headers = csvParser.getHeaderNames();
-        CSVChunk chunk = new CSVChunk();
+        DomainDataChunk chunk = new DomainDataChunk();
         int counter = 0;
         for (CSVRecord record : csvParser) {
-            CSVRow row = new CSVRow();
-            for (String header : headers) {
-                row.addTuple(new Tuple<>(header, record.get(header)));
-            }
-            chunk.chunk.add(row);
+            chunk.getChunk().add(this.domainFactory.build(record));
             counter++;
-            if (counter >= MAX_ROWS_PER_CHUNK) {
+            if (counter >= this.chunkSize) {
                 break;
             }
         }

@@ -4,7 +4,8 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.csv.CSVParsingActor;
-import de.hpi.julianweise.master.DBMasterSupervisor;
+import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.master.ADBMasterSupervisor;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -20,12 +21,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class CSVParsingActorTest {
 
-    @ClassRule public static final TestKitJunitResource testKit = new TestKitJunitResource();
+    private static final int CHUNK_SIZE = 50;
+
+    @ClassRule
+    public static final TestKitJunitResource testKit = new TestKitJunitResource();
 
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
 
     public ActorRef<CSVParsingActor.Command> parser = testKit.spawn(CSVParsingActor.create(), "test-parser");
+    private ADBEntityFactory testFactory = new TestEntityFactory();
+
 
     @AfterClass
     public static void cleanup() {
@@ -40,9 +46,9 @@ public class CSVParsingActorTest {
 
     @Test
     public void testParsingBeforeCSVIsOpenFails() {
-        TestProbe<DBMasterSupervisor.Response> probe = testKit.createTestProbe();
+        TestProbe<ADBMasterSupervisor.Response> probe = testKit.createTestProbe();
         parser.tell(new CSVParsingActor.ParseNextCSVChunk(probe.ref()));
-        DBMasterSupervisor.ErrorResponse response = (DBMasterSupervisor.ErrorResponse) probe.receiveMessage();
+        ADBMasterSupervisor.ErrorResponse response = (ADBMasterSupervisor.ErrorResponse) probe.receiveMessage();
         assertThat(response.getErrorMessage()).contains("Open CSV before parsing");
     }
 
@@ -52,46 +58,47 @@ public class CSVParsingActorTest {
         String csvContent = "headerA,headerB,headerC\nvalueA,valueB,valueC";
         Files.write(Paths.get(testCSV.getAbsolutePath()), csvContent.getBytes());
 
-        TestProbe<DBMasterSupervisor.Response> probe = testKit.createTestProbe();
-        parser.tell(new CSVParsingActor.OpenCSVForParsing(testCSV.getAbsolutePath(), probe.ref()));
-        DBMasterSupervisor.Response response = probe.receiveMessage();
+        TestProbe<ADBMasterSupervisor.Response> probe = testKit.createTestProbe();
+        parser.tell(new CSVParsingActor.OpenCSVForParsing(testCSV.getAbsolutePath(), probe.ref(), this.testFactory,
+                CHUNK_SIZE));
+        ADBMasterSupervisor.Response response = probe.receiveMessage();
         assertThat(response.getClass().getCanonicalName())
                 .isEqualTo(CSVParsingActor.CSVReadyForParsing.class.getCanonicalName());
     }
 
     @Test
     public void testInvalidFilePathDoesNotReturnResult() {
-        TestProbe<DBMasterSupervisor.Response> probe = testKit.createTestProbe();
-        parser.tell(new CSVParsingActor.OpenCSVForParsing("invalid Path", probe.ref()));
-        DBMasterSupervisor.ErrorResponse response = (DBMasterSupervisor.ErrorResponse) probe.receiveMessage();
+        TestProbe<ADBMasterSupervisor.Response> probe = testKit.createTestProbe();
+        parser.tell(new CSVParsingActor.OpenCSVForParsing("invalid Path", probe.ref(), this.testFactory,
+                CHUNK_SIZE));
+        ADBMasterSupervisor.ErrorResponse response = (ADBMasterSupervisor.ErrorResponse) probe.receiveMessage();
         assertThat(response.getErrorMessage()).contains("Invalid File");
     }
 
     @Test
     public void testValidParsing() throws IOException {
         final File testCSV = folder.newFile("test.csv");
-        String csvContent = "headerA,headerB,headerC\nvalueA,valueB,valueC";
+        String csvContent = "headerA,headerB,headerC\n200,TestString,1.02";
         Files.write(Paths.get(testCSV.getAbsolutePath()), csvContent.getBytes());
 
-        TestProbe<DBMasterSupervisor.Response> probe = testKit.createTestProbe();
-        parser.tell(new CSVParsingActor.OpenCSVForParsing(testCSV.getAbsolutePath(), probe.ref()));
-        DBMasterSupervisor.Response response = probe.receiveMessage();
+        TestProbe<ADBMasterSupervisor.Response> probe = testKit.createTestProbe();
+        parser.tell(new CSVParsingActor.OpenCSVForParsing(testCSV.getAbsolutePath(), probe.ref(), this.testFactory
+                , CHUNK_SIZE));
+        ADBMasterSupervisor.Response response = probe.receiveMessage();
         assertThat(response.getClass().getCanonicalName())
                 .isEqualTo(CSVParsingActor.CSVReadyForParsing.class.getCanonicalName());
 
         parser.tell(new CSVParsingActor.ParseNextCSVChunk(probe.ref()));
-        CSVParsingActor.CSVChunk chunk = (CSVParsingActor.CSVChunk) probe.receiveMessage();
+        CSVParsingActor.DomainDataChunk chunk = (CSVParsingActor.DomainDataChunk) probe.receiveMessage();
+
+        TestEntity results = (TestEntity) chunk.getChunk().get(0);
 
         assertThat(chunk.getChunk().size()).isEqualTo(1);
 
-        assertThat(chunk.getChunk().get(0).getTuples().size()).isEqualTo(3);
-        assertThat(chunk.getChunk().get(0).getTuples().get(0).getKey()).isEqualTo("headerA");
-        assertThat(chunk.getChunk().get(0).getTuples().get(1).getKey()).isEqualTo("headerB");
-        assertThat(chunk.getChunk().get(0).getTuples().get(2).getKey()).isEqualTo("headerC");
+        assertThat(results.getAInteger()).isEqualTo(200);
+        assertThat(results.getBString()).isEqualTo("TestString");
+        assertThat(results.getCFloat()).isEqualTo(1.02f);
 
-        assertThat(chunk.getChunk().get(0).getTuples().get(0).getValue()).isEqualTo("valueA");
-        assertThat(chunk.getChunk().get(0).getTuples().get(1).getValue()).isEqualTo("valueB");
-        assertThat(chunk.getChunk().get(0).getTuples().get(2).getValue()).isEqualTo("valueC");
     }
 
 }

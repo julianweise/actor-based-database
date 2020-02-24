@@ -7,7 +7,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.cluster.sharding.typed.javadsl.EntityTypeKey;
-import de.hpi.julianweise.master.DBMasterSupervisor;
+import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,7 +21,7 @@ import java.util.List;
 public class DatabaseEntity extends AbstractBehavior<DatabaseEntity.Operation> {
 
     public interface Operation {
-        ActorRef<DBMasterSupervisor.Response> getClient();
+        ActorRef<ADBMasterSupervisor.Response> getClient();
     }
 
     @Getter
@@ -29,7 +29,7 @@ public class DatabaseEntity extends AbstractBehavior<DatabaseEntity.Operation> {
     @AllArgsConstructor
     @Builder
     public static class UpdateOperation implements Operation, CborSerializable {
-        private ActorRef<DBMasterSupervisor.Response> client;
+        private ActorRef<ADBMasterSupervisor.Response> client;
         private List<Tuple<String, String>> tuples;
         private String id;
     }
@@ -37,7 +37,7 @@ public class DatabaseEntity extends AbstractBehavior<DatabaseEntity.Operation> {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class OperationSuccessful implements DBMasterSupervisor.Response, CborSerializable {
+    public static class OperationSuccessful implements ADBMasterSupervisor.Response, CborSerializable {
         private String id;
     }
 
