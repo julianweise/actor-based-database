@@ -2,7 +2,6 @@ package de.hpi.julianweise.shard;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
@@ -46,14 +45,8 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     @Override
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
-                .onSignal(PostStop.class, this::handlePostStop)
                 .onMessage(PersistEntity.class, this::handleEntity)
                 .build();
-    }
-
-    private Behavior<Command> handlePostStop(PostStop signal) {
-        this.getContext().getLog().info("ADBShard has been stopped");
-        return this;
     }
 
     private Behavior<Command> handleEntity(PersistEntity command) {

@@ -119,7 +119,6 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
 
     private Behavior<Command> handlePostStop(PostStop signal) {
         this.timers.cancelAll();
-        this.getContext().getLog().info("ADBShard has been stopped");
         return this;
     }
 
