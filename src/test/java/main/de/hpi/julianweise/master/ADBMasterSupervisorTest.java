@@ -2,13 +2,9 @@ package main.de.hpi.julianweise.master;
 
 import akka.actor.testkit.typed.javadsl.LoggingTestKit;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
-import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
-import akka.cluster.sharding.typed.javadsl.EntityFactory;
-import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.master.MasterConfiguration;
-import main.de.hpi.julianweise.csv.TestEntityFactory;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -16,8 +12,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBMasterSupervisorTest {
 
