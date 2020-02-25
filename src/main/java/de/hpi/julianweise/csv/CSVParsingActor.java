@@ -61,6 +61,11 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
         private final List<ADBEntityType> chunk = new ArrayList<>();
     }
 
+    @Getter
+    @AllArgsConstructor
+    public static class CSVFullyParsed implements ADBMasterSupervisor.Response {
+    }
+
     private InputStreamReader inputStreamReader;
     private CSVParser csvParser;
     private ADBEntityFactory domainFactory;
@@ -126,7 +131,6 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     }
 
     private Behavior<Command> handleParseNextCSVChunk(ParseNextCSVChunk command) {
-
         if (this.csvParser == null) {
             this.getContext().getLog().error("Unable to parse without open CSV file.");
             command.getClient().tell(new ADBMasterSupervisor.ErrorResponse("Open CSV before parsing"));
@@ -141,7 +145,17 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
                 break;
             }
         }
+        if (chunk.chunk.size() < 1) {
+            return this.sendCSVConcludedNotification(command);
+        }
         command.getClient().tell(chunk);
+        return this;
+    }
+
+    private Behavior<Command> sendCSVConcludedNotification(ParseNextCSVChunk command) {
+        command.getClient().tell(new CSVFullyParsed());
+        this.inputStreamReader = null;
+        this.csvParser = null;
         return this;
     }
 

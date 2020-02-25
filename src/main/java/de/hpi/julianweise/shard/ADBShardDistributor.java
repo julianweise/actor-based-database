@@ -52,6 +52,9 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         private final List<ADBEntityType> entities;
     }
 
+    @AllArgsConstructor
+    public static class ConcludeDistribution implements Command {}
+
     @Getter
     @AllArgsConstructor
     public static class BatchDistributed implements ADBMasterSupervisor.Response { }
@@ -88,9 +91,10 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     private final ActorRef<ADBShard.Command> clusterShardsRouter;
     private final Map<Comparable<?>, ADBShard.Command> pendingDistributions = new HashMap<>();
     private final BlockingQueue<Pair<Long, Comparable<?>>> pendingDistTimer = new LinkedBlockingQueue<>();
+    private final TimerScheduler<Command> timers;
     private ActorRef<ADBMasterSupervisor.Response> client;
     private int batchSize = 0;
-    private final TimerScheduler<Command> timers;
+    private boolean wrappingUp = false;
 
     private ADBShardDistributor(ActorContext<Command> actorContext, TimerScheduler<Command> timers) {
         super(actorContext);
@@ -114,6 +118,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
                 .onMessage(DistributeBatchToShards.class, this::handleDistributeBatchToShards)
                 .onMessage(ConfirmEntityPersisted.class, this::handleConfirmEntityPersisted)
                 .onMessage(CheckPendingDistributions.class, this::handleCheckPendingDistribution)
+                .onMessage(ConcludeDistribution.class, this::handleConcludeDistribution)
                 .build();
     }
 
@@ -140,11 +145,10 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     }
 
     private void notifyClient() {
-        if (this.pendingDistributions.size() > this.batchSize * MIN_FACTOR_NEXT_BATCH || this.client == null) {
+        if (this.batchSize == 0 || this.pendingDistributions.size() > this.batchSize * MIN_FACTOR_NEXT_BATCH) {
             return;
         }
         this.client.tell(new BatchDistributed());
-        this.client = null;
         this.batchSize = 0;
     }
 
@@ -158,16 +162,24 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     }
 
     private Behavior<Command> handleCheckPendingDistribution(CheckPendingDistributions command) {
-        this.getContext().getLog().info("Cleaning pending distributions");
         for (Pair<Long, Comparable<?>> pair : this.pendingDistTimer) {
             if (pair.getKey() > System.currentTimeMillis() - TIMER_DELAY) {
                 break;
             }
             if (this.pendingDistributions.get(pair.getValue()) != null) {
                 this.sendToShard((ADBShard.PersistEntity) this.pendingDistributions.get(pair.getValue()));
+                this.pendingDistributions.remove(pair.getValue());
             }
             this.pendingDistTimer.remove(pair);
         }
+        if (this.wrappingUp && this.pendingDistributions.size() < 1 && this.pendingDistTimer.size() < 1) {
+            this.client.tell(new ADBMasterSupervisor.DataSuccessfullyDistributed());
+        }
+        return this;
+    }
+
+    private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
+        this.wrappingUp = true;
         return this;
     }
 }

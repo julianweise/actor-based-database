@@ -1,5 +1,6 @@
 package de.hpi.julianweise;
 
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -30,8 +31,12 @@ public class ADBApplication {
         return Behaviors.setup(context -> {
             ADBApplication.setCorrectDeserializerForADBEntityType(context, this.entityFactory);
             if (configuration.role().equals(ConfigurationBase.OperationRole.MASTER)) {
-                context.spawn(ADBMasterSupervisor.create((MasterConfiguration) configuration, this.entityFactory),
-                        "DBMasterSupervisor");
+                ActorRef<ADBMasterSupervisor.Response> master = context.spawn(ADBMasterSupervisor
+                        .create((MasterConfiguration) configuration), "DBMasterSupervisor");
+                master.tell(ADBMasterSupervisor.ParseAndDistributeCSV.builder()
+                                                                     .entityFactory(entityFactory)
+                                                                     .filePath(((MasterConfiguration) configuration).getInputFile().toString())
+                                                                     .build());
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
                 context.spawn(ADBSlaveSupervisor.create(), "DBSlaveSupervisor");
             }

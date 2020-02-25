@@ -4,6 +4,7 @@ import akka.actor.testkit.typed.javadsl.LoggingTestKit;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
+import akka.cluster.sharding.typed.javadsl.EntityFactory;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.master.MasterConfiguration;
@@ -37,11 +38,9 @@ public class ADBMasterSupervisorTest {
 
         MasterConfiguration masterConfiguration = new MasterConfiguration();
         masterConfiguration.setInputFile(testFile.toPath());
-        TestEntityFactory entityFactory = new TestEntityFactory();
 
         LoggingTestKit.info("DBMaster started")
-                      .expect(testKit.system(), () ->
-                              testKit.spawn(ADBMasterSupervisor.create(masterConfiguration, entityFactory)));
+                      .expect(testKit.system(), () -> testKit.spawn(ADBMasterSupervisor.create(masterConfiguration)));
     }
 
     @Test
@@ -50,9 +49,7 @@ public class ADBMasterSupervisorTest {
 
         MasterConfiguration masterConfiguration = new MasterConfiguration();
         masterConfiguration.setInputFile(testFile.toPath());
-        TestEntityFactory entityFactory = new TestEntityFactory();
-        ActorRef<ADBMasterSupervisor.Response> master = testKit.spawn(ADBMasterSupervisor.create(masterConfiguration,
-                entityFactory));
+        ActorRef<ADBMasterSupervisor.Response> master = testKit.spawn(ADBMasterSupervisor.create(masterConfiguration));
 
         ADBMasterSupervisor.ErrorResponse errorResponse = new ADBMasterSupervisor.ErrorResponse("Test error");
 
@@ -62,24 +59,5 @@ public class ADBMasterSupervisorTest {
                                   master.tell(errorResponse);
                                   return null;
                               });
-    }
-
-    @Test
-    public void expectCommandToStartParsingAfterReceivedResponseReadyForParsing() throws IOException {
-        File testFile = folder.newFile("empty-test-file-3.csv");
-        TestProbe<CSVParsingActor.Command> probe = testKit.createTestProbe();
-
-        MasterConfiguration masterConfiguration = new MasterConfiguration();
-        masterConfiguration.setInputFile(testFile.toPath());
-        TestEntityFactory entityFactory = new TestEntityFactory();
-        ActorRef<ADBMasterSupervisor.Response> master = testKit.spawn(ADBMasterSupervisor.create(masterConfiguration,
-                entityFactory));
-
-        master.tell(CSVParsingActor.CSVReadyForParsing.builder().respondTo(probe.ref()).build());
-
-        CSVParsingActor.ParseNextCSVChunk response = (CSVParsingActor.ParseNextCSVChunk) probe.receiveMessage();
-
-        assertThat(response.getClass().getCanonicalName()).isEqualTo(CSVParsingActor.ParseNextCSVChunk.class.getCanonicalName());
-        assertThat(response.getClient().path()).isEqualTo(master.path());
     }
 }
