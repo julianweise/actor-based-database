@@ -1,6 +1,5 @@
 package de.hpi.julianweise.domain;
 
-import com.sun.xml.internal.ws.util.StringUtils;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.CborSerializable;
 import lombok.SneakyThrows;
@@ -59,7 +58,8 @@ public abstract class ADBEntityType implements CborSerializable {
 
     protected final Method getGetterForFieldName(String fieldName) throws NoSuchFieldException, NoSuchMethodException {
         Field targetField = this.getClass().getDeclaredField(fieldName);
-        String capitalizedFieldName = StringUtils.capitalize(targetField.getName());
+        String capitalizedFieldName = targetField.getName().substring(0, 1).toUpperCase()
+                + targetField.getName().substring(1);
         if (targetField.getType().getName().equals("boolean")) {
             return this.getClass().getMethod("is" + capitalizedFieldName);
         }
