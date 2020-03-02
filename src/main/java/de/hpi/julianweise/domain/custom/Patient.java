@@ -8,7 +8,7 @@ import lombok.Getter;
 @Builder
 @Getter
 @AllArgsConstructor
-public class Patient implements ADBEntityType {
+public class Patient extends ADBEntityType {
 
     private final int ausgleichsjahr;
     private final int berichtsjahr;
@@ -28,6 +28,11 @@ public class Patient implements ADBEntityType {
 
     @Override
     public String toString() {
-        return String.format("%s: %s", this.getPrimaryKey(), this.berichtsjahr);
+        return String.format("Patient %s aus %s [ %s | * %d | verstorben: %s", this.getPrimaryKey(), this.berichtsjahr,
+                this.getGeschlechtVisualized(), this.geburtsjahr, this.isVerstorben());
+    }
+
+    private String getGeschlechtVisualized() {
+        return this.geschlecht == 'm' ? "♂" : "♀";
     }
 }

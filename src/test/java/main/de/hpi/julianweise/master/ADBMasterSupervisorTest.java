@@ -2,8 +2,13 @@ package main.de.hpi.julianweise.master;
 
 import akka.actor.testkit.typed.javadsl.LoggingTestKit;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
+import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
+import akka.actor.typed.Behavior;
+import akka.actor.typed.javadsl.Behaviors;
+import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.ADBMasterSupervisor;
+import de.hpi.julianweise.master.ADBMasterSupervisorFactory;
 import de.hpi.julianweise.master.MasterConfiguration;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -24,6 +29,7 @@ public class ADBMasterSupervisorTest {
     @AfterClass
     public static void after() {
         folder.delete();
+        testKit.after();
     }
 
     @Test
@@ -33,25 +39,34 @@ public class ADBMasterSupervisorTest {
         MasterConfiguration masterConfiguration = new MasterConfiguration();
         masterConfiguration.setInputFile(testFile.toPath());
 
+        TestProbe<ADBLoadAndDistributeDataProcess.Command> testRef = testKit.createTestProbe();
+        Behavior<ADBLoadAndDistributeDataProcess.Command> mockedProcessBehavior =
+                Behaviors.receiveMessage(message -> Behaviors.same());
+        Behavior<ADBLoadAndDistributeDataProcess.Command> mockedProcess =
+                Behaviors.monitor(ADBLoadAndDistributeDataProcess.Command.class, testRef.ref(), mockedProcessBehavior);
+
         LoggingTestKit.info("DBMaster started")
-                      .expect(testKit.system(), () -> testKit.spawn(ADBMasterSupervisor.create(masterConfiguration)));
+                      .expect(testKit.system(),
+                              () -> testKit.spawn(ADBMasterSupervisorFactory.createDefault(masterConfiguration, mockedProcess)));
     }
 
     @Test
-    public void expectLogMessageForErrorResponse() throws IOException {
+    public void expectNoResponseForStartOperationalService() throws IOException {
         File testFile = folder.newFile("empty-test-file-2.csv");
 
         MasterConfiguration masterConfiguration = new MasterConfiguration();
         masterConfiguration.setInputFile(testFile.toPath());
-        ActorRef<ADBMasterSupervisor.Response> master = testKit.spawn(ADBMasterSupervisor.create(masterConfiguration));
 
-        ADBMasterSupervisor.ErrorResponse errorResponse = new ADBMasterSupervisor.ErrorResponse("Test error");
+        TestProbe<ADBLoadAndDistributeDataProcess.Command> testRef = testKit.createTestProbe();
+        Behavior<ADBLoadAndDistributeDataProcess.Command> mockedProcessBehavior =
+                Behaviors.receiveMessage(message -> Behaviors.same());
+        Behavior<ADBLoadAndDistributeDataProcess.Command> mockedProcess =
+                Behaviors.monitor(ADBLoadAndDistributeDataProcess.Command.class, testRef.ref(), mockedProcessBehavior);
 
-        LoggingTestKit.error("Test error")
-                      .expect(
-                              testKit.system(), () -> {
-                                  master.tell(errorResponse);
-                                  return null;
-                              });
+        ActorRef<ADBMasterSupervisor.Command> masterSupervisor =
+                testKit.spawn(ADBMasterSupervisorFactory.createDefault(masterConfiguration,
+                        mockedProcess));
+
+        masterSupervisor.tell(new ADBMasterSupervisor.StartOperationalService());
     }
 }

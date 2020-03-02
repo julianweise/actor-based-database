@@ -8,11 +8,14 @@ import lombok.Getter;
 @Builder
 @Getter
 @AllArgsConstructor
-public class TestEntity implements ADBEntityType {
+public class TestEntity extends ADBEntityType {
 
     private final int aInteger;
     private final String bString;
     private final float cFloat;
+    private final boolean dBoolean;
+    private final double eDouble;
+    private final char fChar;
 
     @Override
     public Comparable<?> getPrimaryKey() {

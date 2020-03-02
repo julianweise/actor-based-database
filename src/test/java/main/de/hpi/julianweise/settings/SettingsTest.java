@@ -21,10 +21,19 @@ public class SettingsTest {
 
     @Test
     public void expectSuccessfulConfigParsing() {
-        TestKitJunitResource testKit = new TestKitJunitResource("actor-db.csv.chunk-size = 5");
+        String config = "actor-db.csv.chunk-size = 5\n" +
+                "actor-db.query-endpoint.hostname = localhost \n" +
+                "actor-db.query-endpoint.port = 2020";
+        TestKitJunitResource testKit = new TestKitJunitResource(config);
 
         SettingsImpl settings = Settings.SettingsProvider.get(testKit.system());
 
         assertThat(settings.CSV_CHUNK_SIZE).isEqualTo(5);
+    }
+
+    @Test
+    public void lookupSingelton() {
+        Settings settings = Settings.SettingsProvider;
+        assertThat(settings.lookup()).isEqualTo(settings);
     }
 }

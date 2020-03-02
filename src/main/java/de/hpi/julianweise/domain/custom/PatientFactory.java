@@ -8,6 +8,10 @@ import static java.lang.Integer.parseInt;
 
 public class PatientFactory implements ADBEntityFactory {
 
+    @Override public Class<? extends ADBEntityType> getTargetClass() {
+        return Patient.class;
+    }
+
     @Override
     public ADBEntityType build(CSVRecord record) {
         return Patient.builder()
@@ -17,7 +21,7 @@ public class PatientFactory implements ADBEntityFactory {
                       .psid(record.get(4))
                       .kvNrKennzeichen(parseInt(record.get(5), 10) == 1)
                       .geburtsjahr(parseInt(record.get(6), 10))
-                      .geschlecht(record.get(7).charAt(0))
+                      .geschlecht(parseInt(record.get(7)) == 2 ? 'm' : 'w')
                       .versichertenTage(parseInt(record.get(8), 10))
                       .verstorben(parseInt(record.get(9), 10) == 1)
                       .versichertentageKrankenGeld(parseInt(record.get(10), 10))

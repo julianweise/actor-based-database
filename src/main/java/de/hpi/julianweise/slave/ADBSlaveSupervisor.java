@@ -8,6 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.ADBShardFactory;
 
 public class ADBSlaveSupervisor extends AbstractBehavior<Void> {
 
@@ -20,7 +21,7 @@ public class ADBSlaveSupervisor extends AbstractBehavior<Void> {
     private ADBSlaveSupervisor(ActorContext<Void> context) {
         super(context);
         context.getLog().info("DBSlave started");
-        this.localShard = this.getContext().spawn(ADBShard.create(), "ADBShard");
+        this.localShard = this.getContext().spawn(ADBShardFactory.createDefault(), "ADBShard");
         context.getSystem().receptionist().tell(Receptionist.register(ADBShard.SERVICE_KEY, this.localShard));
     }
 

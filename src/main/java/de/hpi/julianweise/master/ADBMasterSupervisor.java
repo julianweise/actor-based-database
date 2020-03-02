@@ -2,140 +2,55 @@ package de.hpi.julianweise.master;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.csv.CSVParsingActor;
-import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.settings.Settings;
-import de.hpi.julianweise.settings.SettingsImpl;
-import de.hpi.julianweise.shard.ADBShardDistributor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import de.hpi.julianweise.query.ADBShardInquirer;
+import de.hpi.julianweise.query.ADBShardInquirerFactory;
+import de.hpi.julianweise.queryEndpoint.ADBQueryEndpoint;
+import de.hpi.julianweise.queryEndpoint.ADBQueryEndpointFactory;
 
-public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Response> {
+public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Command> {
 
-    public interface Response {
+    public interface Command {
     }
 
-    @AllArgsConstructor
-    @Getter
-    public static class ErrorResponse implements Response {
-        private String errorMessage;
+    public static class StartOperationalService implements Command {
     }
 
-    @AllArgsConstructor
-    @Getter
-    @Builder
-    public static class ParseAndDistributeCSV implements Response {
-        private String filePath;
-        private ADBEntityFactory entityFactory;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class DataSuccessfullyDistributed implements Response {
-    }
-
-    public static Behavior<Response> create(MasterConfiguration configuration ) {
-        return Behaviors.setup(context -> new ADBMasterSupervisor(context, configuration));
-    }
-
-    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final MasterConfiguration configuration;
-    private ActorRef<CSVParsingActor.Command> csvParser;
-    private ActorRef<ADBShardDistributor.Command> shardDistributor;
+    private final ActorRef<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcessActor;
+    private ActorRef<ADBQueryEndpoint.Command> queryEndpoint;
+    private ActorRef<ADBShardInquirer.Command> shardInquirer;
 
-    private ADBMasterSupervisor(ActorContext<Response> context, MasterConfiguration configuration) {
+
+    protected ADBMasterSupervisor(ActorContext<Command> context, MasterConfiguration configuration,
+                                  Behavior<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcess) {
         super(context);
         context.getLog().info("DBMaster started");
-
         this.configuration = configuration;
+        this.loadAndDistributeProcessActor = this.getContext().spawn(loadAndDistributeProcess, "LoadAndDistribute");
+        this.loadAndDistributeProcessActor.tell(new ADBLoadAndDistributeDataProcess.Start(this.getContext().getSelf()));
     }
 
     @Override
-    public Receive<Response> createReceive() {
+    public Receive<Command> createReceive() {
         return newReceiveBuilder()
-                .onMessage(ParseAndDistributeCSV.class, this::handleParseAndDistributeCSV)
-                .onMessage(DataSuccessfullyDistributed.class, this::handleDataSuccessfullyDistributed)
-                .onMessage(CSVParsingActor.CSVReadyForParsing.class, this::handleCSVReadyForParsing)
-                .onMessage(CSVParsingActor.DomainDataChunk.class, this::handleCSVChunk)
-                .onMessage(ADBShardDistributor.BatchDistributed.class, this::handleBatchDistributed)
-                .onMessage(CSVParsingActor.CSVFullyParsed.class, this::handleCSVFullyParsed)
-                .onMessage(ErrorResponse.class, this::handleErrorResponse)
+                .onSignal(PostStop.class, this::handlePostStop)
+                .onMessage(StartOperationalService.class, this::handleStartOperationalService)
                 .build();
     }
 
-    private Behavior<Response> handleParseAndDistributeCSV(ParseAndDistributeCSV command) {
-        if (this.isProcessingAndDistributingData()) {
-            this.getContext().getLog().warn("Received request to handle CSV although already processing data");
-            return this;
-        }
-
-        this.csvParser = this.getContext().spawn(CSVParsingActor.create(), "CSVParser");
-        this.shardDistributor = this.getContext().spawn(ADBShardDistributor.create(), "ShardDistributor");
-
-        this.csvParser.tell(CSVParsingActor.OpenCSVForParsing
-                .builder()
-                .filePath(this.configuration.inputFile.toString())
-                .chunkSize(this.settings.CSV_CHUNK_SIZE)
-                .domainFactory(command.getEntityFactory())
-                .client(this.getContext().getSelf())
-                .build());
-        return this;
+    private Behavior<Command> handleStartOperationalService(StartOperationalService command) {
+        this.shardInquirer = this.getContext().spawn(ADBShardInquirerFactory.createDefault(), "shardInquirer");
+        this.queryEndpoint = this.getContext().spawn(ADBQueryEndpointFactory.createDefault(this.shardInquirer),
+                "endpoint");
+        return Behaviors.same();
     }
 
-    private Behavior<Response> handleCSVReadyForParsing(CSVParsingActor.CSVReadyForParsing response) {
-        if (!this.isProcessingAndDistributingData()) {
-            this.getContext().getLog().warn("Got notified about csv ready for parsing although not processing data");
-            return this;
-        }
-        response.getRespondTo().tell(new CSVParsingActor.ParseNextCSVChunk(this.getContext().getSelf()));
-        return this;
-    }
-
-    private Behavior<Response> handleCSVChunk(CSVParsingActor.DomainDataChunk chunk) {
-        if (!this.isProcessingAndDistributingData()) {
-            this.getContext().getLog().warn("Got csv data chunk although not processing data");
-            return this;
-        }
-        this.shardDistributor.tell(new ADBShardDistributor.DistributeBatchToShards(this.getContext().getSelf(),
-                chunk.getChunk()));
-        return this;
-    }
-
-    private Behavior<Response> handleErrorResponse(ErrorResponse errorResponse) {
-        this.getContext().getLog().error(String.format("Unable to proceed: %s", errorResponse.getErrorMessage()));
-        return this;
-    }
-
-    private Behavior<Response> handleBatchDistributed(ADBShardDistributor.BatchDistributed command) {
-        if (!this.isProcessingAndDistributingData()) {
-            return this;
-        }
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.getContext().getSelf()));
-        return this;
-    }
-
-    private Behavior<Response> handleCSVFullyParsed(CSVParsingActor.CSVFullyParsed command) {
-        this.getContext().getLog().info("Finished parsing CSV file");
-        this.shardDistributor.tell(new ADBShardDistributor.ConcludeDistribution());
-        this.getContext().stop(this.csvParser);
-        this.csvParser = null;
-        return this;
-    }
-
-    private Behavior<Response> handleDataSuccessfullyDistributed(DataSuccessfullyDistributed response) {
-        this.getContext().getLog().info("Successfully distributed all data");
-        this.getContext().stop(this.shardDistributor);
-        this.shardDistributor = null;
-        System.gc();
-        return this;
-    }
-
-    private boolean isProcessingAndDistributingData() {
-        return this.csvParser != null && this.shardDistributor != null;
+    private Behavior<Command> handlePostStop(PostStop signal) {
+        return Behaviors.same();
     }
 }

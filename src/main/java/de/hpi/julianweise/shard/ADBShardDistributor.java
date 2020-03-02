@@ -5,24 +5,19 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
-import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.GroupRouter;
 import akka.actor.typed.javadsl.Receive;
-import akka.actor.typed.javadsl.Routers;
 import akka.actor.typed.javadsl.TimerScheduler;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.master.ADBMasterSupervisor;
 import de.hpi.julianweise.utility.CborSerializable;
 import javafx.util.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +29,12 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     public interface Command extends CborSerializable {
     }
 
+    public interface Response extends CborSerializable {
+    }
+
     @AllArgsConstructor
     @Getter
-    public static class DistributeToShards implements Command, ADBShard.Command {
+    public static class Distribute implements Command, ADBShard.Command {
         ADBEntityType entity;
     }
 
@@ -47,17 +45,22 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
 
     @AllArgsConstructor
     @Getter
-    public static class DistributeBatchToShards implements Command {
-        private final ActorRef<ADBMasterSupervisor.Response> client;
+    public static class DistributeBatch implements Command {
+        private final ActorRef<Response> client;
         private final List<ADBEntityType> entities;
     }
 
     @AllArgsConstructor
-    public static class ConcludeDistribution implements Command {}
+    public static class ConcludeDistribution implements Command {
+    }
 
-    @Getter
     @AllArgsConstructor
-    public static class BatchDistributed implements ADBMasterSupervisor.Response { }
+    public static class BatchDistributed implements Response {
+    }
+
+    @AllArgsConstructor
+    public static class DataFullyDistributed implements Response {
+    }
 
     @AllArgsConstructor
     @Getter
@@ -76,46 +79,30 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         Comparable<?> entityPrimaryKey;
     }
 
-    public static Behavior<ADBShardDistributor.Command> create() {
-        return Behaviors.setup(actorContext ->
-                Behaviors.withTimers(timers ->
-                        new ADBShardDistributor(actorContext, timers)));
-    }
-
-    private static final int VIRTUAL_ROUTES_FACTOR_HASHING = 50;
-    private static final int TIMER_DELAY = 3000;
     private static final float MIN_FACTOR_NEXT_BATCH = 0.3f;
-    private static final Object TIMER_KEY = new Object();
-
+    private static final int MAX_ROUND_TRIP_TIME = 3000;
 
     private final ActorRef<ADBShard.Command> clusterShardsRouter;
     private final Map<Comparable<?>, ADBShard.Command> pendingDistributions = new HashMap<>();
     private final BlockingQueue<Pair<Long, Comparable<?>>> pendingDistTimer = new LinkedBlockingQueue<>();
     private final TimerScheduler<Command> timers;
-    private ActorRef<ADBMasterSupervisor.Response> client;
+    private ActorRef<Response> client;
     private int batchSize = 0;
     private boolean wrappingUp = false;
 
-    private ADBShardDistributor(ActorContext<Command> actorContext, TimerScheduler<Command> timers) {
+    protected ADBShardDistributor(ActorContext<Command> actorContext, TimerScheduler<Command> timers,
+                                  GroupRouter<ADBShard.Command> clusterShards) {
         super(actorContext);
         this.timers = timers;
-        this.timers.startTimerWithFixedDelay(TIMER_KEY, new CheckPendingDistributions(),
-                Duration.of(TIMER_DELAY, ChronoUnit.MILLIS));
-        GroupRouter<ADBShard.Command> clusterShards = Routers.group(ADBShard.SERVICE_KEY);
-        clusterShards.withConsistentHashingRouting(VIRTUAL_ROUTES_FACTOR_HASHING, (this::getHashingKeyFromCommand));
         this.clusterShardsRouter = this.getContext().spawn(clusterShards, "cluster-shards");
-    }
-
-    private String getHashingKeyFromCommand(ADBShard.Command command) {
-        return command.getEntity().getPrimaryKey().toString();
     }
 
     @Override
     public Receive<ADBShardDistributor.Command> createReceive() {
         return newReceiveBuilder()
                 .onSignal(PostStop.class, this::handlePostStop)
-                .onMessage(DistributeToShards.class, this::handleDistributeToShards)
-                .onMessage(DistributeBatchToShards.class, this::handleDistributeBatchToShards)
+                .onMessage(Distribute.class, this::handleDistributeToShards)
+                .onMessage(DistributeBatch.class, this::handleDistributeBatchToShards)
                 .onMessage(ConfirmEntityPersisted.class, this::handleConfirmEntityPersisted)
                 .onMessage(CheckPendingDistributions.class, this::handleCheckPendingDistribution)
                 .onMessage(ConcludeDistribution.class, this::handleConcludeDistribution)
@@ -127,7 +114,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         return this;
     }
 
-    private Behavior<Command> handleDistributeToShards(DistributeToShards command) {
+    private Behavior<Command> handleDistributeToShards(Distribute command) {
         this.sendToShard(new ADBShard.PersistEntity(this.getContext().getSelf(), command.getEntity()));
         return this;
     }
@@ -152,18 +139,18 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         this.batchSize = 0;
     }
 
-    private Behavior<Command> handleDistributeBatchToShards(DistributeBatchToShards command) {
+    private Behavior<Command> handleDistributeBatchToShards(DistributeBatch command) {
         this.client = command.getClient();
         this.batchSize = command.getEntities().size();
         for (ADBEntityType entity : command.getEntities()) {
-            this.getContext().getSelf().tell(new DistributeToShards(entity));
+            this.getContext().getSelf().tell(new Distribute(entity));
         }
         return this;
     }
 
     private Behavior<Command> handleCheckPendingDistribution(CheckPendingDistributions command) {
         for (Pair<Long, Comparable<?>> pair : this.pendingDistTimer) {
-            if (pair.getKey() > System.currentTimeMillis() - TIMER_DELAY) {
+            if (pair.getKey() > System.currentTimeMillis() - MAX_ROUND_TRIP_TIME) {
                 break;
             }
             if (this.pendingDistributions.get(pair.getValue()) != null) {
@@ -173,7 +160,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
             this.pendingDistTimer.remove(pair);
         }
         if (this.wrappingUp && this.pendingDistributions.size() < 1 && this.pendingDistTimer.size() < 1) {
-            this.client.tell(new ADBMasterSupervisor.DataSuccessfullyDistributed());
+            this.client.tell(new DataFullyDistributed());
         }
         return this;
     }

@@ -1,6 +1,5 @@
 package de.hpi.julianweise;
 
-import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -12,10 +11,18 @@ import com.beust.jcommander.ParameterException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import de.hpi.julianweise.csv.CSVParsingActor;
+import de.hpi.julianweise.csv.CSVParsingActorFactory;
 import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.master.ADBMasterSupervisor;
+import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
+import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcessFactory;
+import de.hpi.julianweise.master.ADBMasterSupervisorFactory;
 import de.hpi.julianweise.master.MasterConfiguration;
+import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBQueryTermDeserializer;
+import de.hpi.julianweise.shard.ADBShardDistributor;
+import de.hpi.julianweise.shard.ADBShardDistributorFactory;
 import de.hpi.julianweise.slave.ADBSlaveSupervisor;
 import de.hpi.julianweise.slave.SlaveConfiguration;
 import de.hpi.julianweise.utility.CborSerializable;
@@ -31,12 +38,14 @@ public class ADBApplication {
         return Behaviors.setup(context -> {
             ADBApplication.setCorrectDeserializerForADBEntityType(context, this.entityFactory);
             if (configuration.role().equals(ConfigurationBase.OperationRole.MASTER)) {
-                ActorRef<ADBMasterSupervisor.Response> master = context.spawn(ADBMasterSupervisor
-                        .create((MasterConfiguration) configuration), "DBMasterSupervisor");
-                master.tell(ADBMasterSupervisor.ParseAndDistributeCSV.builder()
-                                                                     .entityFactory(entityFactory)
-                                                                     .filePath(((MasterConfiguration) configuration).getInputFile().toString())
-                                                                     .build());
+                MasterConfiguration masterConfiguration = (MasterConfiguration) configuration;
+                Behavior<CSVParsingActor.Command> csvParser =
+                        CSVParsingActorFactory.createForFile(masterConfiguration.getInputFile().toAbsolutePath().toString(), entityFactory);
+                Behavior<ADBShardDistributor.Command> distributor = ADBShardDistributorFactory.createDefault();
+                Behavior<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcess =
+                        ADBLoadAndDistributeDataProcessFactory.createDefault(csvParser, distributor);
+                context.spawn(ADBMasterSupervisorFactory.createDefault((MasterConfiguration) configuration, loadAndDistributeProcess),
+                        "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
                 context.spawn(ADBSlaveSupervisor.create(), "DBSlaveSupervisor");
             }
@@ -48,6 +57,8 @@ public class ADBApplication {
         // TODO: Discuss better solution to bind custom deserializer
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ADBEntityType.class, entityFactory.buildDeserializer());
+        module.addDeserializer(ADBQuery.ABDQueryTerm.class,
+                new ADBQueryTermDeserializer(entityFactory.getTargetClass()));
         JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
                 .get(context.getSystem()).serializerFor(CborSerializable.class);
         serializer.objectMapper().registerModule(module);
@@ -101,6 +112,6 @@ public class ADBApplication {
     public void run(String[] args) {
         ConfigurationBase configuration = ADBApplication.parseArgument(args);
         Config config = configWithPort(configuration.getPort());
-        ActorSystem<Void> system = ActorSystem.create(rootBehavior(configuration), "ActorDatabaseSystem", config);
+        ActorSystem.create(rootBehavior(configuration), "ActorDatabaseSystem", config);
     }
 }

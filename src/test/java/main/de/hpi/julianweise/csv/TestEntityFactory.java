@@ -10,13 +10,17 @@ import static java.lang.Integer.parseInt;
 
 public class TestEntityFactory implements ADBEntityFactory {
 
+    @Override public Class<? extends ADBEntityType> getTargetClass() {
+        return TestEntity.class;
+    }
+
     @Override
     public ADBEntityType build(CSVRecord row) {
         return TestEntity.builder()
-                  .aInteger(parseInt(row.get(0), 10))
-                  .bString(row.get(1))
-                  .cFloat(parseFloat(row.get(2)))
-                  .build();
+                         .aInteger(parseInt(row.get(0), 10))
+                         .bString(row.get(1))
+                         .cFloat(parseFloat(row.get(2)))
+                         .build();
     }
 
     @Override public PatientDeserializer buildDeserializer() {

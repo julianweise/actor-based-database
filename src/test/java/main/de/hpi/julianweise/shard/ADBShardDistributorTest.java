@@ -4,6 +4,7 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.ADBShardFactory;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -24,7 +25,7 @@ public class ADBShardDistributorTest {
 
     @Before
     public void before() {
-        ActorRef<ADBShard.Command> shard = testKit.spawn(ADBShard.create());
+        ActorRef<ADBShard.Command> shard = testKit.spawn(ADBShardFactory.createDefault());
         testKit.system().receptionist().tell(Receptionist.register(ADBShard.SERVICE_KEY, shard));
     }
 }
