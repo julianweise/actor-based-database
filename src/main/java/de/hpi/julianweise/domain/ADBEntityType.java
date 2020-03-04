@@ -2,13 +2,14 @@ package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.CborSerializable;
-import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ADBEntityType implements CborSerializable {
+
+    private static Map<String, Field> fields = new ConcurrentHashMap<>();
 
     protected ADBEntityType() {
         for (Field field : this.getClass().getDeclaredFields()) {
@@ -19,25 +20,27 @@ public abstract class ADBEntityType implements CborSerializable {
     public abstract Comparable<?> getPrimaryKey();
 
     public final boolean matches(ADBQuery query) {
-        return query.getTerms().stream()
-                    .allMatch(this::matches);
+        for (ADBQuery.ABDQueryTerm term : query.getTerms()) {
+            if (!this.matches(term)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public final boolean matches(ADBQuery.ABDQueryTerm term) {
-        return hasField(term.getFieldName()) && fieldMatches(term.getFieldName(),
-                (Comparable<Object>) term.getValue(), term.getOperator());
+        return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
     }
 
-    public final boolean hasField(String name) {
-        return Arrays.stream(this.getClass().getDeclaredFields())
-                     .map(Field::getName)
-                     .anyMatch(s -> s.equals(name));
-    }
-
-    @SneakyThrows
     protected final boolean fieldMatches(String fieldName, Comparable<Object> value,
                                          ADBQuery.RelationalOperator operator) {
-        Object fieldValue = this.getGetterForFieldName(fieldName).invoke(this);
+        Object fieldValue;
+        try {
+            fieldValue = this.getFieldForName(fieldName).get(this);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            return false;
+        }
         switch (operator) {
             case EQUALITY:
                 return value.compareTo(fieldValue) == 0;
@@ -56,13 +59,14 @@ public abstract class ADBEntityType implements CborSerializable {
         }
     }
 
-    protected final Method getGetterForFieldName(String fieldName) throws NoSuchFieldException, NoSuchMethodException {
-        Field targetField = this.getClass().getDeclaredField(fieldName);
-        String capitalizedFieldName = targetField.getName().substring(0, 1).toUpperCase()
-                + targetField.getName().substring(1);
-        if (targetField.getType().getName().equals("boolean")) {
-            return this.getClass().getMethod("is" + capitalizedFieldName);
+    private Field getFieldForName(String fieldName) throws NoSuchFieldException {
+        String fieldKey = this.getClass().getName() + fieldName;
+        Field targetField = ADBEntityType.fields.get(fieldKey);
+        if (targetField != null) {
+            return targetField;
         }
-        return this.getClass().getMethod("get" + capitalizedFieldName);
+        targetField = this.getClass().getDeclaredField(fieldName);
+        ADBEntityType.fields.put(fieldKey, targetField);
+        return targetField;
     }
 }

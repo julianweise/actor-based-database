@@ -9,20 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBEntityTypeTest {
 
-    @Test
-    public void hasFieldDetectsFieldSuccessfully() {
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.hasField("aInteger")).isTrue();
-    }
-
-    @Test
-    public void hasFieldDetectsNotPresentFieldSuccessfully() {
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.hasField("aNotPresentField")).isFalse();
-    }
-
     // ##### Integer #####
-
     @Test
     public void matchesEqualityIntegerQueryTermSuccessfully() {
         ADBQuery.ABDQueryTerm term = new ADBQuery.ABDQueryTerm(1, "aInteger", ADBQuery.RelationalOperator.EQUALITY);
