@@ -1,5 +1,6 @@
 package de.hpi.julianweise.domain;
 
+import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.CborSerializable;
 
@@ -17,7 +18,7 @@ public abstract class ADBEntityType implements CborSerializable {
         }
     }
 
-    public abstract Comparable<?> getPrimaryKey();
+    public abstract ADBKey getPrimaryKey();
 
     public final boolean matches(ADBQuery query) {
         for (ADBQuery.ABDQueryTerm term : query.getTerms()) {

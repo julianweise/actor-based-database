@@ -12,6 +12,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.key.ADBDoubleKey;
+import de.hpi.julianweise.domain.key.ADBFloatKey;
+import de.hpi.julianweise.domain.key.ADBIntegerKey;
+import de.hpi.julianweise.domain.key.ADBKey;
+import de.hpi.julianweise.domain.key.ADBStringKey;
 import de.hpi.julianweise.utility.CborSerializable;
 import javafx.util.Pair;
 import lombok.AllArgsConstructor;
@@ -69,22 +74,20 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         @JsonIgnoreProperties(ignoreUnknown = true)
         @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
         @JsonSubTypes({
-                              @JsonSubTypes.Type(value = String.class, name = "String"),
-                              @JsonSubTypes.Type(value = Integer.class, name = "Integer"),
-                              @JsonSubTypes.Type(value = Float.class, name = "Float"),
-                              @JsonSubTypes.Type(value = Double.class, name = "Double"),
-                              @JsonSubTypes.Type(value = Character.class, name = "Character"),
-                              @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
+                              @JsonSubTypes.Type(value = ADBStringKey.class, name = "String"),
+                              @JsonSubTypes.Type(value = ADBIntegerKey.class, name = "Integer"),
+                              @JsonSubTypes.Type(value = ADBFloatKey.class, name = "Float"),
+                              @JsonSubTypes.Type(value = ADBDoubleKey.class, name = "Double"),
                       })
-        Comparable<?> entityPrimaryKey;
+        ADBKey entityPrimaryKey;
     }
 
     private static final float MIN_FACTOR_NEXT_BATCH = 0.3f;
     private static final int MAX_ROUND_TRIP_TIME = 3000;
 
     private final ActorRef<ADBShard.Command> clusterShardsRouter;
-    private final Map<Comparable<?>, ADBShard.Command> pendingDistributions = new HashMap<>();
-    private final BlockingQueue<Pair<Long, Comparable<?>>> pendingDistTimer = new LinkedBlockingQueue<>();
+    private final Map<ADBKey, ADBShard.Command> pendingDistributions = new HashMap<>();
+    private final BlockingQueue<Pair<Long, ADBKey>> pendingDistTimer = new LinkedBlockingQueue<>();
     private final TimerScheduler<Command> timers;
     private ActorRef<Response> client;
     private int batchSize = 0;
@@ -149,7 +152,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     }
 
     private Behavior<Command> handleCheckPendingDistribution(CheckPendingDistributions command) {
-        for (Pair<Long, Comparable<?>> pair : this.pendingDistTimer) {
+        for (Pair<Long, ADBKey> pair : this.pendingDistTimer) {
             if (pair.getKey() > System.currentTimeMillis() - MAX_ROUND_TRIP_TIME) {
                 break;
             }
