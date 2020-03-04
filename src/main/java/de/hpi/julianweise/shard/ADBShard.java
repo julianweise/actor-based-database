@@ -8,6 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.settings.Settings;
@@ -48,7 +49,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     public static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data-shard");
 
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
-    private final Map<Comparable<?>, ADBEntityType> data = new HashMap<>();
+    private final Map<ADBKey, ADBEntityType> data = new HashMap<>();
 
 
     protected ADBShard(ActorContext<Command> context) {
@@ -74,7 +75,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         final AtomicInteger counter = new AtomicInteger();
         Collection<List<ADBEntityType>> results = this.data.values().stream()
                                                            .filter(entity -> entity.matches(command.getQuery()))
-                                                           .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / this.settings.CSV_CHUNK_SIZE))
+                                                           .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / this.settings.QUERY_RESPONSE_CHUNK_SIZE))
                                                            .values();
 
         results.forEach(chunk -> command.getRespondTo().tell(new ADBShardInquirer.QueryResults(transactionId, chunk)));
