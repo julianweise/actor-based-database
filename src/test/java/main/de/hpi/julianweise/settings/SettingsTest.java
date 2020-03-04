@@ -23,7 +23,7 @@ public class SettingsTest {
     public void expectSuccessfulConfigParsing() {
         String config = "actor-db.csv.chunk-size = 5\n" +
                 "actor-db.query-endpoint.hostname = localhost \n" +
-                "actor-db.query-response-chunk-size = 5" +
+                "actor-db.query-response-chunk-size = 5 \n" +
                 "actor-db.query-endpoint.port = 2020";
         TestKitJunitResource testKit = new TestKitJunitResource(config);
 
