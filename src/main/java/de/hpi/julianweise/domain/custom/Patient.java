@@ -1,6 +1,8 @@
 package de.hpi.julianweise.domain.custom;
 
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.key.ADBKey;
+import de.hpi.julianweise.domain.key.ADBStringKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
@@ -20,8 +22,8 @@ public class Patient extends ADBEntityType {
     public final int versichertentageKrankenGeld;
 
     @Override
-    public Comparable<String> getPrimaryKey() {
-        return this.psid;
+    public ADBKey getPrimaryKey() {
+        return new ADBStringKey(this.psid);
     }
 
     @Override
