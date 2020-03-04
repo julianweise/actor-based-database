@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ADBShardTest {
 
     public static String config = "actor-db.csv.chunk-size = 1\n" +
+            "actor-db.query-response-chunk-size = 5" +
             "actor-db.query-endpoint.hostname = localhost\n" +
             "actor-db.query-endpoint.port = 8080";
 
