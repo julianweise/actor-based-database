@@ -57,7 +57,7 @@ public class ADBApplication {
         // TODO: Discuss better solution to bind custom deserializer
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ADBEntityType.class, entityFactory.buildDeserializer());
-        module.addDeserializer(ADBSelectionQuery.QueryTerm.class,
+        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class,
                 new ADBSelectionQueryTermDeserializer(entityFactory.getTargetClass()));
         JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
                 .get(context.getSystem()).serializerFor(CborSerializable.class);

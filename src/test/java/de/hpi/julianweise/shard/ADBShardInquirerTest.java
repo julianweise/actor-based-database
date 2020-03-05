@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
+import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBShardInquirerTest {
@@ -154,7 +155,13 @@ public class ADBShardInquirerTest {
         receptionistProbe.receiveSeveralMessages(2);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+                .builder()
+                .fieldName("aInteger")
+                .operator(EQUALITY)
+                .value(1)
+                .build();
+        query.addTerm(term);
         inquirer.tell(ADBShardInquirer.QueryShards.builder()
                                                   .requestId(requestId)
                                                   .query(query)

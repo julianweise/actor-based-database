@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBShardTest {
@@ -67,7 +68,13 @@ public class ADBShardTest {
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+                .builder()
+                .fieldName("aInteger")
+                .operator(EQUALITY)
+                .value(1)
+                .build();
+        query.addTerm(term);
         shard.tell(new ADBShard.QueryEntities(transactionId, queryProbe.ref(), query));
 
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) queryProbe.receiveMessage();
@@ -99,7 +106,13 @@ public class ADBShardTest {
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+                .builder()
+                .fieldName("cFloat")
+                .operator(EQUALITY)
+                .value(1.01f)
+                .build();
+        query.addTerm(term);
         shard.tell(new ADBShard.QueryEntities(transactionId, queryProbe.ref(), query));
 
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) queryProbe.receiveMessage();

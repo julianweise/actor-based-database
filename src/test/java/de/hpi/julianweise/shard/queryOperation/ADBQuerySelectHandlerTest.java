@@ -19,6 +19,8 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
+import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.INEQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBQuerySelectHandlerTest {
@@ -47,7 +49,14 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+                .builder()
+                .fieldName("aInteger")
+                .operator(EQUALITY)
+                .value(1)
+                .build();
+        query.addTerm(term);
+
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
@@ -69,7 +78,13 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+                .builder()
+                .fieldName("aInteger")
+                .operator(EQUALITY)
+                .value(1)
+                .build();
+        query.addTerm(term);
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
@@ -100,7 +115,13 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.QueryTerm(3, "aInteger", ADBSelectionQuery.RelationalOperator.INEQUALITY));
+        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+                .builder()
+                .fieldName("aInteger")
+                .operator(INEQUALITY)
+                .value(3)
+                .build();
+        query.addTerm(term);
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 

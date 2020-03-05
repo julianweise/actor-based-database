@@ -3,20 +3,19 @@ package de.hpi.julianweise.query;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ADBSelectionQuery extends ADBQuery {
-    @Builder
+
+    @SuperBuilder
     @Getter
-    @AllArgsConstructor
     @NoArgsConstructor
-    public static class QueryTerm {
+    public static class SelectionQueryTerm extends QueryTerm {
         @JsonIgnoreProperties(ignoreUnknown = true)
         @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
         @JsonSubTypes({
@@ -28,27 +27,24 @@ public class ADBSelectionQuery extends ADBQuery {
                               @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
                       })
         Comparable<?> value;
-        String fieldName;
-        RelationalOperator operator;
 
         @Override
         public String toString() {
             return "[Term] " + this.fieldName + " " + this.operator + " " + this.value;
         }
-
     }
 
     @Getter
-    private final List<QueryTerm> terms = new ArrayList<>();
+    private final List<SelectionQueryTerm> terms = new ArrayList<>();
 
-    public void addTerm(QueryTerm term) {
+    public void addTerm(SelectionQueryTerm term) {
         this.terms.add(term);
     }
 
     @Override
     public String toString() {
         return "[Query] " + this.terms.stream()
-                                      .map(QueryTerm::toString)
+                                      .map(SelectionQueryTerm::toString)
                                       .reduce((term, acc) -> acc + " & " + term).orElse("");
     }
 }
