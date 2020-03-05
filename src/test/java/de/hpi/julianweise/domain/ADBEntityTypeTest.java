@@ -4,7 +4,7 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import main.de.hpi.julianweise.csv.TestEntity;
 import org.junit.Test;
 
-import static de.hpi.julianweise.query.ADBSelectionQuery.RelationalOperator.UNSPECIFIED;
+import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.UNSPECIFIED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBEntityTypeTest {

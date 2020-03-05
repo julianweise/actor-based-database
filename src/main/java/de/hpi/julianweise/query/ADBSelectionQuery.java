@@ -12,17 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ADBSelectionQuery extends ADBQuery {
-
-    public enum RelationalOperator {
-        UNSPECIFIED,
-        EQUALITY,
-        INEQUALITY,
-        GREATER_OR_EQUAL,
-        GREATER,
-        LESS_OR_EQUAL,
-        LESS
-    }
-
     @Builder
     @Getter
     @AllArgsConstructor
