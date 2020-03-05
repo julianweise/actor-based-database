@@ -5,7 +5,7 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.ADBShardInquirerFactory;
 import main.de.hpi.julianweise.csv.TestEntity;
@@ -49,7 +49,7 @@ public class ADBShardInquirerTest {
         // necessary to ensure receptionist registration propagates successfully before querying shards
         receptionistProbe.receiveSeveralMessages(2);
 
-        ADBQuery query = new ADBQuery();
+        ADBSelectionQuery query = new ADBSelectionQuery();
 
         inquirer.tell(ADBShardInquirer.QueryShards.builder()
                                                   .requestId(requestId)
@@ -81,7 +81,7 @@ public class ADBShardInquirerTest {
         // necessary to ensure receptionist registration propagates successfully before querying shards
         receptionistProbe.receiveSeveralMessages(2);
 
-        ADBQuery query = new ADBQuery();
+        ADBSelectionQuery query = new ADBSelectionQuery();
 
         inquirer.tell(ADBShardInquirer.QueryShards.builder()
                                                   .requestId(requestId)
@@ -118,7 +118,7 @@ public class ADBShardInquirerTest {
         // necessary to ensure receptionist registration propagates successfully before querying shards
         receptionistProbe.receiveSeveralMessages(2);
 
-        ADBQuery query = new ADBQuery();
+        ADBSelectionQuery query = new ADBSelectionQuery();
         inquirer.tell(ADBShardInquirer.QueryShards.builder()
                                                   .requestId(requestId)
                                                   .query(query)
@@ -153,8 +153,8 @@ public class ADBShardInquirerTest {
         // necessary to ensure receptionist registration propagates successfully before querying shards
         receptionistProbe.receiveSeveralMessages(2);
 
-        ADBQuery query = new ADBQuery();
-        query.addTerm(new ADBQuery.ABDQueryTerm(1, "aInteger", ADBQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery query = new ADBSelectionQuery();
+        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
         inquirer.tell(ADBShardInquirer.QueryShards.builder()
                                                   .requestId(requestId)
                                                   .query(query)

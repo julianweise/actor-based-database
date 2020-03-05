@@ -20,7 +20,7 @@ import akka.stream.Materializer;
 import akka.stream.javadsl.Flow;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -81,7 +81,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
         return Directives.concat(
                 Directives.path("query", () ->
                         Directives.post(() ->
-                                Directives.entity(Jackson.unmarshaller(ADBQuery.class), query -> {
+                                Directives.entity(Jackson.unmarshaller(ADBSelectionQuery.class), query -> {
                                     this.getContext().getLog().info("Received new query: " + query);
                                     CompletableFuture<List<ADBEntityType>> future = new CompletableFuture<>();
                                     int requestId = this.requestCounter.getAndIncrement();

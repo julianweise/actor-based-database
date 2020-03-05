@@ -20,9 +20,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        ADBSelectionQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("aInteger");
         assertThat(term.getValue()).isEqualTo(4);
@@ -38,9 +38,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        ADBSelectionQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("bString");
         assertThat(term.getValue()).isEqualTo("TestString");
@@ -56,9 +56,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        ADBSelectionQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("cFloat");
         assertThat(term.getValue()).isEqualTo(1.03);
@@ -74,9 +74,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        ADBSelectionQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("dBoolean");
         assertThat(term.getValue()).isEqualTo(true);
@@ -92,9 +92,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        ADBSelectionQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("eDouble");
         assertThat(term.getValue()).isEqualTo(12.0374362372462382432);
@@ -110,9 +110,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        ADBSelectionQuery.ABDQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("fChar");
         assertThat(term.getValue()).isEqualTo('w');
@@ -128,9 +128,9 @@ public class ADBQueryTermDeserializerTest {
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class, new ADBQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        objectMapper.readValue(queryJson, ADBQuery.ABDQueryTerm.class);
+        objectMapper.readValue(queryJson, ADBSelectionQuery.ABDQueryTerm.class);
     }
 
 }

@@ -6,7 +6,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBKey;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
@@ -24,7 +24,7 @@ public class ADBQuerySelectHandler extends ADBQueryOperationHandler {
 
     public ADBQuerySelectHandler(ActorContext<ADBQueryOperationHandler.Command> context,
                                  ActorRef<ADBShardInquirer.Command> client, int transactionId,
-                                 ADBQuery query, final Map<ADBKey, ADBEntityType> data) {
+                                 ADBSelectionQuery query, final Map<ADBKey, ADBEntityType> data) {
         super(context, client, transactionId, query, data);
     }
 

@@ -1,7 +1,7 @@
 package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.domain.key.ADBKey;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.utility.CborSerializable;
 
 import java.lang.reflect.Field;
@@ -20,8 +20,8 @@ public abstract class ADBEntityType implements CborSerializable {
 
     public abstract ADBKey getPrimaryKey();
 
-    public final boolean matches(ADBQuery query) {
-        for (ADBQuery.ABDQueryTerm term : query.getTerms()) {
+    public final boolean matches(ADBSelectionQuery query) {
+        for (ADBSelectionQuery.ABDQueryTerm term : query.getTerms()) {
             if (!this.matches(term)) {
                 return false;
             }
@@ -29,12 +29,12 @@ public abstract class ADBEntityType implements CborSerializable {
         return true;
     }
 
-    public final boolean matches(ADBQuery.ABDQueryTerm term) {
+    public final boolean matches(ADBSelectionQuery.ABDQueryTerm term) {
         return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
     }
 
     protected final boolean fieldMatches(String fieldName, Comparable<Object> value,
-                                         ADBQuery.RelationalOperator operator) {
+                                         ADBSelectionQuery.RelationalOperator operator) {
         Object fieldValue;
         try {
             fieldValue = this.getFieldForName(fieldName).get(this);

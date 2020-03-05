@@ -1,19 +1,19 @@
 package de.hpi.julianweise.shard;
 
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ADBQueryTest {
+public class ADBSelectionQueryTest {
 
     @Test
     public void addTermToQuery() {
-        ADBQuery query = new ADBQuery();
+        ADBSelectionQuery query = new ADBSelectionQuery();
 
         assertThat(query.getTerms().size()).isZero();
 
-        ADBQuery.ABDQueryTerm term = new ADBQuery.ABDQueryTerm(1, "Test", ADBQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "Test", ADBSelectionQuery.RelationalOperator.EQUALITY);
 
         query.addTerm(term);
         assertThat(query.getTerms().size()).isEqualTo(1);
@@ -22,9 +22,9 @@ public class ADBQueryTest {
 
     @Test
     public void queryTermStringRepresentation() {
-        ADBQuery.ABDQueryTerm term = ADBQuery.ABDQueryTerm.builder()
+        ADBSelectionQuery.ABDQueryTerm term = ADBSelectionQuery.ABDQueryTerm.builder()
                                                           .fieldName("aInteger")
-                                                          .operator(ADBQuery.RelationalOperator.EQUALITY)
+                                                          .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
                                                           .value(2)
                                                           .build();
 
@@ -36,13 +36,13 @@ public class ADBQueryTest {
 
     @Test
     public void queryStringRepresentation() {
-        ADBQuery.ABDQueryTerm term = ADBQuery.ABDQueryTerm.builder()
+        ADBSelectionQuery.ABDQueryTerm term = ADBSelectionQuery.ABDQueryTerm.builder()
                                                           .fieldName("aInteger")
-                                                          .operator(ADBQuery.RelationalOperator.EQUALITY)
+                                                          .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
                                                           .value(2)
                                                           .build();
 
-        ADBQuery query = new ADBQuery();
+        ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term);
 
         assertThat(query.toString()).contains("Query");
@@ -53,7 +53,7 @@ public class ADBQueryTest {
 
     @Test
     public void noArgsConstructorIsPresentForDeserialization() {
-        ADBQuery.ABDQueryTerm term = new ADBQuery.ABDQueryTerm();
+        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm();
 
         assertThat(term.getFieldName()).isNull();
         assertThat(term.getValue()).isNull();

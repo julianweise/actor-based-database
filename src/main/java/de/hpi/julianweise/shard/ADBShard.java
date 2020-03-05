@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBKey;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.queryOperation.ADBQueryOperationHandler;
 import de.hpi.julianweise.shard.queryOperation.ADBQueryOperationHandlerFactory;
@@ -39,7 +39,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     public static class QueryEntities implements Command {
         int transactionId;
         private ActorRef<ADBShardInquirer.Command> respondTo;
-        private ADBQuery query;
+        private ADBSelectionQuery query;
     }
 
     public static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data-shard");

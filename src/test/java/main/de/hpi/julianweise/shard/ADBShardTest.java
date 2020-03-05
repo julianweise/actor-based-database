@@ -4,7 +4,7 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.ADBShardDistributor;
@@ -66,8 +66,8 @@ public class ADBShardTest {
 
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
-        ADBQuery query = new ADBQuery();
-        query.addTerm(new ADBQuery.ABDQueryTerm(1, "aInteger", ADBQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery query = new ADBSelectionQuery();
+        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
         shard.tell(new ADBShard.QueryEntities(transactionId, queryProbe.ref(), query));
 
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) queryProbe.receiveMessage();
@@ -98,8 +98,8 @@ public class ADBShardTest {
 
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
-        ADBQuery query = new ADBQuery();
-        query.addTerm(new ADBQuery.ABDQueryTerm(1.01f, "cFloat", ADBQuery.RelationalOperator.EQUALITY));
+        ADBSelectionQuery query = new ADBSelectionQuery();
+        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.EQUALITY));
         shard.tell(new ADBShard.QueryEntities(transactionId, queryProbe.ref(), query));
 
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) queryProbe.receiveMessage();

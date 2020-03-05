@@ -19,8 +19,8 @@ import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.ADBMasterSupervisorFactory;
 import de.hpi.julianweise.master.MasterConfiguration;
-import de.hpi.julianweise.query.ADBQuery;
-import de.hpi.julianweise.query.ADBQueryTermDeserializer;
+import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTermDeserializer;
 import de.hpi.julianweise.shard.ADBShardDistributor;
 import de.hpi.julianweise.shard.ADBShardDistributorFactory;
 import de.hpi.julianweise.slave.ADBSlaveSupervisor;
@@ -57,8 +57,8 @@ public class ADBApplication {
         // TODO: Discuss better solution to bind custom deserializer
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ADBEntityType.class, entityFactory.buildDeserializer());
-        module.addDeserializer(ADBQuery.ABDQueryTerm.class,
-                new ADBQueryTermDeserializer(entityFactory.getTargetClass()));
+        module.addDeserializer(ADBSelectionQuery.ABDQueryTerm.class,
+                new ADBSelectionQueryTermDeserializer(entityFactory.getTargetClass()));
         JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
                 .get(context.getSystem()).serializerFor(CborSerializable.class);
         serializer.objectMapper().registerModule(module);
