@@ -30,7 +30,7 @@ public class ADBSelectionQuery extends ADBQuery {
 
         @Override
         public String toString() {
-            return "[Term] " + this.fieldName + " " + this.operator + " " + this.value;
+            return "[SelectionTerm] " + this.fieldName + " " + this.operator + " " + this.value;
         }
     }
 
@@ -43,7 +43,7 @@ public class ADBSelectionQuery extends ADBQuery {
 
     @Override
     public String toString() {
-        return "[Query] " + this.terms.stream()
+        return "[SelectionQuery] " + this.terms.stream()
                                       .map(SelectionQueryTerm::toString)
                                       .reduce((term, acc) -> acc + " & " + term).orElse("");
     }
