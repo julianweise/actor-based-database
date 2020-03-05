@@ -21,7 +21,7 @@ public abstract class ADBEntityType implements CborSerializable {
     public abstract ADBKey getPrimaryKey();
 
     public final boolean matches(ADBSelectionQuery query) {
-        for (ADBSelectionQuery.ABDQueryTerm term : query.getTerms()) {
+        for (ADBSelectionQuery.QueryTerm term : query.getTerms()) {
             if (!this.matches(term)) {
                 return false;
             }
@@ -29,7 +29,7 @@ public abstract class ADBEntityType implements CborSerializable {
         return true;
     }
 
-    public final boolean matches(ADBSelectionQuery.ABDQueryTerm term) {
+    public final boolean matches(ADBSelectionQuery.QueryTerm term) {
         return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
     }
 

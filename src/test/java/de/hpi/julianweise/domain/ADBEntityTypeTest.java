@@ -12,7 +12,7 @@ public class ADBEntityTypeTest {
     // ##### Integer #####
     @Test
     public void matchesEqualityIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -23,7 +23,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.INEQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.INEQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(term)).isFalse();
@@ -34,7 +34,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.LESS);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.LESS);
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isFalse();
@@ -48,7 +48,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.GREATER);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.GREATER);
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -62,7 +62,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessOrEqualIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.LESS_OR_EQUAL);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.LESS_OR_EQUAL);
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isFalse();
@@ -76,7 +76,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterOrEqualIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.GREATER_OR_EQUAL);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.GREATER_OR_EQUAL);
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -92,7 +92,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesEqualityFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.EQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -103,7 +103,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.INEQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.INEQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(term)).isFalse();
@@ -114,7 +114,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.LESS);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.LESS);
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isFalse();
@@ -128,7 +128,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.GREATER);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.GREATER);
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -142,7 +142,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessOrEqualFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat",
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat",
                 ADBSelectionQuery.RelationalOperator.LESS_OR_EQUAL);
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
@@ -157,7 +157,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterOrEqualFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat",
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat",
                 ADBSelectionQuery.RelationalOperator.GREATER_OR_EQUAL);
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
@@ -174,7 +174,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesEqualityStringQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm("Test", "bString", ADBSelectionQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm("Test", "bString", ADBSelectionQuery.RelationalOperator.EQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -185,7 +185,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityStringQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm("Test", "bString",
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm("Test", "bString",
                 ADBSelectionQuery.RelationalOperator.INEQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
@@ -199,7 +199,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesEqualityBooleanQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(true, "dBoolean", ADBSelectionQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(true, "dBoolean", ADBSelectionQuery.RelationalOperator.EQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(term)).isTrue();
@@ -210,7 +210,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityBooleanQueryTermSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(true, "dBoolean",
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(true, "dBoolean",
                 ADBSelectionQuery.RelationalOperator.INEQUALITY);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
@@ -224,7 +224,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void defaultsToFalseForUnknownOperator() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", UNSPECIFIED);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", UNSPECIFIED);
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isFalse();
@@ -240,7 +240,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesStringQuerySuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm("Test", "bString", ADBSelectionQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm("Test", "bString", ADBSelectionQuery.RelationalOperator.EQUALITY);
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term);
 
@@ -253,9 +253,9 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesQueryMultipleTermsSuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term1 = new ADBSelectionQuery.ABDQueryTerm("Test", "bString",
+        ADBSelectionQuery.QueryTerm term1 = new ADBSelectionQuery.QueryTerm("Test", "bString",
                 ADBSelectionQuery.RelationalOperator.EQUALITY);
-        ADBSelectionQuery.ABDQueryTerm term2 = new ADBSelectionQuery.ABDQueryTerm(1f, "cFloat",
+        ADBSelectionQuery.QueryTerm term2 = new ADBSelectionQuery.QueryTerm(1f, "cFloat",
                 ADBSelectionQuery.RelationalOperator.INEQUALITY);
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term1);
@@ -270,7 +270,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesIntegerQuerySuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "aInteger",
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "aInteger",
                 ADBSelectionQuery.RelationalOperator.EQUALITY);
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term);
@@ -284,7 +284,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesFloatQuerySuccessfully() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat",
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1.01f, "cFloat",
                 ADBSelectionQuery.RelationalOperator.EQUALITY);
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term);

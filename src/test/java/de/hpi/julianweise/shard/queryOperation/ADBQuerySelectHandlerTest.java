@@ -47,7 +47,7 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
@@ -69,7 +69,7 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
@@ -100,7 +100,7 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(3, "aInteger", ADBSelectionQuery.RelationalOperator.INEQUALITY));
+        query.addTerm(new ADBSelectionQuery.QueryTerm(3, "aInteger", ADBSelectionQuery.RelationalOperator.INEQUALITY));
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 

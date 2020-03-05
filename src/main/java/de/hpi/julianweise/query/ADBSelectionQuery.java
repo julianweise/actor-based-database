@@ -27,7 +27,7 @@ public class ADBSelectionQuery extends ADBQuery {
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class ABDQueryTerm {
+    public static class QueryTerm {
         @JsonIgnoreProperties(ignoreUnknown = true)
         @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
         @JsonSubTypes({
@@ -50,16 +50,16 @@ public class ADBSelectionQuery extends ADBQuery {
     }
 
     @Getter
-    private final List<ADBSelectionQuery.ABDQueryTerm> terms = new ArrayList<>();
+    private final List<QueryTerm> terms = new ArrayList<>();
 
-    public void addTerm(ADBSelectionQuery.ABDQueryTerm term) {
+    public void addTerm(QueryTerm term) {
         this.terms.add(term);
     }
 
     @Override
     public String toString() {
         return "[Query] " + this.terms.stream()
-                                      .map(ADBSelectionQuery.ABDQueryTerm::toString)
+                                      .map(QueryTerm::toString)
                                       .reduce((term, acc) -> acc + " & " + term).orElse("");
     }
 }

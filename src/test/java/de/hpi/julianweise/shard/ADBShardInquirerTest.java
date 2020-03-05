@@ -154,7 +154,7 @@ public class ADBShardInquirerTest {
         receptionistProbe.receiveSeveralMessages(2);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
         inquirer.tell(ADBShardInquirer.QueryShards.builder()
                                                   .requestId(requestId)
                                                   .query(query)

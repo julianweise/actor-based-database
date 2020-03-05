@@ -13,7 +13,7 @@ public class ADBSelectionQueryTest {
 
         assertThat(query.getTerms().size()).isZero();
 
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm(1, "Test", ADBSelectionQuery.RelationalOperator.EQUALITY);
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm(1, "Test", ADBSelectionQuery.RelationalOperator.EQUALITY);
 
         query.addTerm(term);
         assertThat(query.getTerms().size()).isEqualTo(1);
@@ -22,11 +22,11 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void queryTermStringRepresentation() {
-        ADBSelectionQuery.ABDQueryTerm term = ADBSelectionQuery.ABDQueryTerm.builder()
-                                                          .fieldName("aInteger")
-                                                          .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
-                                                          .value(2)
-                                                          .build();
+        ADBSelectionQuery.QueryTerm term = ADBSelectionQuery.QueryTerm.builder()
+                                                                      .fieldName("aInteger")
+                                                                      .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
+                                                                      .value(2)
+                                                                      .build();
 
         assertThat(term.toString()).contains("Term");
         assertThat(term.toString()).contains("2");
@@ -36,11 +36,11 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void queryStringRepresentation() {
-        ADBSelectionQuery.ABDQueryTerm term = ADBSelectionQuery.ABDQueryTerm.builder()
-                                                          .fieldName("aInteger")
-                                                          .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
-                                                          .value(2)
-                                                          .build();
+        ADBSelectionQuery.QueryTerm term = ADBSelectionQuery.QueryTerm.builder()
+                                                                      .fieldName("aInteger")
+                                                                      .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
+                                                                      .value(2)
+                                                                      .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term);
@@ -53,7 +53,7 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void noArgsConstructorIsPresentForDeserialization() {
-        ADBSelectionQuery.ABDQueryTerm term = new ADBSelectionQuery.ABDQueryTerm();
+        ADBSelectionQuery.QueryTerm term = new ADBSelectionQuery.QueryTerm();
 
         assertThat(term.getFieldName()).isNull();
         assertThat(term.getValue()).isNull();

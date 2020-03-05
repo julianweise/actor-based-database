@@ -67,7 +67,7 @@ public class ADBShardTest {
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        query.addTerm(new ADBSelectionQuery.QueryTerm(1, "aInteger", ADBSelectionQuery.RelationalOperator.EQUALITY));
         shard.tell(new ADBShard.QueryEntities(transactionId, queryProbe.ref(), query));
 
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) queryProbe.receiveMessage();
@@ -99,7 +99,7 @@ public class ADBShardTest {
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQuery.ABDQueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.EQUALITY));
+        query.addTerm(new ADBSelectionQuery.QueryTerm(1.01f, "cFloat", ADBSelectionQuery.RelationalOperator.EQUALITY));
         shard.tell(new ADBShard.QueryEntities(transactionId, queryProbe.ref(), query));
 
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) queryProbe.receiveMessage();

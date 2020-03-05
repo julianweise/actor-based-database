@@ -12,22 +12,22 @@ import lombok.SneakyThrows;
 import java.lang.reflect.Type;
 
 @AllArgsConstructor
-public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQuery.ABDQueryTerm> {
+public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQuery.QueryTerm> {
 
     private final Class<? extends ADBEntityType> entityClass;
 
     @SneakyThrows
     @Override
-    public ADBSelectionQuery.ABDQueryTerm deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
+    public ADBSelectionQuery.QueryTerm deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
 
         ObjectCodec oc = jsonParser.getCodec();
         JsonNode node = oc.readTree(jsonParser);
 
-        return ADBSelectionQuery.ABDQueryTerm.builder()
-                                    .fieldName(node.get("fieldName").asText())
-                                    .operator(ADBSelectionQuery.RelationalOperator.valueOf(node.get("operator").asText()))
-                                    .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
-                                    .build();
+        return ADBSelectionQuery.QueryTerm.builder()
+                                          .fieldName(node.get("fieldName").asText())
+                                          .operator(ADBSelectionQuery.RelationalOperator.valueOf(node.get("operator").asText()))
+                                          .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
+                                          .build();
     }
 
     private Comparable<?> convertToCorrectDataFormat(String fieldName, JsonNode node) throws NoSuchFieldException {
