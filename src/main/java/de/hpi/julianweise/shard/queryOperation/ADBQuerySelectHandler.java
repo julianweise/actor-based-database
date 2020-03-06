@@ -38,7 +38,7 @@ public class ADBQuerySelectHandler extends ADBQueryOperationHandler {
     private Behavior<ADBQueryOperationHandler.Command> handleExecute(Execute command) {
         final AtomicInteger counter = new AtomicInteger();
         Collection<List<ADBEntityType>> results = this.data.values().stream()
-                                                           .filter(entity -> entity.matches(this.query))
+                                                           .filter(entity -> entity.matches((ADBSelectionQuery) this.query))
                                                            .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / this.settings.QUERY_RESPONSE_CHUNK_SIZE))
                                                            .values();
 

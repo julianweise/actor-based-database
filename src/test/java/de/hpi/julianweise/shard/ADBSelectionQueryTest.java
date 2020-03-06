@@ -1,9 +1,11 @@
 package de.hpi.julianweise.shard;
 
+import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import org.junit.Test;
 
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBSelectionQueryTest {
@@ -14,7 +16,7 @@ public class ADBSelectionQueryTest {
 
         assertThat(query.getTerms().size()).isZero();
 
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -28,11 +30,11 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void queryTermStringRepresentation() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm.builder()
-                                                                                        .fieldName("aInteger")
-                                                                                        .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
-                                                                                        .value(2)
-                                                                                        .build();
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm.builder()
+                                                          .fieldName("aInteger")
+                                                          .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
+                                                          .value(2)
+                                                          .build();
 
         assertThat(term.toString()).contains("Term");
         assertThat(term.toString()).contains("2");
@@ -42,11 +44,11 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void queryStringRepresentation() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm.builder()
-                                                                                        .fieldName("aInteger")
-                                                                                        .operator(ADBSelectionQuery.RelationalOperator.EQUALITY)
-                                                                                        .value(2)
-                                                                                        .build();
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm.builder()
+                                                          .fieldName("aInteger")
+                                                          .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
+                                                          .value(2)
+                                                          .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addTerm(term);
@@ -59,7 +61,7 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void noArgsConstructorIsPresentForDeserialization() {
-        ADBSelectionQuery.SelectionQueryTerm term = new ADBSelectionQuery.SelectionQueryTerm();
+        ADBSelectionQueryTerm term = new ADBSelectionQueryTerm();
 
         assertThat(term.getFieldName()).isNull();
         assertThat(term.getValue()).isNull();

@@ -19,7 +19,7 @@ import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.ADBMasterSupervisorFactory;
 import de.hpi.julianweise.master.MasterConfiguration;
-import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQueryTermDeserializer;
 import de.hpi.julianweise.shard.ADBShardDistributor;
 import de.hpi.julianweise.shard.ADBShardDistributorFactory;
@@ -44,7 +44,8 @@ public class ADBApplication {
                 Behavior<ADBShardDistributor.Command> distributor = ADBShardDistributorFactory.createDefault();
                 Behavior<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcess =
                         ADBLoadAndDistributeDataProcessFactory.createDefault(csvParser, distributor);
-                context.spawn(ADBMasterSupervisorFactory.createDefault((MasterConfiguration) configuration, loadAndDistributeProcess),
+                context.spawn(ADBMasterSupervisorFactory.createDefault((MasterConfiguration) configuration,
+                        loadAndDistributeProcess),
                         "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
                 context.spawn(ADBSlaveSupervisor.create(), "DBSlaveSupervisor");
@@ -57,7 +58,7 @@ public class ADBApplication {
         // TODO: Discuss better solution to bind custom deserializer
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ADBEntityType.class, entityFactory.buildDeserializer());
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class,
+        module.addDeserializer(ADBSelectionQueryTerm.class,
                 new ADBSelectionQueryTermDeserializer(entityFactory.getTargetClass()));
         JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
                 .get(context.getSystem()).serializerFor(CborSerializable.class);

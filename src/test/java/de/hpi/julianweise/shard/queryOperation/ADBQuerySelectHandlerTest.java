@@ -8,6 +8,7 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.ADBShard;
 import main.de.hpi.julianweise.csv.TestEntity;
@@ -19,8 +20,8 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.INEQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.INEQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBQuerySelectHandlerTest {
@@ -49,7 +50,7 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -78,7 +79,7 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -115,7 +116,7 @@ public class ADBQuerySelectHandlerTest {
         int transactionId = 1;
         TestProbe<ADBShardInquirer.Command> responseProbe = testKit.createTestProbe();
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(INEQUALITY)

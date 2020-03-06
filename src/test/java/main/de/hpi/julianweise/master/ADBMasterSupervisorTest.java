@@ -47,7 +47,8 @@ public class ADBMasterSupervisorTest {
 
         LoggingTestKit.info("DBMaster started")
                       .expect(testKit.system(),
-                              () -> testKit.spawn(ADBMasterSupervisorFactory.createDefault(masterConfiguration, mockedProcess)));
+                              () -> testKit.spawn(ADBMasterSupervisorFactory.createDefault(masterConfiguration,
+                                      mockedProcess)));
     }
 
     @Test

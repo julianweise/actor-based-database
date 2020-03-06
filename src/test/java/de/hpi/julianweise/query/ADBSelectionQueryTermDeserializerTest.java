@@ -15,14 +15,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": 4,\n" +
                 "  \"fieldName\": \"aInteger\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBSelectionQuery.SelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        ADBSelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("aInteger");
         assertThat(term.getValue()).isEqualTo(4);
@@ -33,14 +34,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": \"TestString\",\n" +
                 "  \"fieldName\": \"bString\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBSelectionQuery.SelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        ADBSelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("bString");
         assertThat(term.getValue()).isEqualTo("TestString");
@@ -51,14 +53,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": 1.03,\n" +
                 "  \"fieldName\": \"cFloat\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBSelectionQuery.SelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        ADBSelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("cFloat");
         assertThat(term.getValue()).isEqualTo(1.03);
@@ -69,14 +72,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": true,\n" +
                 "  \"fieldName\": \"dBoolean\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBSelectionQuery.SelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        ADBSelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("dBoolean");
         assertThat(term.getValue()).isEqualTo(true);
@@ -87,14 +91,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": 12.0374362372462382432,\n" +
                 "  \"fieldName\": \"eDouble\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBSelectionQuery.SelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        ADBSelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("eDouble");
         assertThat(term.getValue()).isEqualTo(12.0374362372462382432);
@@ -105,14 +110,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": \"w\",\n" +
                 "  \"fieldName\": \"fChar\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        ADBSelectionQuery.SelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        ADBSelectionQueryTerm term = objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
 
         assertThat(term.getFieldName()).isEqualTo("fChar");
         assertThat(term.getValue()).isEqualTo('w');
@@ -123,14 +129,15 @@ public class ADBSelectionQueryTermDeserializerTest {
         String queryJson = "{\n" +
                 "  \"value\": 4,\n" +
                 "  \"fieldName\": \"invalidField\",\n" +
-                "  \"operator\": \"EQUALITY\"\n" +
+                "  \"operator\": \"EQUALITY\",\n" +
+                "  \"@type\": \"ADBSelectionQueryTerm\"\n" +
                 "}";
 
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBSelectionQuery.SelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
+        module.addDeserializer(ADBSelectionQueryTerm.class, new ADBSelectionQueryTermDeserializer(TestEntity.class));
         objectMapper.registerModule(module);
-        objectMapper.readValue(queryJson, ADBSelectionQuery.SelectionQueryTerm.class);
+        objectMapper.readValue(queryJson, ADBSelectionQueryTerm.class);
     }
 
 }

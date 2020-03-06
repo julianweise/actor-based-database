@@ -1,16 +1,17 @@
 package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import main.de.hpi.julianweise.csv.TestEntity;
 import org.junit.Test;
 
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.GREATER;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.GREATER_OR_EQUAL;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.INEQUALITY;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.LESS;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.LESS_OR_EQUAL;
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.UNSPECIFIED;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.GREATER;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.INEQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.LESS;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.UNSPECIFIED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBEntityTypeTest {
@@ -18,7 +19,7 @@ public class ADBEntityTypeTest {
     // ##### Integer #####
     @Test
     public void matchesEqualityIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -34,7 +35,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(INEQUALITY)
@@ -50,7 +51,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(LESS)
@@ -69,7 +70,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(GREATER)
@@ -88,7 +89,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessOrEqualIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(LESS_OR_EQUAL)
@@ -107,7 +108,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterOrEqualIntegerQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(GREATER_OR_EQUAL)
@@ -128,7 +129,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesEqualityFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)
@@ -144,7 +145,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(INEQUALITY)
@@ -160,7 +161,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(LESS)
@@ -179,7 +180,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(GREATER)
@@ -198,7 +199,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesLessOrEqualFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(LESS_OR_EQUAL)
@@ -217,7 +218,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesGreaterOrEqualFloatQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(GREATER_OR_EQUAL)
@@ -238,7 +239,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesEqualityStringQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
@@ -254,7 +255,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityStringQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("bString")
                 .operator(INEQUALITY)
@@ -272,7 +273,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesEqualityBooleanQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("dBoolean")
                 .operator(EQUALITY)
@@ -288,7 +289,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesInEqualityBooleanQueryTermSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("dBoolean")
                 .operator(INEQUALITY)
@@ -306,7 +307,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void defaultsToFalseForUnknownOperator() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(UNSPECIFIED)
@@ -328,7 +329,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesStringQuerySuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
@@ -347,14 +348,14 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesQueryMultipleTermsSuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term1 = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term1 = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
                 .value("Test")
                 .build();
 
-        ADBSelectionQuery.SelectionQueryTerm term2 = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term2 = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(INEQUALITY)
@@ -374,7 +375,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesIntegerQuerySuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -393,7 +394,7 @@ public class ADBEntityTypeTest {
 
     @Test
     public void matchesFloatQuerySuccessfully() {
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)

@@ -43,7 +43,7 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
     @Builder
     public static class QueryShards implements Command {
         private int requestId;
-        private ADBSelectionQuery query;
+        private ADBQuery query;
         private ActorRef<Response> respondTo;
     }
 

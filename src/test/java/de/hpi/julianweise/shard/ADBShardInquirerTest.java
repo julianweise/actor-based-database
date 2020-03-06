@@ -6,6 +6,7 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.ADBShardInquirerFactory;
 import main.de.hpi.julianweise.csv.TestEntity;
@@ -16,7 +17,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBShardInquirerTest {
@@ -155,7 +156,7 @@ public class ADBShardInquirerTest {
         receptionistProbe.receiveSeveralMessages(2);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)

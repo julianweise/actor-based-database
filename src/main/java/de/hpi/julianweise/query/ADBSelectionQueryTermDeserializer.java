@@ -12,20 +12,20 @@ import lombok.SneakyThrows;
 import java.lang.reflect.Type;
 
 @AllArgsConstructor
-public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQuery.SelectionQueryTerm> {
+public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQueryTerm> {
 
     private final Class<? extends ADBEntityType> entityClass;
 
     @SneakyThrows
     @Override
-    public ADBSelectionQuery.SelectionQueryTerm deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
+    public ADBSelectionQueryTerm deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
 
         ObjectCodec oc = jsonParser.getCodec();
         JsonNode node = oc.readTree(jsonParser);
 
-        return ADBSelectionQuery.SelectionQueryTerm.builder()
+        return ADBSelectionQueryTerm.builder()
                                                    .fieldName(node.get("fieldName").asText())
-                                                   .operator(ADBSelectionQuery.RelationalOperator.valueOf(node.get("operator").asText()))
+                                                   .operator(ADBQueryTerm.RelationalOperator.valueOf(node.get("operator").asText()))
                                                    .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
                                                    .build();
     }

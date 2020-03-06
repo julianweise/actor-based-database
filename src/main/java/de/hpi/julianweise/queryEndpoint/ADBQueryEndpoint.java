@@ -78,24 +78,21 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     }
 
     private Route createRoute() {
-        return Directives.concat(
-                Directives.path("query", () ->
-                        Directives.post(() ->
-                                Directives.entity(Jackson.unmarshaller(ADBSelectionQuery.class), query -> {
-                                    this.getContext().getLog().info("Received new query: " + query);
-                                    CompletableFuture<List<ADBEntityType>> future = new CompletableFuture<>();
-                                    int requestId = this.requestCounter.getAndIncrement();
-                                    this.requests.put(requestId, future);
-                                    this.shardInquirer.tell(ADBShardInquirer.QueryShards.builder()
-                                                                                        .query(query)
-                                                                                        .requestId(requestId)
-                                                                                        .respondTo(this.shardInquirerResponseWrapper)
-                                                                                        .build());
-                                    return Directives.onSuccess(future,
-                                            extracted -> Directives.complete(this.toJSON(extracted)));
-                                })
-                        )
-                )
+        return Directives.concat(Directives.path("query", () -> Directives.post(() -> Directives.entity(
+                Jackson.unmarshaller(ADBSelectionQuery.class),
+                query -> {
+                    this.getContext().getLog().info("Received new query: " + query);
+                    CompletableFuture<List<ADBEntityType>> future = new CompletableFuture<>();
+                    int requestId = this.requestCounter.getAndIncrement();
+                    this.requests.put(requestId, future);
+                    this.shardInquirer.tell(ADBShardInquirer.QueryShards.builder()
+                                                                        .query(query)
+                                                                        .requestId(requestId)
+                                                                        .respondTo(this.shardInquirerResponseWrapper)
+                                                                        .build());
+                    return Directives.onSuccess(future,
+                            extracted -> Directives.complete(this.toJSON(extracted)));
+                })))
         );
     }
 

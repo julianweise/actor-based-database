@@ -5,6 +5,7 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.ADBShardDistributor;
@@ -15,7 +16,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import static de.hpi.julianweise.query.ADBQuery.RelationalOperator.EQUALITY;
+import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBShardTest {
@@ -68,7 +69,7 @@ public class ADBShardTest {
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -106,7 +107,7 @@ public class ADBShardTest {
         TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQuery.SelectionQueryTerm term = ADBSelectionQuery.SelectionQueryTerm
+        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)

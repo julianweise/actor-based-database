@@ -1,30 +1,20 @@
 package de.hpi.julianweise.query;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@Getter
-@NoArgsConstructor
-@SuperBuilder
-public abstract class ADBQuery {
+import java.util.List;
 
-    public enum RelationalOperator {
-        UNSPECIFIED,
-        EQUALITY,
-        INEQUALITY,
-        GREATER_OR_EQUAL,
-        GREATER,
-        LESS_OR_EQUAL,
-        LESS
-    }
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
+import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 
-    @Getter
-    @SuperBuilder
-    @NoArgsConstructor
-    public static abstract class QueryTerm {
-        protected String fieldName;
-        protected RelationalOperator operator;
+@JsonTypeInfo(use = NAME, include = PROPERTY)
+@JsonSubTypes({
+                      @JsonSubTypes.Type(value=ADBSelectionQuery.class, name = "ADBSelectionQuery"),
+                      @JsonSubTypes.Type(value=ADBJoinQuery.class, name = "ADBJoinQuery")
+              })
+public interface ADBQuery {
 
-    }
+    List<? extends ADBQueryTerm> getTerms();
+
 }
