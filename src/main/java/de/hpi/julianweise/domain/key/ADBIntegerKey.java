@@ -12,10 +12,7 @@ public class ADBIntegerKey implements ADBKey {
     private int value;
 
     @Override
-    public int compareTo(ADBKey o) throws ADBKeyComparisonException {
-        if (!(o instanceof ADBIntegerKey)) {
-            throw new ADBKeyComparisonException(this.getClass(), o.getClass());
-        }
+    public int compareTo(ADBKey o) {
         return value - ((ADBIntegerKey) o).value;
     }
 

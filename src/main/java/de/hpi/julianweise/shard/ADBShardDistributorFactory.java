@@ -1,31 +1,29 @@
 package de.hpi.julianweise.shard;
 
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
-import akka.actor.typed.javadsl.GroupRouter;
-import akka.actor.typed.javadsl.Routers;
+import akka.actor.typed.receptionist.Receptionist;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 public class ADBShardDistributorFactory {
 
-    private static final int VIRTUAL_ROUTES_FACTOR_HASHING = 50;
     private static final Duration TIMER_DURATION = Duration.of(3000, ChronoUnit.MILLIS);
 
     public static Behavior<ADBShardDistributor.Command> createDefault() {
-        GroupRouter<ADBShard.Command> clusterShards = Routers.group(ADBShard.SERVICE_KEY);
-        clusterShards.withConsistentHashingRouting(VIRTUAL_ROUTES_FACTOR_HASHING, (ADBShardDistributorFactory::getHashingKey));
-
         return Behaviors.setup(context ->
                 Behaviors.withTimers(timers -> {
+                    ActorRef<Receptionist.Listing> wrapper = ADBShardDistributorFactory.createListingWrapper(context);
+                    context.getSystem().receptionist().tell(Receptionist.subscribe(ADBShard.SERVICE_KEY, wrapper));
                     timers.startTimerWithFixedDelay(new Object(), new ADBShardDistributor.CheckPendingDistributions(), TIMER_DURATION);
-                    return new ADBShardDistributor(context, timers, clusterShards);
+                    return new ADBShardDistributor(context, timers);
                 }));
     }
 
-    private static String getHashingKey(ADBShard.Command command) {
-        ADBShard.PersistEntity castedCommand = (ADBShard.PersistEntity) command;
-        return castedCommand.getEntity().getPrimaryKey().toString();
+    private static ActorRef<Receptionist.Listing> createListingWrapper(ActorContext<ADBShardDistributor.Command> context) {
+        return context.messageAdapter(Receptionist.Listing.class, ADBShardDistributor.WrappedListing::new);
     }
 }

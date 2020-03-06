@@ -8,7 +8,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.queryOperation.ADBQueryOperationHandler;
@@ -17,10 +16,10 @@ import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 public class ADBShard extends AbstractBehavior<ADBShard.Command> {
 
@@ -43,9 +42,17 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         private ADBQuery query;
     }
 
+    @Getter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ConcludeTransfer implements Command {
+        private int numberOfNodes;
+    }
+
+
     public static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data-shard");
 
-    private final Map<ADBKey, ADBEntityType> data = new HashMap<>();
+    private ArrayList<ADBEntityType> data = new ArrayList<>();
 
 
     protected ADBShard(ActorContext<Command> context) {
@@ -57,20 +64,30 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         return newReceiveBuilder()
                 .onMessage(PersistEntity.class, this::handleEntity)
                 .onMessage(QueryEntities.class, this::handleQueryEntities)
+                .onMessage(ConcludeTransfer.class, this::handleConcludeTransaction)
                 .build();
     }
 
     private Behavior<Command> handleEntity(PersistEntity command) {
-        this.data.put(command.getEntity().getPrimaryKey(), command.getEntity());
+        this.data.add(command.getEntity());
         command.respondTo.tell(new ADBShardDistributor.ConfirmEntityPersisted(command.getEntity().getPrimaryKey()));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleQueryEntities(QueryEntities command) {
         int transactionId = command.getTransactionId();
-        this.getContext().spawn(ADBQueryOperationHandlerFactory.create(command, Collections.unmodifiableMap(this.data)),
+        this.getContext().spawn(ADBQueryOperationHandlerFactory.create(command, this.data),
                 "queryEntities-" + transactionId)
             .tell(new ADBQueryOperationHandler.Execute());
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleConcludeTransaction(ConcludeTransfer command) {
+        this.getContext().getLog().info("Distribution concluded. Shard maintains " + this.data.size() + " elements");
+        this.getContext().getLog().info("Overall " + command.numberOfNodes + " data nodes are present");
+        this.data.trimToSize();
+        System.gc();
+        this.data.sort(Comparator.comparing(ADBEntityType::getPrimaryKey));
         return Behaviors.same();
     }
 }

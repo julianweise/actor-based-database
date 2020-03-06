@@ -5,9 +5,11 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
-import akka.actor.typed.javadsl.GroupRouter;
+import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.javadsl.TimerScheduler;
+import akka.actor.typed.receptionist.Receptionist;
+import akka.routing.ConsistentHash;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -24,17 +26,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Command> {
 
-    public interface Command extends CborSerializable {
-    }
+    public interface Command extends CborSerializable {}
 
-    public interface Response extends CborSerializable {
+    public interface Response extends CborSerializable {}
+
+    @AllArgsConstructor
+    @Getter
+    public static class WrappedListing implements Command {
+        private Receptionist.Listing listing;
     }
 
     @AllArgsConstructor
@@ -84,26 +92,27 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
 
     private static final float MIN_FACTOR_NEXT_BATCH = 0.3f;
     private static final int MAX_ROUND_TRIP_TIME = 3000;
+    private static final int VIRTUAL_NODES_FACTOR = 50;
 
-    private final ActorRef<ADBShard.Command> clusterShardsRouter;
     private final Map<ADBKey, ADBShard.Command> pendingDistributions = new HashMap<>();
     private final BlockingQueue<Pair<Long, ADBKey>> pendingDistTimer = new LinkedBlockingQueue<>();
     private final TimerScheduler<Command> timers;
+    private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
+    private ConsistentHash<ActorRef<ADBShard.Command>> consistentHash = ConsistentHash.create(this.shards, VIRTUAL_NODES_FACTOR);
     private ActorRef<Response> client;
     private int batchSize = 0;
     private boolean wrappingUp = false;
 
-    protected ADBShardDistributor(ActorContext<Command> actorContext, TimerScheduler<Command> timers,
-                                  GroupRouter<ADBShard.Command> clusterShards) {
+    protected ADBShardDistributor(ActorContext<Command> actorContext, TimerScheduler<Command> timers) {
         super(actorContext);
         this.timers = timers;
-        this.clusterShardsRouter = this.getContext().spawn(clusterShards, "cluster-shards");
     }
 
     @Override
     public Receive<ADBShardDistributor.Command> createReceive() {
         return newReceiveBuilder()
                 .onSignal(PostStop.class, this::handlePostStop)
+                .onMessage(WrappedListing.class, this::handleWrappedReceptionistListing)
                 .onMessage(Distribute.class, this::handleDistributeToShards)
                 .onMessage(DistributeBatch.class, this::handleDistributeBatchToShards)
                 .onMessage(ConfirmEntityPersisted.class, this::handleConfirmEntityPersisted)
@@ -112,26 +121,41 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
                 .build();
     }
 
+    private Behavior<Command> handleWrappedReceptionistListing(WrappedListing command) {
+        this.shards.addAll(command.getListing().getServiceInstances(ADBShard.SERVICE_KEY));
+        this.consistentHash = ConsistentHash.create(this.shards, VIRTUAL_NODES_FACTOR);
+        return Behaviors.same();
+    }
+
     private Behavior<Command> handlePostStop(PostStop signal) {
         this.timers.cancelAll();
-        return this;
+        return Behaviors.same();
     }
 
     private Behavior<Command> handleDistributeToShards(Distribute command) {
         this.sendToShard(new ADBShard.PersistEntity(this.getContext().getSelf(), command.getEntity()));
-        return this;
+        return Behaviors.same();
     }
 
     public void sendToShard(ADBShard.PersistEntity command) {
         this.pendingDistTimer.add(new Pair<>(System.currentTimeMillis(), command.getEntity().getPrimaryKey()));
         this.pendingDistributions.put(command.getEntity().getPrimaryKey(), command);
-        this.clusterShardsRouter.tell(command);
+        if (this.consistentHash.isEmpty()) {
+            return;
+        }
+        this.consistentHash.nodeFor(command.getEntity().getPrimaryKey().toString()).tell(command);
+    }
+
+    public void concludeTransfer() {
+        for(ActorRef<ADBShard.Command> node : this.shards) {
+            node.tell(new ADBShard.ConcludeTransfer(this.shards.size()));
+        }
     }
 
     private Behavior<Command> handleConfirmEntityPersisted(ConfirmEntityPersisted command) {
         this.pendingDistributions.remove(command.getEntityPrimaryKey());
         this.notifyClient();
-        return this;
+        return Behaviors.same();
     }
 
     private void notifyClient() {
@@ -148,7 +172,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         for (ADBEntityType entity : command.getEntities()) {
             this.getContext().getSelf().tell(new Distribute(entity));
         }
-        return this;
+        return Behaviors.same();
     }
 
     private Behavior<Command> handleCheckPendingDistribution(CheckPendingDistributions command) {
@@ -165,11 +189,12 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
         if (this.wrappingUp && this.pendingDistributions.size() < 1 && this.pendingDistTimer.size() < 1) {
             this.client.tell(new DataFullyDistributed());
         }
-        return this;
+        return Behaviors.same();
     }
 
     private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
+        this.concludeTransfer();
         this.wrappingUp = true;
-        return this;
+        return Behaviors.same();
     }
 }

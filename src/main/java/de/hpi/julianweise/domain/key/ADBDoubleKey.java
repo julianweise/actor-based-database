@@ -12,9 +12,9 @@ public class ADBDoubleKey implements ADBKey {
     private double value;
 
     @Override
-    public int compareTo(ADBKey o) throws ADBKeyComparisonException {
-        if (!(o instanceof ADBDoubleKey)) {
-            throw new ADBKeyComparisonException(this.getClass(), o.getClass());
+    public int compareTo(ADBKey o) {
+        if (! (o instanceof ADBDoubleKey)) {
+            return -1;
         }
         return (int) (this.value - ((ADBDoubleKey) o).value);
     }

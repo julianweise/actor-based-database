@@ -1,6 +1,7 @@
 package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.domain.key.ADBKey;
+import de.hpi.julianweise.domain.key.ADBKeyBase;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;

@@ -12,10 +12,11 @@ public class ADBFloatKey implements ADBKey {
     private float value;
 
     @Override
-    public int compareTo(ADBKey o) throws ADBKeyComparisonException {
+    public int compareTo(ADBKey o) {
         if (!(o instanceof ADBFloatKey)) {
-            throw new ADBKeyComparisonException(this.getClass(), o.getClass());
+            return -1;
         }
+
         return (int) (this.value - ((ADBFloatKey) o).value);
     }
 

@@ -5,8 +5,6 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.domain.key.ADBIntegerKey;
-import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
@@ -17,8 +15,8 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.INEQUALITY;
@@ -62,7 +60,7 @@ public class ADBQuerySelectHandlerTest {
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
         Behavior<ADBQueryOperationHandler.Command> selectBehavior = ADBQueryOperationHandlerFactory.create(message,
-                new HashMap<>());
+                new ArrayList<>());
 
 
         ActorRef<ADBQueryOperationHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
@@ -89,9 +87,9 @@ public class ADBQuerySelectHandlerTest {
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
-        Map<ADBKey, ADBEntityType> dataset = new HashMap<>();
-        dataset.put(new ADBIntegerKey(1), new TestEntity(1, "Test", 1f, true, 1.01, 'w'));
-        dataset.put(new ADBIntegerKey(2), new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
+        List<ADBEntityType> dataset = new ArrayList<>();
+        dataset.add(new TestEntity(1, "Test", 1f, true, 1.01, 'w'));
+        dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 
         Behavior<ADBQueryOperationHandler.Command> selectBehavior = ADBQueryOperationHandlerFactory.create(message,
                 dataset);
@@ -102,7 +100,7 @@ public class ADBQuerySelectHandlerTest {
         ADBShardInquirer.QueryResults results = (ADBShardInquirer.QueryResults) responseProbe.receiveMessage();
         assertThat(results.getTransactionId()).isEqualTo(transactionId);
         assertThat(results.getResults().size()).isOne();
-        assertThat(results.getResults().get(0)).isEqualTo(dataset.get(new ADBIntegerKey(1)));
+        assertThat(results.getResults().get(0)).isEqualTo(dataset.get(0));
 
 
         ADBShardInquirer.ConcludeTransaction conclusion =
@@ -126,9 +124,9 @@ public class ADBQuerySelectHandlerTest {
 
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
-        Map<ADBKey, ADBEntityType> dataset = new HashMap<>();
-        dataset.put(new ADBIntegerKey(1), new TestEntity(1, "Test", 1f, true, 1.01, 'w'));
-        dataset.put(new ADBIntegerKey(2), new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
+        List<ADBEntityType> dataset = new ArrayList<>();
+        dataset.add(new TestEntity(1, "Test", 1f, true, 1.01, 'w'));
+        dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 
         Behavior<ADBQueryOperationHandler.Command> selectBehavior = ADBQueryOperationHandlerFactory.create(message,
                 dataset);
@@ -139,12 +137,12 @@ public class ADBQuerySelectHandlerTest {
         ADBShardInquirer.QueryResults chunk1 = (ADBShardInquirer.QueryResults) responseProbe.receiveMessage();
         assertThat(chunk1.getTransactionId()).isEqualTo(transactionId);
         assertThat(chunk1.getResults().size()).isOne();
-        assertThat(chunk1.getResults().get(0)).isEqualTo(dataset.get(new ADBIntegerKey(1)));
+        assertThat(chunk1.getResults().get(0)).isEqualTo(dataset.get(0));
 
         ADBShardInquirer.QueryResults chunk2 = (ADBShardInquirer.QueryResults) responseProbe.receiveMessage();
         assertThat(chunk2.getTransactionId()).isEqualTo(transactionId);
         assertThat(chunk2.getResults().size()).isOne();
-        assertThat(chunk2.getResults().get(0)).isEqualTo(dataset.get(new ADBIntegerKey(2)));
+        assertThat(chunk2.getResults().get(0)).isEqualTo(dataset.get(1));
 
 
         ADBShardInquirer.ConcludeTransaction conclusion =

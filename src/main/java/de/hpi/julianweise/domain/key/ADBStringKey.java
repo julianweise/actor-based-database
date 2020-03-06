@@ -14,9 +14,9 @@ public class ADBStringKey implements ADBKey {
     private String value;
 
     @Override
-    public int compareTo(ADBKey o) throws ADBKeyComparisonException {
-        if (!(o instanceof ADBStringKey)) {
-            throw new ADBKeyComparisonException(this.getClass(), o.getClass());
+    public int compareTo(ADBKey o) {
+        if (!(o instanceof  ADBStringKey)) {
+            return -1;
         }
         return value.compareTo(((ADBStringKey) o).value);
     }
