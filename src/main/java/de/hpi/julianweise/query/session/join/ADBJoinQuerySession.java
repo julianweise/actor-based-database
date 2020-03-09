@@ -10,16 +10,19 @@ import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 public class ADBJoinQuerySession extends ADBQuerySession {
+
+    private final JoinDistributionPlan distributionPlan;
 
     public ADBJoinQuerySession(ActorContext<ADBQuerySession.Command> context,
                                   Set<ActorRef<ADBShard.Command>> shards, int transactionId,
                                   ActorRef<ADBShardInquirer.Command> parent,
                                   ADBJoinQuery query) {
         super(context, shards, transactionId, parent);
-
+        this.distributionPlan = new JoinDistributionPlan(new ArrayList<>(shards));
         // Send initial query
         this.shards.forEach(shard -> shard.tell(ADBShard.QueryEntities.builder()
                                                                       .transactionId(transactionId)
