@@ -107,7 +107,6 @@ public class JoinDistributionPlanTest {
         assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardA.ref()); // A:2 B:3 C:1 D:2
         assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref()); // A:3 B:3 C:2 D:2
         assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardC.ref()); // A:3 B:3 C:3 D:3
-        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardC.ref()); // A:3 B:3 C:3 D:3
     }
 
 }
