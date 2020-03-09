@@ -6,8 +6,8 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import lombok.AllArgsConstructor;
@@ -53,13 +53,10 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
     private InputStreamReader inputStreamReader;
     private Iterator<CSVRecord> csvIterator;
-    private ADBEntityFactory domainFactory;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
 
-    protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath,
-                              ADBEntityFactory domainFactory) {
+    protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);
-        this.domainFactory = domainFactory;
         this.inputStreamReader = new InputStreamReader(this.locateCSVFile(filePath));
         CSVParser csvParser = this.openCSVForParsing();
         this.csvIterator = csvParser.iterator();
@@ -92,7 +89,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
         List<ADBEntityType> chunk = new ArrayList<>();
 
         while (csvIterator.hasNext() && counter.getAndIncrement() < this.settings.CSV_CHUNK_SIZE) {
-            chunk.add(this.domainFactory.build(this.csvIterator.next()));
+            chunk.add(ADBEntityFactoryProvider.getInstance().build(this.csvIterator.next()));
         }
 
         command.getClient().tell(new DomainDataChunk(chunk));

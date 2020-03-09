@@ -1,7 +1,6 @@
 package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.domain.key.ADBKey;
-import de.hpi.julianweise.domain.key.ADBKeyBase;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
@@ -15,11 +14,7 @@ public abstract class ADBEntityType implements CborSerializable {
 
     private static Map<String, Field> fields = new ConcurrentHashMap<>();
 
-    protected ADBEntityType() {
-        for (Field field : this.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-        }
-    }
+    protected ADBEntityType() {}
 
     public abstract ADBKey getPrimaryKey();
 
@@ -32,6 +27,7 @@ public abstract class ADBEntityType implements CborSerializable {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     public final boolean matches(ADBSelectionQueryTerm term) {
         return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
     }
@@ -63,13 +59,14 @@ public abstract class ADBEntityType implements CborSerializable {
         }
     }
 
-    private Field getFieldForName(String fieldName) throws NoSuchFieldException {
+    public Field getFieldForName(String fieldName) throws NoSuchFieldException {
         String fieldKey = this.getClass().getName() + fieldName;
         Field targetField = ADBEntityType.fields.get(fieldKey);
         if (targetField != null) {
             return targetField;
         }
         targetField = this.getClass().getDeclaredField(fieldName);
+        targetField.setAccessible(true);
         ADBEntityType.fields.put(fieldKey, targetField);
         return targetField;
     }

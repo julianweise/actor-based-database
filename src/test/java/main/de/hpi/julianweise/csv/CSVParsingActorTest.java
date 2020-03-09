@@ -7,6 +7,7 @@ import akka.actor.typed.Behavior;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.CSVParsingActorFactory;
 import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,8 +27,6 @@ public class CSVParsingActorTest {
     @ClassRule
     public static TemporaryFolder folder = new TemporaryFolder();
 
-    private ADBEntityFactory testFactory = new TestEntityFactory();
-
 
     @AfterClass
     public static void cleanup() {
@@ -37,18 +36,20 @@ public class CSVParsingActorTest {
 
     @Test
     public void testValidParsing() throws IOException {
+        ADBEntityFactoryProvider adbEntityFactoryProvider = new ADBEntityFactoryProvider(new TestEntityFactory());
+
         final String testCSV = folder.newFile("test.csv").getAbsolutePath();
         String csvContent = "headerA,headerB,headerC\n200,TestString,1.02";
         Files.write(Paths.get(testCSV), csvContent.getBytes());
 
-        Behavior<CSVParsingActor.Command> parserBehavior = CSVParsingActorFactory.createForFile(testCSV, testFactory);
+        Behavior<CSVParsingActor.Command> parserBehavior = CSVParsingActorFactory.createForFile(testCSV);
         ActorRef<CSVParsingActor.Command> parser = testKit.spawn(parserBehavior, "test-parser");
 
 
         TestProbe<CSVParsingActor.Response> probe = testKit.createTestProbe();
 
         parser.tell(new CSVParsingActor.ParseNextCSVChunk(probe.ref()));
-        CSVParsingActor.DomainDataChunk chunk = (CSVParsingActor.DomainDataChunk) probe.receiveMessage();
+        CSVParsingActor.DomainDataChunk chunk = probe.expectMessageClass(CSVParsingActor.DomainDataChunk.class);
 
         TestEntity results = (TestEntity) chunk.getChunk().get(0);
 
@@ -67,7 +68,7 @@ public class CSVParsingActorTest {
         String csvContent = "";
         Files.write(Paths.get(testCSV), csvContent.getBytes());
 
-        Behavior<CSVParsingActor.Command> parserBehavior = CSVParsingActorFactory.createForFile(testCSV, testFactory);
+        Behavior<CSVParsingActor.Command> parserBehavior = CSVParsingActorFactory.createForFile(testCSV);
         ActorRef<CSVParsingActor.Command> parser = testKit.spawn(parserBehavior, "test-parser");
 
 

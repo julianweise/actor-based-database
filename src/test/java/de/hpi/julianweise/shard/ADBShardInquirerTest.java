@@ -9,6 +9,7 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.ADBShardInquirerFactory;
+import de.hpi.julianweise.query.session.ADBQuerySession;
 import main.de.hpi.julianweise.csv.TestEntity;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -178,30 +179,8 @@ public class ADBShardInquirerTest {
     }
 
     @Test
-    public void ensureInquirerDoesNotCrashOnInvalidTransactionForQueryResults() {
-        TestProbe<ADBShardInquirer.AllQueryResults> resultProbe = testKit.createTestProbe();
-        ActorRef<ADBShardInquirer.Command> inquirer = testKit.spawn(ADBShardInquirerFactory.createDefault());
-
-        ADBShardInquirer.QueryResults results = new ADBShardInquirer.QueryResults(999, new ArrayList<>());
-        inquirer.tell(results);
-
-        resultProbe.expectNoMessage();
-    }
-
-    @Test
-    public void ensureInquirerDoesNotCrashOnInvalidTransactionForTransactionConclusion() {
-        TestProbe<ADBShardInquirer.AllQueryResults> resultProbe = testKit.createTestProbe();
-        ActorRef<ADBShardInquirer.Command> inquirer = testKit.spawn(ADBShardInquirerFactory.createDefault());
-
-        ADBShardInquirer.ConcludeTransaction concludeTransaction = new ADBShardInquirer.ConcludeTransaction(999);
-        inquirer.tell(concludeTransaction);
-
-        resultProbe.expectNoMessage();
-    }
-
-    @Test
     public void ensureNoArgsConstructorForConcludeTransactionForDeserializationIsPresent() {
-        ADBShardInquirer.ConcludeTransaction concludeTransaction = new ADBShardInquirer.ConcludeTransaction();
+        ADBQuerySession.ConcludeTransaction concludeTransaction = new ADBQuerySession.ConcludeTransaction();
 
         assertThat(concludeTransaction.getTransactionId()).isZero();
     }

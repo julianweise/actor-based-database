@@ -8,7 +8,8 @@ import static java.lang.Integer.parseInt;
 
 public class PatientFactory implements ADBEntityFactory {
 
-    @Override public Class<? extends ADBEntityType> getTargetClass() {
+    @Override
+    public Class<? extends ADBEntityType> getTargetClass() {
         return Patient.class;
     }
 

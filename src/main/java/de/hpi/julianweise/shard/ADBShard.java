@@ -9,9 +9,9 @@ import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
-import de.hpi.julianweise.query.ADBShardInquirer;
-import de.hpi.julianweise.shard.queryOperation.ADBQueryOperationHandler;
-import de.hpi.julianweise.shard.queryOperation.ADBQueryOperationHandlerFactory;
+import de.hpi.julianweise.query.session.ADBQuerySession;
+import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandler;
+import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandlerFactory;
 import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,7 +38,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     @Builder
     public static class QueryEntities implements Command {
         int transactionId;
-        private ActorRef<ADBShardInquirer.Command> respondTo;
+        private ActorRef<ADBQuerySession.Command> respondTo;
         private ADBQuery query;
     }
 
@@ -54,7 +54,6 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
 
     private ArrayList<ADBEntityType> data = new ArrayList<>();
 
-
     protected ADBShard(ActorContext<Command> context) {
         super(context);
     }
@@ -64,7 +63,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         return newReceiveBuilder()
                 .onMessage(PersistEntity.class, this::handleEntity)
                 .onMessage(QueryEntities.class, this::handleQueryEntities)
-                .onMessage(ConcludeTransfer.class, this::handleConcludeTransaction)
+                .onMessage(ConcludeTransfer.class, this::handleConcludeTransfer)
                 .build();
     }
 
@@ -75,14 +74,16 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     }
 
     private Behavior<Command> handleQueryEntities(QueryEntities command) {
+        this.getContext().getLog().info(String.format("New Query [Transaction %d] to match against local entities.",
+                command.getTransactionId()));
         int transactionId = command.getTransactionId();
-        this.getContext().spawn(ADBQueryOperationHandlerFactory.create(command, this.data),
+        this.getContext().spawn(ADBQuerySessionHandlerFactory.create(command, this.getContext().getSelf(), this.data),
                 "queryEntities-" + transactionId)
-            .tell(new ADBQueryOperationHandler.Execute());
+            .tell(new ADBQuerySessionHandler.Execute());
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleConcludeTransaction(ConcludeTransfer command) {
+    private Behavior<Command> handleConcludeTransfer(ConcludeTransfer command) {
         this.getContext().getLog().info("Distribution concluded. Shard maintains " + this.data.size() + " elements");
         this.getContext().getLog().info("Overall " + command.numberOfNodes + " data nodes are present");
         this.data.trimToSize();

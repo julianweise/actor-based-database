@@ -16,10 +16,13 @@ import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.server.Directives;
 import akka.http.javadsl.server.Route;
+import akka.http.javadsl.server.directives.RouteAdapter;
 import akka.stream.Materializer;
+import akka.stream.Supervision;
 import akka.stream.javadsl.Flow;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import lombok.AllArgsConstructor;
@@ -79,21 +82,22 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     private Route createRoute() {
         return Directives.concat(Directives.path("query", () -> Directives.post(() -> Directives.entity(
-                Jackson.unmarshaller(ADBSelectionQuery.class),
-                query -> {
-                    this.getContext().getLog().info("Received new query: " + query);
-                    CompletableFuture<List<ADBEntityType>> future = new CompletableFuture<>();
-                    int requestId = this.requestCounter.getAndIncrement();
-                    this.requests.put(requestId, future);
-                    this.shardInquirer.tell(ADBShardInquirer.QueryShards.builder()
-                                                                        .query(query)
-                                                                        .requestId(requestId)
-                                                                        .respondTo(this.shardInquirerResponseWrapper)
-                                                                        .build());
-                    return Directives.onSuccess(future,
-                            extracted -> Directives.complete(this.toJSON(extracted)));
-                })))
+                Jackson.unmarshaller(ADBQuery.class), this::handleQuery)))
         );
+    }
+
+    private RouteAdapter handleQuery(ADBQuery query) {
+        this.getContext().getLog().info("Received new query: " + query);
+        CompletableFuture<List<ADBEntityType>> future = new CompletableFuture<>();
+        int requestId = this.requestCounter.getAndIncrement();
+        this.requests.put(requestId, future);
+        this.shardInquirer.tell(ADBShardInquirer.QueryShards.builder()
+                                                            .query(query)
+                                                            .requestId(requestId)
+                                                            .respondTo(this.shardInquirerResponseWrapper)
+                                                            .build());
+        return Directives.onSuccess(future,
+                extracted -> Directives.complete(this.toJSON(extracted)));
     }
 
     private Behavior<Command> handlePostStop(PostStop signal) {
