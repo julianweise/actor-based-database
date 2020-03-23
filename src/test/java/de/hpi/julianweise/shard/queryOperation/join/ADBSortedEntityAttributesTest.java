@@ -20,7 +20,7 @@ public class ADBSortedEntityAttributesTest {
 
     @Before
     public void setup() {
-        ADBEntityFactoryProvider adbEntityFactoryProvider = new ADBEntityFactoryProvider(new TestEntityFactory());
+        new ADBEntityFactoryProvider(new TestEntityFactory());
     }
 
     @Test
@@ -111,6 +111,13 @@ public class ADBSortedEntityAttributesTest {
         assertThat((attributes.get("cFloat").get(1))).isEqualTo(1.0f);
         assertThat((attributes.get("cFloat").get(2))).isEqualTo(3f);
         assertThat((attributes.get("cFloat").get(3))).isEqualTo(20.2f);
+
+        assertThat((attributes.get("aInteger").getOriginalIndex(0))).isEqualTo(1);
+        assertThat((attributes.get("aInteger").getOriginalIndex(1))).isEqualTo(3);
+        assertThat((attributes.get("aInteger").getOriginalIndex(2))).isEqualTo(0);
+        assertThat((attributes.get("aInteger").getOriginalIndex(3))).isEqualTo(2);
     }
+
+
 
 }

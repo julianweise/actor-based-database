@@ -94,11 +94,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
     public int size() {
         return this.data.size();
     }
-
-    public ADBEntityType getEntity(int index) {
-        return this.data.get(this.indices[index]);
-    }
-
+    
     @SneakyThrows
     public Comparable<?> get(int index) {
         return (Comparable<?>) field.get(this.data.get(this.indices[index]));
