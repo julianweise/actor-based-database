@@ -1,6 +1,6 @@
 package de.hpi.julianweise.domain;
 
-import de.hpi.julianweise.domain.custom.PatientDeserializer;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import org.apache.commons.csv.CSVRecord;
 
 public interface ADBEntityFactory {
@@ -8,5 +8,5 @@ public interface ADBEntityFactory {
 
     ADBEntityType build(CSVRecord row);
 
-    PatientDeserializer buildDeserializer();
+    JsonDeserializer<? extends ADBEntityType> buildDeserializer();
 }

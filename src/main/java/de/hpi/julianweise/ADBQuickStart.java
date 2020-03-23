@@ -1,7 +1,7 @@
 package de.hpi.julianweise;
 
 import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.domain.custom.PatientFactory;
+import de.hpi.julianweise.domain.custom.SFEmployeeFactory;
 
 public class ADBQuickStart {
     public static void main(String[] args) {
@@ -11,6 +11,6 @@ public class ADBQuickStart {
     }
 
     private static ADBEntityFactory createEntityFactory() {
-        return new PatientFactory();
+        return new SFEmployeeFactory();
     }
 }
