@@ -5,21 +5,32 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
-import de.hpi.julianweise.domain.ADBEntityType;
+import akka.actor.typed.javadsl.ReceiveBuilder;
+import akka.actor.typed.receptionist.Receptionist;
+import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandler;
 import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.Command> {
 
     public interface Command extends CborSerializable {
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateShardToHandlerMapping implements ADBQuerySession.Command {
+        ActorRef<ADBShard.Command> shard;
+        ActorRef<ADBQuerySessionHandler.Command> sessionHandler;
     }
 
     @AllArgsConstructor
@@ -30,32 +41,51 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
         private int transactionId;
     }
 
-    @AllArgsConstructor
+    @SuperBuilder
     @NoArgsConstructor
+    @AllArgsConstructor
     @Getter
-    public static class QueryResults implements Command {
+    public abstract static class QueryResults implements Command {
         private int transactionId;
-        private List<ADBEntityType> results;
+        private int globalShardId;
+    }
+
+    public static ServiceKey<ADBQuerySession.Command> getServiceKeyFor(int transactionId) {
+        return ServiceKey.create(ADBQuerySession.Command.class, "ADBQuerySession-" + transactionId);
     }
 
     protected final int transactionId;
-    protected final List<ADBEntityType> queryResults = new ArrayList<>();
     protected final ActorRef<ADBShardInquirer.Command> parent;
-    protected final Set<ActorRef<ADBShard.Command>> shards;
+    protected final List<ActorRef<ADBShard.Command>> shards;
+    protected final Map<ActorRef<ADBShard.Command>, ActorRef<ADBQuerySessionHandler.Command>> shardToSessionMapping =
+            new HashMap<>();
 
-    public ADBQuerySession(ActorContext<Command> context, Set<ActorRef<ADBShard.Command>> shards,
+    public ADBQuerySession(ActorContext<Command> context, List<ActorRef<ADBShard.Command>> shards,
                            int transactionId, ActorRef<ADBShardInquirer.Command> parent) {
         super(context);
         this.shards = shards;
         this.transactionId = transactionId;
         this.parent = parent;
+        context.getSystem().receptionist().tell(Receptionist.register(ADBQuerySession.getServiceKeyFor(transactionId),
+                this.getContext().getSelf()));
         this.getContext().getLog().info(String.format("Started new QuerySession %d for %s",
                 this.transactionId, this.getQuerySessionName()));
+
     }
 
+    protected ReceiveBuilder<Command> createReceiveBuilder() {
+        return newReceiveBuilder()
+                .onMessage(UpdateShardToHandlerMapping.class, this::handleUpdateShardToHandlerMapping);
+    }
+
+    protected Behavior<ADBQuerySession.Command> handleUpdateShardToHandlerMapping(UpdateShardToHandlerMapping command) {
+        this.shardToSessionMapping.put(command.shard, command.sessionHandler);
+        return Behaviors.same();
+    }
+
+
     protected Behavior<ADBQuerySession.Command> concludeTransaction() {
-        this.parent.tell(new ADBShardInquirer.TransactionResults(this.transactionId, this.queryResults));
-        this.getContext().getLog().info(String.format("Concluding QuerySessionHandler for transaction %d handling %s",
+        this.getContext().getLog().info(String.format("Concluding QuerySession for transaction %d handling %s",
                 this.transactionId, this.getQuerySessionName()));
         return Behaviors.stopped();
     }

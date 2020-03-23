@@ -6,7 +6,6 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.CSVParsingActorFactory;
-import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import org.junit.AfterClass;
 import org.junit.ClassRule;

@@ -7,7 +7,6 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
-import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.ADBQuerySessionFactory;
 import de.hpi.julianweise.shard.ADBShard;
@@ -16,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,14 +51,14 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
     @Getter
     public static class TransactionResults implements Command {
         private int transactionId;
-        private List<ADBEntityType> results;
+        private Object[] results;
     }
 
     @AllArgsConstructor
     @Getter
     public static class AllQueryResults implements Response {
         private int requestId;
-        private List<ADBEntityType> results;
+        private Object[] results;
     }
 
     private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
@@ -82,6 +82,10 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
 
     private Behavior<Command> handleReceptionistListing(WrappedListing wrapper) {
         this.shards.addAll(wrapper.getListing().getServiceInstances(ADBShard.SERVICE_KEY));
+        List<ActorRef<ADBShard.Command>> numberedShards = new ArrayList<>(this.shards);
+        for(int i = 0; i < numberedShards.size(); i ++) {
+            this.getContext().getLog().info("Shard " + numberedShards.get(i) + " has globalID " + i);
+        }
         return Behaviors.same();
     }
 
@@ -95,8 +99,8 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
     }
 
     private ActorRef<ADBQuerySession.Command> createNewQuerySession(int transactionID, ADBQuery query) {
-        return this.getContext().spawn(ADBQuerySessionFactory.create(new HashSet<>(this.shards), query, transactionID,
-                this.getContext().getSelf()), "ADBQuerySession_" + transactionID);
+        return this.getContext().spawn(ADBQuerySessionFactory.create(new ArrayList<>(this.shards), query, transactionID,
+                this.getContext().getSelf()), ADBQuerySessionFactory.sessionName(query, transactionID));
     }
 
     private Behavior<Command> handleTransactionResults(TransactionResults command) {

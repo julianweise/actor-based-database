@@ -18,19 +18,15 @@ import akka.http.javadsl.server.Directives;
 import akka.http.javadsl.server.Route;
 import akka.http.javadsl.server.directives.RouteAdapter;
 import akka.stream.Materializer;
-import akka.stream.Supervision;
 import akka.stream.javadsl.Flow;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
-import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -51,7 +47,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     private final ActorRef<ADBShardInquirer.Command> shardInquirer;
     private final ActorRef<ADBShardInquirer.Response> shardInquirerResponseWrapper;
-    private final Map<Integer, CompletableFuture<List<ADBEntityType>>> requests = new HashMap<>();
+    private final Map<Integer, CompletableFuture<Object[]>> requests = new HashMap<>();
     private final AtomicInteger requestCounter = new AtomicInteger();
 
     public ADBQueryEndpoint(ActorContext<Command> context, String hostname, int port,
@@ -81,14 +77,15 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     }
 
     private Route createRoute() {
-        return Directives.concat(Directives.path("query", () -> Directives.post(() -> Directives.entity(
-                Jackson.unmarshaller(ADBQuery.class), this::handleQuery)))
+        return Directives.concat(Directives.path("query",
+                () -> Directives.withoutRequestTimeout( () -> Directives.post(() -> Directives.entity(
+                Jackson.unmarshaller(ADBQuery.class), this::handleQuery))))
         );
     }
 
     private RouteAdapter handleQuery(ADBQuery query) {
         this.getContext().getLog().info("Received new query: " + query);
-        CompletableFuture<List<ADBEntityType>> future = new CompletableFuture<>();
+        CompletableFuture<Object[]> future = new CompletableFuture<>();
         int requestId = this.requestCounter.getAndIncrement();
         this.requests.put(requestId, future);
         this.shardInquirer.tell(ADBShardInquirer.QueryShards.builder()
@@ -114,7 +111,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     }
 
     @SneakyThrows
-    private String toJSON(List<ADBEntityType> results) {
+    private String toJSON(Object[] results) {
         final ObjectMapper mapper = new ObjectMapper();
         return mapper.writeValueAsString(results);
     }

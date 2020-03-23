@@ -6,7 +6,7 @@
             <level>INFO</level>
         </filter>
         <encoder>
-            <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} %c{1} - %msg%n</pattern>
+            <pattern>[%-5level] %d{HH:mm:ss.SSS} %c{0} \t %msg%n</pattern>
         </encoder>
     </appender>
 

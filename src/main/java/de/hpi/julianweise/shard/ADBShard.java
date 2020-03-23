@@ -10,6 +10,7 @@ import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
+import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
 import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandlerFactory;
 import de.hpi.julianweise.utility.CborSerializable;
@@ -46,13 +47,14 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ConcludeTransfer implements Command {
-        private int numberOfNodes;
+        private int shardId;
     }
 
 
     public static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data-shard");
 
     private ArrayList<ADBEntityType> data = new ArrayList<>();
+    private int globalId;
 
     protected ADBShard(ActorContext<Command> context) {
         super(context);
@@ -74,18 +76,20 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     }
 
     private Behavior<Command> handleQueryEntities(QueryEntities command) {
-        this.getContext().getLog().info(String.format("New Query [Transaction %d] to match against local entities.",
-                command.getTransactionId()));
-        int transactionId = command.getTransactionId();
-        this.getContext().spawn(ADBQuerySessionHandlerFactory.create(command, this.getContext().getSelf(), this.data),
-                "queryEntities-" + transactionId)
-            .tell(new ADBQuerySessionHandler.Execute());
+        this.getContext().getLog().info("New Query [TX #" + command.getTransactionId() + "] to match against local entities.");
+        ActorRef<ADBQuerySessionHandler.Command> sessionHandler = this.getContext().spawn(
+                ADBQuerySessionHandlerFactory.create(command, this.getContext().getSelf(), this.data, this.globalId),
+                ADBQuerySessionHandlerFactory.sessionHandlerName(command, this.globalId));
+        command.getRespondTo().tell(new ADBJoinQuerySession.UpdateShardToHandlerMapping(this.getContext().getSelf(),
+                sessionHandler));
+        sessionHandler.tell(new ADBQuerySessionHandler.Execute());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleConcludeTransfer(ConcludeTransfer command) {
-        this.getContext().getLog().info("Distribution concluded. Shard maintains " + this.data.size() + " elements");
-        this.getContext().getLog().info("Overall " + command.numberOfNodes + " data nodes are present");
+        this.globalId = command.shardId;
+        this.getContext().getLog().info("GlobalID of this shard: " + command.shardId);
+        this.getContext().getLog().info("Distribution concluded. Shard owns " + this.data.size() + " elements");
         this.data.trimToSize();
         System.gc();
         this.data.sort(Comparator.comparing(ADBEntityType::getPrimaryKey));

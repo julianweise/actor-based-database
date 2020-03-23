@@ -33,7 +33,7 @@ public class JoinDistributionPlanTest {
     }
 
     @Test
-    public void expectEvenlyIncreasingSuggestions() {
+    public void expectEvenlyIncreasingSuggestionsPermutationABC() {
         TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
@@ -43,7 +43,7 @@ public class JoinDistributionPlanTest {
         shards.add(shardB.ref());
         shards.add(shardC.ref());
 
-        JoinDistributionPlan plan = new JoinDistributionPlan(shards);
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
 
         assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
         assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
@@ -51,7 +51,7 @@ public class JoinDistributionPlanTest {
     }
 
     @Test
-    public void expectEvenlyDistributedSuggestions() {
+    public void expectEvenlyIncreasingSuggestionsPermutationACB() {
         TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
@@ -61,15 +61,51 @@ public class JoinDistributionPlanTest {
         shards.add(shardB.ref());
         shards.add(shardC.ref());
 
-        JoinDistributionPlan plan = new JoinDistributionPlan(shards);
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
 
         assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
+    }
+
+    @Test
+    public void expectEvenlyIncreasingSuggestionsPermutationBCA() {
+        TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
+
+        List<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        shards.add(shardA.ref());
+        shards.add(shardB.ref());
+        shards.add(shardC.ref());
+
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
+
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardC.ref());
+    }
+
+    @Test
+    public void expectEvenlyIncreasingSuggestionsPermutationBAC() {
+        TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
+
+        List<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        shards.add(shardA.ref());
+        shards.add(shardB.ref());
+        shards.add(shardC.ref());
+
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
+
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardA.ref());
         assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardC.ref());
         assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardB.ref());
     }
 
     @Test
-    public void expectEvenlyDistributedSuggestions2() {
+    public void expectEvenlyIncreasingSuggestionsPermutationCAB() {
         TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
@@ -79,11 +115,29 @@ public class JoinDistributionPlanTest {
         shards.add(shardB.ref());
         shards.add(shardC.ref());
 
-        JoinDistributionPlan plan = new JoinDistributionPlan(shards);
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
 
+        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
         assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
+    }
+
+    @Test
+    public void expectEvenlyIncreasingSuggestionsPermutationCBA() {
+        TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
+
+        List<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        shards.add(shardA.ref());
+        shards.add(shardB.ref());
+        shards.add(shardC.ref());
+
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
+
         assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
         assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
     }
 
     @Test
@@ -99,14 +153,36 @@ public class JoinDistributionPlanTest {
         shards.add(shardC.ref());
         shards.add(shardD.ref());
 
-        JoinDistributionPlan plan = new JoinDistributionPlan(shards);
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
 
         assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref()); // A:1 B:1 C:0 D:0
         assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref()); // A:1 B:2 C:1 D:0
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardD.ref()); // A:1 B:3 C:1 D:1
-        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardA.ref()); // A:2 B:3 C:1 D:2
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref()); // A:3 B:3 C:2 D:2
-        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardC.ref()); // A:3 B:3 C:3 D:3
+        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardD.ref()); // A:1 B:2 C:2 D:1
+        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardA.ref()); // A:2 B:2 C:2 D:2
+        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardC.ref()); // A:3 B:2 C:3 D:2
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardD.ref()); // A:3 B:3 C:3 D:3
     }
 
+    @Test
+    public void distributionPlanIsFulfilledAfterAllPermutationsHaveBeenTested() {
+        TestProbe<ADBShard.Command> shardA = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardB = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardC = testKit.createTestProbe();
+        TestProbe<ADBShard.Command> shardD = testKit.createTestProbe();
+
+        List<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        shards.add(shardA.ref());
+        shards.add(shardB.ref());
+        shards.add(shardC.ref());
+        shards.add(shardD.ref());
+
+        JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
+
+        plan.getNextJoinShardFor(shardA.ref());
+        plan.getNextJoinShardFor(shardB.ref());
+        plan.getNextJoinShardFor(shardB.ref());
+        plan.getNextJoinShardFor(shardD.ref());
+        plan.getNextJoinShardFor(shardC.ref());
+        plan.getNextJoinShardFor(shardD.ref());
+    }
 }

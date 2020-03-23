@@ -8,6 +8,7 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
+import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import main.de.hpi.julianweise.csv.TestEntity;
 import org.junit.After;
@@ -24,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBSelectQuerySessionHandlerTest {
 
+    private static int GLOBAL_SHARD_ID = 1;
+
     public static String config = "actor-db.csv.chunk-size = 1\n" +
             "actor-db.query-response-chunk-size = 1 \n" +
             "actor-db.query-endpoint.hostname = localhost\n" +
@@ -31,6 +34,7 @@ public class ADBSelectQuerySessionHandlerTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource(config);
+
 
     @After
     public void cleanup() {
@@ -62,7 +66,7 @@ public class ADBSelectQuerySessionHandlerTest {
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), new ArrayList<>());
+                shardProbe.ref(), new ArrayList<>(), GLOBAL_SHARD_ID);
 
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
@@ -96,13 +100,12 @@ public class ADBSelectQuerySessionHandlerTest {
         dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), dataset);
+                shardProbe.ref(), dataset, GLOBAL_SHARD_ID);
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
         selectHandler.tell(new ADBQuerySessionHandler.Execute());
 
-        ADBQuerySession.QueryResults results = (ADBQuerySession.QueryResults) responseProbe.receiveMessage();
-        assertThat(results.getTransactionId()).isEqualTo(transactionId);
+        ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) responseProbe.receiveMessage();
         assertThat(results.getResults().size()).isOne();
         assertThat(results.getResults().get(0)).isEqualTo(dataset.get(0));
 
@@ -135,18 +138,17 @@ public class ADBSelectQuerySessionHandlerTest {
         dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), dataset);
+                shardProbe.ref(), dataset, GLOBAL_SHARD_ID);
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
         selectHandler.tell(new ADBQuerySessionHandler.Execute());
 
-        ADBQuerySession.QueryResults chunk1 = (ADBQuerySession.QueryResults) responseProbe.receiveMessage();
-        assertThat(chunk1.getTransactionId()).isEqualTo(transactionId);
+        ADBSelectQuerySession.SelectQueryResults chunk1 = (ADBSelectQuerySession.SelectQueryResults) responseProbe.receiveMessage();
         assertThat(chunk1.getResults().size()).isOne();
         assertThat(chunk1.getResults().get(0)).isEqualTo(dataset.get(0));
 
-        ADBQuerySession.QueryResults chunk2 = (ADBQuerySession.QueryResults) responseProbe.receiveMessage();
-        assertThat(chunk2.getTransactionId()).isEqualTo(transactionId);
+        ADBSelectQuerySession.SelectQueryResults chunk2 =
+                (ADBSelectQuerySession.SelectQueryResults) responseProbe.receiveMessage();
         assertThat(chunk2.getResults().size()).isOne();
         assertThat(chunk2.getResults().get(0)).isEqualTo(dataset.get(1));
 

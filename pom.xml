@@ -8,7 +8,6 @@
     <properties>
         <akka.version>2.6.3</akka.version>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
@@ -83,6 +82,11 @@
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-http-jackson_2.12</artifactId>
             <version>10.1.11</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twitter</groupId>
+            <artifactId>chill-akka_2.13</artifactId>
+            <version>0.9.5</version>
         </dependency>
     </dependencies>
     <build>

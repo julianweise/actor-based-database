@@ -3,10 +3,12 @@ package de.hpi.julianweise.shard.queryOperation;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
+import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
+import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.shard.ADBShard;
@@ -24,8 +26,9 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
     public ADBSelectQuerySessionHandler(ActorContext<ADBQuerySessionHandler.Command> context,
                                         ActorRef<ADBShard.Command> shard,
                                         ActorRef<ADBQuerySession.Command> client, int transactionId,
-                                        ADBSelectionQuery query, final List<ADBEntityType> data) {
-        super(context, shard, client, transactionId, query, data);
+                                        ADBSelectionQuery query, final List<ADBEntityType> data,
+                                        int globalShardId) {
+        super(context, shard, client, transactionId, query, data, globalShardId);
     }
 
     @Override
@@ -42,8 +45,13 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
                                                            .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / this.settings.QUERY_RESPONSE_CHUNK_SIZE))
                                                            .values();
 
-        results.forEach(chunk -> this.client.tell(new ADBQuerySession.QueryResults(transactionId, chunk)));
-        return this.concludeTransaction();
+        results.forEach(chunk -> this.client.tell(ADBSelectQuerySession.SelectQueryResults.builder()
+                                                                                          .results(chunk)
+                                                                                          .globalShardId(this.globalShardId)
+                                                                                          .transactionId(transactionId)
+                                                                                          .build()));
+        this.concludeTransaction();
+        return Behaviors.stopped();
     }
 
     @Override

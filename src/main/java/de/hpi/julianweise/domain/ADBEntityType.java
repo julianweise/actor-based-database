@@ -32,7 +32,7 @@ public abstract class ADBEntityType implements CborSerializable {
         return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
     }
 
-    protected final boolean fieldMatches(String fieldName, Comparable<Object> value,
+    public final boolean fieldMatches(String fieldName, Comparable<Object> value,
                                          ADBQueryTerm.RelationalOperator operator) {
         Object fieldValue;
         try {
@@ -41,19 +41,23 @@ public abstract class ADBEntityType implements CborSerializable {
             e.printStackTrace();
             return false;
         }
-        switch (operator) {
+        return ADBEntityType.matches(value, fieldValue, operator);
+    }
+
+    public static boolean matches(Comparable<Object> a, Object b, ADBQueryTerm.RelationalOperator opr) {
+        switch (opr) {
             case EQUALITY:
-                return value.compareTo(fieldValue) == 0;
+                return a.compareTo(b) == 0;
             case INEQUALITY:
-                return value.compareTo(fieldValue) != 0;
+                return a.compareTo(b) != 0;
             case LESS:
-                return value.compareTo(fieldValue) < 0;
+                return a.compareTo(b) < 0;
             case LESS_OR_EQUAL:
-                return value.compareTo(fieldValue) <= 0;
+                return a.compareTo(b) <= 0;
             case GREATER:
-                return value.compareTo(fieldValue) > 0;
+                return a.compareTo(b) > 0;
             case GREATER_OR_EQUAL:
-                return value.compareTo(fieldValue) >= 0;
+                return a.compareTo(b) >= 0;
             default:
                 return false;
         }

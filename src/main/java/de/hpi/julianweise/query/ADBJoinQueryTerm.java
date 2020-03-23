@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 public class ADBJoinQueryTerm implements ADBQueryTerm {
 
     ADBQueryTerm.RelationalOperator operator;
-    String fieldName;
-    String targetFieldName;
+    String sourceAttributeName;
+    String targetAttributeName;
 
     @Override
     public String toString() {
-        return "[JoinTerm] " + this.fieldName + " " + this.operator + " " + this.targetFieldName;
+        return "[JoinTerm] " + this.sourceAttributeName + " " + this.operator + " " + this.targetAttributeName;
     }
 }

@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -147,8 +148,10 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     }
 
     public void concludeTransfer() {
-        for(ActorRef<ADBShard.Command> node : this.shards) {
-            node.tell(new ADBShard.ConcludeTransfer(this.shards.size()));
+        List<ActorRef<ADBShard.Command>> numberedShards = new ArrayList<>(this.shards);
+        for(int i = 0; i < numberedShards.size(); i ++) {
+            numberedShards.get(i).tell(new ADBShard.ConcludeTransfer(i));
+            this.getContext().getLog().info("Shard " + numberedShards.get(i) + " has globalID " + i);
         }
     }
 

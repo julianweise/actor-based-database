@@ -16,8 +16,6 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.ArrayList;
-
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -131,7 +129,7 @@ public class ADBShardInquirerTest {
         ADBShardInquirer.Response results = resultProbe.receiveMessage();
         ADBShardInquirer.AllQueryResults typedResults = (ADBShardInquirer.AllQueryResults) results;
 
-        assertThat(typedResults.getResults().size()).isZero();
+        assertThat(typedResults.getResults().length).isZero();
     }
 
     @Test
@@ -173,8 +171,8 @@ public class ADBShardInquirerTest {
         ADBShardInquirer.Response results = resultProbe.receiveMessage();
         ADBShardInquirer.AllQueryResults typedResults = (ADBShardInquirer.AllQueryResults) results;
 
-        assertThat(typedResults.getResults().size()).isOne();
-        assertThat(typedResults.getResults().get(0)).isEqualTo(testEntity);
+        assertThat(typedResults.getResults().length).isOne();
+        assertThat(typedResults.getResults()[0]).isEqualTo(testEntity);
         assertThat(typedResults.getRequestId()).isEqualTo(requestId);
     }
 

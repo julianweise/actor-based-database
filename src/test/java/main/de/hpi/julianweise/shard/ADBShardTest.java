@@ -9,6 +9,7 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.session.ADBQuerySession;
+import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.ADBShardDistributor;
 import de.hpi.julianweise.shard.ADBShardFactory;
@@ -82,8 +83,8 @@ public class ADBShardTest {
         query.addTerm(term);
         shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(), query));
 
-        ADBQuerySession.QueryResults results = (ADBQuerySession.QueryResults) querySessionProbe.receiveMessage();
-        assertThat(results.getTransactionId()).isEqualTo(transactionId);
+        querySessionProbe.receiveMessage();
+        ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
         assertThat(results.getResults().size()).isOne();
         assertThat(results.getResults().get(0)).isEqualTo(entityToPersist);
 
@@ -121,13 +122,13 @@ public class ADBShardTest {
         query.addTerm(term);
         shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(), query));
 
-        ADBQuerySession.QueryResults results = (ADBQuerySession.QueryResults) querySessionProbe.receiveMessage();
-        assertThat(results.getTransactionId()).isEqualTo(transactionId);
+        querySessionProbe.receiveMessage();
+        ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
         assertThat(results.getResults().size()).isOne();
         assertThat(results.getResults().get(0)).isEqualTo(entityToPersist);
 
-        ADBQuerySession.QueryResults results2 = (ADBQuerySession.QueryResults) querySessionProbe.receiveMessage();
-        assertThat(results2.getTransactionId()).isEqualTo(transactionId);
+        ADBSelectQuerySession.SelectQueryResults results2 =
+                (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
         assertThat(results2.getResults().size()).isOne();
         assertThat(results2.getResults().get(0)).isEqualTo(entityToPersist2);
 
@@ -164,11 +165,12 @@ public class ADBShardTest {
         query.addTerm(term);
         shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(), query));
 
-        ADBQuerySession.QueryResults results = (ADBQuerySession.QueryResults) querySessionProbe.receiveMessage();
-        assertThat(results.getTransactionId()).isEqualTo(transactionId);
+        querySessionProbe.receiveMessage();
+        ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
         assertThat(results.getResults().get(0).getPrimaryKey()).isEqualTo(new ADBIntegerKey(1));
 
-        ADBQuerySession.QueryResults results2 = (ADBQuerySession.QueryResults) querySessionProbe.receiveMessage();
+        ADBSelectQuerySession.SelectQueryResults results2 =
+                (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
         assertThat(results2.getResults().get(0).getPrimaryKey()).isEqualTo(new ADBIntegerKey(2));
     }
 }
