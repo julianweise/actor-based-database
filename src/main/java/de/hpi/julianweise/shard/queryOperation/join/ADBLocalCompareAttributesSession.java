@@ -14,6 +14,7 @@ import de.hpi.julianweise.utility.largeMessageTransfer.ADBPair;
 import javafx.util.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    @Getter
     public static class CompareJoinAttributes implements Command {
         String sourceAttributeName;
         List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
@@ -39,6 +41,7 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    @Getter
     public static class HandleResults implements ADBLocalCompareAttributesSession.Command {
         private ADBJoinQueryTerm term;
         private List<Pair<Integer, Integer>> joinPartners;

@@ -53,7 +53,7 @@ public class ADBJoinAttributeComparator extends AbstractBehavior<ADBJoinAttribut
         ADBSortedEntityAttributes targetVals = command.targetAttributeValues.get(command.term.getTargetAttributeName());
         for (int a = command.startIndexSourceAttributeValues; a < command.endIndexSourceAttributeValues; a++) {
             Comparable<Object> sourceAttributeVal = (Comparable<Object>) command.sourceAttributeValues.get(a).getKey();
-            for (int b = 0; b < command.targetAttributeValues.size(); b++) {
+            for (int b = 0; b < targetVals.size(); b++) {
                 Comparable<?> targetAttributeVal = targetVals.get(b);
                 if (ADBEntityType.matches(sourceAttributeVal, targetAttributeVal, command.term.getOperator())) {
                     joinPartners.add(new Pair<>(command.sourceAttributeValues.get(a).getValue(), targetVals.getOriginalIndex(b)));
