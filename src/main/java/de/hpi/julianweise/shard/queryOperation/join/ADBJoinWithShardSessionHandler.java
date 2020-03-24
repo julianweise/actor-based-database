@@ -20,9 +20,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
@@ -49,7 +50,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     @Builder
     public static class JoinAttributesComparedFor implements Command {
         String sourceAttributeName;
-        List<Pair<Integer, Integer>> joinCandidates;
+        Set<Pair<Integer, Integer>> joinCandidates;
         boolean isLastChunk;
     }
 
@@ -57,7 +58,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
     private final Map<String, List<ADBJoinQueryTerm>> groupedQueryTerms;
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
-    private final List<Pair<Integer, Integer>> joinCandidates = new ArrayList<>();
+    private final Set<Pair<Integer, Integer>> joinCandidates = new HashSet<>();
     private final List<ADBEntityType> data;
 
     public ADBJoinWithShardSessionHandler(ActorContext<Command> context,
@@ -105,6 +106,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleJoinAttributesCompared(JoinAttributesComparedFor command) {
+        this.getContext().getLog().info("Received " + command.joinCandidates.size() + " join candidates to be " +
+                "intersected");
         if (this.joinCandidates.isEmpty()) {
             this.joinCandidates.addAll(command.joinCandidates);
         } else {
