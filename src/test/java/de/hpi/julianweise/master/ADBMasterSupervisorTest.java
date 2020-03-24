@@ -1,4 +1,4 @@
-package main.de.hpi.julianweise.master;
+package de.hpi.julianweise.master;
 
 import akka.actor.testkit.typed.javadsl.LoggingTestKit;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
@@ -6,10 +6,6 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
-import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
-import de.hpi.julianweise.master.ADBMasterSupervisor;
-import de.hpi.julianweise.master.ADBMasterSupervisorFactory;
-import de.hpi.julianweise.master.MasterConfiguration;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;

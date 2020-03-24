@@ -7,7 +7,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.shard.ADBShardDistributor;
-import main.de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntity;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;

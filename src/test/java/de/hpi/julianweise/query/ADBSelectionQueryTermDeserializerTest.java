@@ -3,7 +3,7 @@ package de.hpi.julianweise.query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import main.de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntity;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

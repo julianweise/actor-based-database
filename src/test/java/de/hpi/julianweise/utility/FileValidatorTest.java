@@ -1,7 +1,6 @@
-package main.de.hpi.julianweise.utility;
+package de.hpi.julianweise.utility;
 
 import com.beust.jcommander.ParameterException;
-import de.hpi.julianweise.utility.FileValidator;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;

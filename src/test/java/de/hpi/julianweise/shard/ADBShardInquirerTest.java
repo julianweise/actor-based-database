@@ -10,7 +10,7 @@ import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.ADBShardInquirerFactory;
 import de.hpi.julianweise.query.session.ADBQuerySession;
-import main.de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntity;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;

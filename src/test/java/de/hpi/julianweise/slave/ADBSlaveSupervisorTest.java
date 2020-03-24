@@ -1,8 +1,7 @@
-package main.de.hpi.julianweise.slave;
+package de.hpi.julianweise.slave;
 
 import akka.actor.testkit.typed.javadsl.LoggingTestKit;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
-import de.hpi.julianweise.slave.ADBSlaveSupervisor;
 import org.junit.ClassRule;
 import org.junit.Test;
 

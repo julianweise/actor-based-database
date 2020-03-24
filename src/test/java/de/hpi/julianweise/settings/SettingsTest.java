@@ -1,8 +1,6 @@
-package main.de.hpi.julianweise.settings;
+package de.hpi.julianweise.settings;
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
-import de.hpi.julianweise.settings.Settings;
-import de.hpi.julianweise.settings.SettingsImpl;
 import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;

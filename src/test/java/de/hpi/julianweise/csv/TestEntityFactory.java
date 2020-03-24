@@ -1,4 +1,4 @@
-package main.de.hpi.julianweise.csv;
+package de.hpi.julianweise.csv;
 
 import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;

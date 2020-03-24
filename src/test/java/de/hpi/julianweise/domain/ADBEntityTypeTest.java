@@ -2,7 +2,7 @@ package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
-import main.de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntity;
 import org.junit.Test;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
