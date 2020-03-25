@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,7 +120,7 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
                 this.intermediateJoinResults.entrySet()) {
             this.respondTo.tell(ADBJoinWithShardSessionHandler.JoinAttributesComparedFor
                     .builder()
-                    .joinCandidates(new HashSet<>(termResults.getValue()))
+                    .joinCandidates(termResults.getValue())
                     .sourceAttributeName(termResults.getKey().getSourceAttributeName())
                     .isLastChunk(i == (this.intermediateJoinResults.size() - 1))
                     .build());

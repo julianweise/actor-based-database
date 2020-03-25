@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
 
     private final JoinDistributionPlan distributionPlan;
     private final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions;
-    private final Set<ADBPair<ADBEntityType, ADBEntityType>> queryResults = new HashSet<>();
+    private final List<ADBPair<ADBEntityType, ADBEntityType>> queryResults = new ArrayList<>();
     private final AtomicInteger expectedPartialResults = new AtomicInteger();
 
     public ADBJoinQuerySession(ActorContext<ADBQuerySession.Command> context,
