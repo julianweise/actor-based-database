@@ -16,13 +16,11 @@ public class ADBSlaveSupervisor extends AbstractBehavior<Void> {
         return Behaviors.setup(ADBSlaveSupervisor::new);
     }
 
-    private final ActorRef<ADBShard.Command> localShard;
-
     private ADBSlaveSupervisor(ActorContext<Void> context) {
         super(context);
         context.getLog().info("DBSlave started");
-        this.localShard = this.getContext().spawn(ADBShardFactory.createDefault(), "ADBShard");
-        context.getSystem().receptionist().tell(Receptionist.register(ADBShard.SERVICE_KEY, this.localShard));
+        ActorRef<ADBShard.Command> localShard = this.getContext().spawn(ADBShardFactory.createDefault(), "ADBShard");
+        context.getSystem().receptionist().tell(Receptionist.register(ADBShard.SERVICE_KEY, localShard));
     }
 
     @Override
