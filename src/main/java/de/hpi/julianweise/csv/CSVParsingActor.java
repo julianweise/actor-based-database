@@ -28,32 +28,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
+    private final InputStreamReader inputStreamReader;
+    private final Iterator<CSVRecord> csvIterator;
+    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+
     public interface Command {
-    }
 
+    }
     public interface Response {
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class ParseNextCSVChunk implements CSVParsingActor.Command {
         private final ActorRef<Response> client;
-    }
 
+    }
     @Getter
     @AllArgsConstructor
     public static class DomainDataChunk implements Response {
         private final List<ADBEntityType> chunk;
-    }
 
+    }
     @Getter
     @AllArgsConstructor
     public static class CSVFullyParsed implements Response {
-    }
 
-    private final InputStreamReader inputStreamReader;
-    private final Iterator<CSVRecord> csvIterator;
-    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+    }
 
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);

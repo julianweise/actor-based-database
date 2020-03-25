@@ -28,36 +28,38 @@ import java.util.stream.Collectors;
 
 public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
+    private Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
+    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
     public static class JoinWithShard implements ADBQuerySessionHandler.Command {
+
         private ActorRef<ADBQuerySessionHandler.Command> counterpart;
         private int globalShardIndex;
-    }
 
+    }
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
     public static class NoMoreShardsToJoinWith implements ADBQuerySessionHandler.Command {
         private int transactionId;
-    }
 
+    }
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OpenNewJoinWithShardSession implements ADBQuerySessionHandler.Command {
         private ActorRef<ADBJoinWithShardSession.Command> session;
         private int shardId;
-    }
 
+    }
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Terminate implements Command {
         private int transactionId;
-    }
 
-    private Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
-    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+    }
 
     public ADBJoinQuerySessionHandler(ActorContext<Command> context,
                                       ActorRef<ADBShard.Command> shard,

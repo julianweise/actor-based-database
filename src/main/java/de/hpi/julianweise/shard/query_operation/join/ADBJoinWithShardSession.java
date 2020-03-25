@@ -23,24 +23,26 @@ import java.util.Set;
 
 public class ADBJoinWithShardSession extends ADBLargeMessageActor {
 
+    private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
+    private final ActorRef<ADBJoinQuerySessionHandler.Command> supervisor;
+    private final ADBQuery query;
+    private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
+
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
     public static class RegisterHandler implements Command, CborSerializable {
-        private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
-    }
 
+        private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
+
+    }
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
     public static class HandleJoinShardsResults implements Command, ADBJoinQuerySessionHandler.Command, ADBLargeMessageSender.LargeMessage {
         private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
-    }
 
-    private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
-    private final ActorRef<ADBJoinQuerySessionHandler.Command> supervisor;
-    private final ADBQuery query;
-    private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
+    }
 
 
     public ADBJoinWithShardSession(ActorContext<Command> context, ADBQuery query,

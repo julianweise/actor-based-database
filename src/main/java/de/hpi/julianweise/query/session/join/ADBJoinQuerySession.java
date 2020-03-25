@@ -26,32 +26,33 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBJoinQuerySession extends ADBQuerySession {
 
+    private final JoinDistributionPlan distributionPlan;
+    private final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions;
+    private final List<ADBPair<ADBEntityType, ADBEntityType>> queryResults = new ArrayList<>();
+    private final AtomicInteger expectedPartialResults = new AtomicInteger();
+
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RequestNextShardComparison implements ADBQuerySession.Command {
         private ActorRef<ADBShard.Command> requestingShard;
         private ActorRef<ADBQuerySessionHandler.Command> respondTo;
-    }
 
+    }
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TriggerNextShardComparison implements ADBQuerySession.Command {
         private ActorRef<ADBShard.Command> requestingShard;
         private ActorRef<ADBShard.Command> nextJoiningShard;
         private ActorRef<ADBQuerySessionHandler.Command> respondTo;
-    }
 
+    }
     @NoArgsConstructor
     @AllArgsConstructor
     @SuperBuilder
     public static class JoinQueryResults extends ADBQuerySession.QueryResults {
         private List<ADBPair<ADBEntityType, ADBEntityType>> joinResults;
-    }
 
-    private final JoinDistributionPlan distributionPlan;
-    private final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions;
-    private final List<ADBPair<ADBEntityType, ADBEntityType>> queryResults = new ArrayList<>();
-    private final AtomicInteger expectedPartialResults = new AtomicInteger();
+    }
 
     public ADBJoinQuerySession(ActorContext<ADBQuerySession.Command> context,
                                List<ActorRef<ADBShard.Command>> shards, int transactionId,
