@@ -19,7 +19,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class ADBSortedEntityAttributesTest {
 
     @Before
-    public void setup() {
+    public void setUp() {
         ADBEntityFactoryProvider.initialize(new TestEntityFactory());
     }
 
