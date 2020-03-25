@@ -75,7 +75,7 @@ public class ADBJoinAttributeComparatorTest {
         assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(2);
         // index for data stored locally
         assertThat(results.getJoinPartners().get(0).getValue()).isEqualTo(0);
-        assertThat(((TestEntity) localEntities.get(results.getJoinPartners().get(0).getValue())).aInteger).isEqualTo(1);
+        assertThat(((TestEntity) localEntities.get(results.getJoinPartners().get(0).getValue())).getAInteger()).isEqualTo(1);
     }
 
     @Test

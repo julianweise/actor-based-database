@@ -24,18 +24,17 @@ public class ADBSortedEntityAttributesTest {
     }
 
     @Test
-    public void emptySortedEntityAttributesCollection() throws NoSuchFieldException {
+    public void emptySortedEntityAttributesCollection() {
         List<ADBEntityType> entities = new ArrayList<>();
         ADBSortedEntityAttributes attributes = ADBSortedEntityAttributes.of("aInteger", entities);
 
-        assertThat(attributes.getField()).isEqualTo(TestEntity.class.getDeclaredField("aInteger"));
         assertThat(attributes.size()).isZero();
         assertThat(attributes.getAllWithOriginalIndex().size()).isZero();
         assertThat(attributes.iterator().hasNext()).isFalse();
     }
 
     @Test
-    public void valuesAreSorted() throws NoSuchFieldException {
+    public void valuesAreSorted() {
         List<ADBEntityType> entities = new ArrayList<>();
         entities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         entities.add(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
@@ -44,7 +43,6 @@ public class ADBSortedEntityAttributesTest {
 
         ADBSortedEntityAttributes attributes = ADBSortedEntityAttributes.of("aInteger", entities);
 
-        assertThat(attributes.getField()).isEqualTo(TestEntity.class.getDeclaredField("aInteger"));
         assertThat(attributes.size()).isEqualTo(4);
         assertThat(attributes.getAllWithOriginalIndex().size()).isEqualTo(4);
 
@@ -67,7 +65,7 @@ public class ADBSortedEntityAttributesTest {
     }
 
     @Test
-    public void valuesExtractedFromQueryAreSorted() throws NoSuchFieldException {
+    public void valuesExtractedFromQueryAreSorted() {
         List<ADBEntityType> entities = new ArrayList<>();
         entities.add(new TestEntity(5, "Test2", 1.0f, true, 1.01, 'a'));
         entities.add(new TestEntity(1, "Test55", 0.3f, true, 1.01, 'a'));
@@ -85,7 +83,6 @@ public class ADBSortedEntityAttributesTest {
         assertThat(attributes.containsKey("bString"));
         assertThat(attributes.containsKey("cFloat"));
 
-        assertThat(attributes.get("aInteger").getField()).isEqualTo(TestEntity.class.getDeclaredField("aInteger"));
         assertThat(attributes.get("aInteger").size()).isEqualTo(4);
         assertThat(attributes.get("aInteger").getAllWithOriginalIndex().size()).isEqualTo(4);
 
@@ -94,7 +91,6 @@ public class ADBSortedEntityAttributesTest {
         assertThat((attributes.get("aInteger").get(2))).isEqualTo(5);
         assertThat((attributes.get("aInteger").get(3))).isEqualTo(23);
 
-        assertThat(attributes.get("bString").getField()).isEqualTo(TestEntity.class.getDeclaredField("bString"));
         assertThat(attributes.get("bString").size()).isEqualTo(4);
         assertThat(attributes.get("bString").getAllWithOriginalIndex().size()).isEqualTo(4);
 
@@ -103,7 +99,6 @@ public class ADBSortedEntityAttributesTest {
         assertThat((attributes.get("bString").get(2))).isEqualTo("Test2");
         assertThat((attributes.get("bString").get(3))).isEqualTo("Test55");
 
-        assertThat(attributes.get("cFloat").getField()).isEqualTo(TestEntity.class.getDeclaredField("cFloat"));
         assertThat(attributes.get("cFloat").size()).isEqualTo(4);
         assertThat(attributes.get("cFloat").getAllWithOriginalIndex().size()).isEqualTo(4);
 

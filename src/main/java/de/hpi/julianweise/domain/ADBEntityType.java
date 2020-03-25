@@ -5,16 +5,22 @@ import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.utility.CborSerializable;
+import lombok.SneakyThrows;
 
-import java.lang.reflect.Field;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public abstract class ADBEntityType implements CborSerializable {
 
-    private static Map<String, Field> fields = new ConcurrentHashMap<>();
+    private static Map<String, Function<ADBEntityType, Comparable<Object>>> fieldGetter = new ConcurrentHashMap<>();
 
-    protected ADBEntityType() {}
+    protected ADBEntityType() {
+    }
 
     public abstract ADBKey getPrimaryKey();
 
@@ -32,16 +38,8 @@ public abstract class ADBEntityType implements CborSerializable {
         return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
     }
 
-    public final boolean fieldMatches(String fieldName, Comparable<Object> value,
-                                         ADBQueryTerm.RelationalOperator operator) {
-        Object fieldValue;
-        try {
-            fieldValue = this.getFieldForName(fieldName).get(this);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return ADBEntityType.matches(value, fieldValue, operator);
+    public final boolean fieldMatches(String fieldName, Comparable<Object> value, ADBQueryTerm.RelationalOperator opr) {
+        return ADBEntityType.matches(value, this.getGetterForField(fieldName).apply(this), opr);
     }
 
     public static boolean matches(Comparable<Object> a, Object b, ADBQueryTerm.RelationalOperator opr) {
@@ -63,15 +61,36 @@ public abstract class ADBEntityType implements CborSerializable {
         }
     }
 
-    public Field getFieldForName(String fieldName) throws NoSuchFieldException {
-        String fieldKey = this.getClass().getName() + fieldName;
-        Field targetField = ADBEntityType.fields.get(fieldKey);
-        if (targetField != null) {
-            return targetField;
+    public Function<ADBEntityType, Comparable<Object>> getGetterForField(String field) {
+        return ADBEntityType.getGetterForField(field, this.getClass());
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public static Function<ADBEntityType, Comparable<Object>> getGetterForField(String field, Class<?> targetClass) {
+        String fieldKey = targetClass.getName() + field;
+
+        if (ADBEntityType.fieldGetter.containsKey(fieldKey)) {
+            return ADBEntityType.fieldGetter.get(fieldKey);
         }
-        targetField = this.getClass().getDeclaredField(fieldName);
-        targetField.setAccessible(true);
-        ADBEntityType.fields.put(fieldKey, targetField);
-        return targetField;
+
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+        Class<?> returnType = targetClass.getDeclaredField(field).getType();
+
+        String getter = (returnType == boolean.class || returnType == Boolean.class ? "is" :
+                "get") + field.substring(0, 1).toUpperCase() + field.substring(1);
+
+        CallSite site = LambdaMetafactory.metafactory(lookup,
+                "apply",
+                MethodType.methodType(Function.class),
+                MethodType.methodType(Object.class, Object.class),
+                lookup.findVirtual(targetClass, getter, MethodType.methodType(returnType)),
+                MethodType.methodType(returnType, targetClass));
+
+        Function<ADBEntityType, Comparable<Object>> fieldGetter =
+                (Function<ADBEntityType, Comparable<Object>>) site.getTarget().invokeExact();
+        ADBEntityType.fieldGetter.put(fieldKey, fieldGetter);
+        return fieldGetter;
     }
 }

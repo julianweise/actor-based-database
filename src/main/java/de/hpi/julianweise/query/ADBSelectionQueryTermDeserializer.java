@@ -9,8 +9,6 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
-import java.lang.reflect.Type;
-
 @AllArgsConstructor
 public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQueryTerm> {
 
@@ -31,7 +29,7 @@ public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelec
     }
 
     private Comparable<?> convertToCorrectDataFormat(String fieldName, JsonNode node) throws NoSuchFieldException {
-        Type valueType = this.entityClass.getDeclaredField(fieldName).getType();
+        Class<?> valueType = this.entityClass.getDeclaredField(fieldName).getType();
         if (valueType.equals(Integer.class) || valueType.equals(int.class)) {
             return node.get("value").asInt();
         } else if (valueType.equals(Float.class) || valueType.equals(float.class)) {

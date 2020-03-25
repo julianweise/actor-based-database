@@ -7,10 +7,8 @@ import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.largeMessageTransfer.ADBPair;
 import javafx.util.Pair;
-import lombok.Getter;
 import lombok.SneakyThrows;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -18,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
@@ -60,27 +59,29 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     @SneakyThrows
     public static ADBSortedEntityAttributes of(String fieldName, List<ADBEntityType> data) {
-        Field joinAttribute = ADBEntityFactoryProvider.getInstance().getTargetClass().getDeclaredField(fieldName);
-        return new ADBSortedEntityAttributes(joinAttribute, data);
+        if (data.size() > 0) {
+            return new ADBSortedEntityAttributes(data.get(0).getGetterForField(fieldName), data);
+        }
+        return new ADBSortedEntityAttributes(ADBEntityType.getGetterForField(fieldName,
+                ADBEntityFactoryProvider.getInstance().getTargetClass()), data);
     }
 
     private final int[] indices;
     private final List<ADBEntityType> data;
-    @Getter
-    private final Field field;
+    private final Function<ADBEntityType, Comparable<Object>> fieldGetter;
 
-    public ADBSortedEntityAttributes(Field field, List<ADBEntityType> data) {
+    public ADBSortedEntityAttributes(Function<ADBEntityType, Comparable<Object>> fieldGetter,
+                                     List<ADBEntityType> data)  {
         this.data = data;
-        this.field = field;
+        this.fieldGetter = fieldGetter;
         this.indices = this.getFieldValues().stream().map(Pair::getKey).mapToInt(Integer::intValue).toArray();
     }
 
     @SneakyThrows
-    @SuppressWarnings("unchecked")
     private List<Pair<Integer, Comparable<Object>>> getFieldValues() {
         List<Pair<Integer, Comparable<Object>>> fieldJoinAttributes = new ArrayList<>(data.size());
         for (int i = 0; i < data.size(); i++) {
-            fieldJoinAttributes.add(new Pair<>(i, (Comparable<Object>) field.get(data.get(i))));
+            fieldJoinAttributes.add(new Pair<>(i, fieldGetter.apply(data.get(i))));
         }
         fieldJoinAttributes.sort(Comparator.comparing(Pair::getValue));
         return fieldJoinAttributes;
@@ -97,7 +98,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
     
     @SneakyThrows
     public Comparable<?> get(int index) {
-        return (Comparable<?>) field.get(this.data.get(this.indices[index]));
+        return fieldGetter.apply(this.data.get(this.indices[index]));
     }
 
     public int getOriginalIndex(int index) {

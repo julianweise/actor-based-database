@@ -5,17 +5,19 @@ import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.domain.key.ADBKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 
 @Builder
 @AllArgsConstructor
+@Getter
 public class TestEntity extends ADBEntityType {
 
-    public final int aInteger;
-    public final String bString;
-    public final float cFloat;
-    public final boolean dBoolean;
-    public final double eDouble;
-    public final char fChar;
+    private final int aInteger;
+    private final String bString;
+    private final float cFloat;
+    private final boolean dBoolean;
+    private final double eDouble;
+    private final char fChar;
 
     @Override
     public ADBKey getPrimaryKey() {
