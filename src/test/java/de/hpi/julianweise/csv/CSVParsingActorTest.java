@@ -33,7 +33,7 @@ public class CSVParsingActorTest {
 
     @Test
     public void testValidParsing() throws IOException {
-        ADBEntityFactoryProvider adbEntityFactoryProvider = new ADBEntityFactoryProvider(new TestEntityFactory());
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
 
         final String testCSV = folder.newFile("test.csv").getAbsolutePath();
         String csvContent = "headerA,headerB,headerC\n200,TestString,1.02";

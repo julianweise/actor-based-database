@@ -107,7 +107,7 @@ public class ADBApplication {
     }
 
     public ADBApplication(ADBEntityFactory entityFactory) {
-        new ADBEntityFactoryProvider(entityFactory);
+        ADBEntityFactoryProvider.initialize(entityFactory);
     }
 
     public void run(String[] args) {

@@ -20,7 +20,7 @@ public class ADBSortedEntityAttributesTest {
 
     @Before
     public void setup() {
-        new ADBEntityFactoryProvider(new TestEntityFactory());
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
     }
 
     @Test

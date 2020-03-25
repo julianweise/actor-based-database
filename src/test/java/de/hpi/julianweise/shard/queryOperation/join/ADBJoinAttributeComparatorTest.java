@@ -30,7 +30,7 @@ public class ADBJoinAttributeComparatorTest {
 
     @Before
     public void prepare() {
-        new ADBEntityFactoryProvider(new TestEntityFactory());
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
     }
 
     @After
