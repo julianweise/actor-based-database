@@ -45,9 +45,7 @@ public class ADBApplication {
                 Behavior<ADBShardDistributor.Command> distributor = ADBShardDistributorFactory.createDefault();
                 Behavior<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcess =
                         ADBLoadAndDistributeDataProcessFactory.createDefault(csvParser, distributor);
-                context.spawn(ADBMasterSupervisorFactory.createDefault((MasterConfiguration) configuration,
-                        loadAndDistributeProcess),
-                        "DBMasterSupervisor");
+                context.spawn(ADBMasterSupervisorFactory.createDefault(loadAndDistributeProcess), "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
                 context.spawn(ADBSlaveSupervisor.create(), "DBSlaveSupervisor");
             }
