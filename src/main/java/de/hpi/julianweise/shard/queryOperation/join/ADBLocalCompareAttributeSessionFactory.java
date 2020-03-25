@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class ADBLocalCompareAttributeSessionFactory {
 
-    private final static int COMPARATOR_POOL_SIZE = 4;
+    private final static int COMPARATOR_POOL_SIZE = 8;
 
     public static ActorRef<ADBJoinAttributeComparator.Command> getComparatorPool(ActorContext<?> context) {
         return context.spawn(Routers.pool(COMPARATOR_POOL_SIZE, Behaviors.supervise(ADBJoinAttributeComparatorFactory

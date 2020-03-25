@@ -47,7 +47,7 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
         private List<Pair<Integer, Integer>> joinPartners;
     }
 
-    public static int CHUNK_SIZE_COMPARISON = 5000;
+    public static int CHUNK_SIZE_COMPARISON = 2000;
 
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
     private Map<String, ADBSortedEntityAttributes> sortedLocalJoinAttributes;
