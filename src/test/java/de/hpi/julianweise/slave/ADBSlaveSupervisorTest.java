@@ -13,7 +13,6 @@ public class ADBSlaveSupervisorTest {
     @Test
     public void expectHealthyStartup() {
         LoggingTestKit.info("DBSlave started")
-                      .expect(testKit.system(), () ->
-                              testKit.spawn(ADBSlaveSupervisor.create()));
+                      .expect(testKit.system(), () -> testKit.spawn(ADBSlaveSupervisor.create()));
     }
 }

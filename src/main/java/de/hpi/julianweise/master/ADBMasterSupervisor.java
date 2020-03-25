@@ -31,7 +31,6 @@ public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Co
     @Override
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
-                .onSignal(PostStop.class, this::handlePostStop)
                 .onMessage(StartOperationalService.class, this::handleStartOperationalService)
                 .build();
     }
@@ -39,12 +38,7 @@ public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Co
     private Behavior<Command> handleStartOperationalService(StartOperationalService command) {
         ActorRef<ADBShardInquirer.Command> shardInquirer =
                 this.getContext().spawn(ADBShardInquirerFactory.createDefault(), "shardInquirer");
-        this.getContext().spawn(ADBQueryEndpointFactory.createDefault(shardInquirer),
-                "endpoint");
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handlePostStop(PostStop signal) {
+        this.getContext().spawn(ADBQueryEndpointFactory.createDefault(shardInquirer), "endpoint");
         return Behaviors.same();
     }
 }

@@ -178,11 +178,11 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards, testKit.system().log());
 
-        plan.getNextJoinShardFor(shardA.ref());
-        plan.getNextJoinShardFor(shardB.ref());
-        plan.getNextJoinShardFor(shardB.ref());
-        plan.getNextJoinShardFor(shardD.ref());
-        plan.getNextJoinShardFor(shardC.ref());
-        plan.getNextJoinShardFor(shardD.ref());
+        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardD.ref());
+        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardC.ref());
     }
 }
