@@ -109,7 +109,6 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
     }
 
     private Behavior<Command> handleResults(HandleResults command) {
-        this.getContext().getLog().info(" Chunk of comparisons for " + command.term.getSourceAttributeName() + " completed.");
         this.intermediateJoinResults.get(command.term).addAll(command.joinPartners);
         if (this.processCounter.decrementAndGet() > 0) {
             return Behaviors.same();
