@@ -73,7 +73,6 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
     @Override
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
-                .onSignal(PostStop.class, this::handlePostStop)
                 .onMessage(CompareJoinAttributes.class, this::handleCompareJoinAttributes)
                 .onMessage(HandleResults.class, this::handleResults)
                 .build();
@@ -89,9 +88,6 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
         return Behaviors.same();
     }
 
-    private Behavior<Command> handlePostStop(PostStop signal) {
-        return Behaviors.same();
-    }
 
     private void processTerms(ADBJoinQueryTerm term, List<ADBPair<Comparable<?>, Integer>> sourceAttributes) {
         for (int i = 0; i < (sourceAttributes.size() / CHUNK_SIZE_COMPARISON) + 1; i++) {
