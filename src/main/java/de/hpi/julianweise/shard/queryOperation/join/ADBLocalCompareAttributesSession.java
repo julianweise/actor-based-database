@@ -33,9 +33,9 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
     @Builder
     @Getter
     public static class CompareJoinAttributes implements Command {
-        String sourceAttributeName;
-        List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
-        ADBJoinQueryTerm[] terms;
+        private String sourceAttributeName;
+        private List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
+        private ADBJoinQueryTerm[] terms;
     }
 
     @NoArgsConstructor
@@ -47,12 +47,12 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
         private List<Pair<Integer, Integer>> joinPartners;
     }
 
-    public static int CHUNK_SIZE_COMPARISON = 2000;
+    public static final int CHUNK_SIZE_COMPARISON = 2000;
 
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
-    private Map<String, ADBSortedEntityAttributes> sortedLocalJoinAttributes;
-    private ActorRef<ADBJoinWithShardSessionHandler.Command> respondTo;
-    private AtomicInteger processCounter = new AtomicInteger(0);
+    private final Map<String, ADBSortedEntityAttributes> sortedLocalJoinAttributes;
+    private final ActorRef<ADBJoinWithShardSessionHandler.Command> respondTo;
+    private final AtomicInteger processCounter = new AtomicInteger(0);
 
 
     private final Map<ADBJoinQueryTerm, List<Pair<Integer, Integer>>> intermediateJoinResults = new HashMap<>();

@@ -9,7 +9,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.ADBShardInquirerFactory;
-import de.hpi.julianweise.queryEndpoint.ADBQueryEndpoint;
 import de.hpi.julianweise.queryEndpoint.ADBQueryEndpointFactory;
 
 public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Command> {

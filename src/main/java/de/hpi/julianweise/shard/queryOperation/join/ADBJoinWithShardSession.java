@@ -15,6 +15,7 @@ import de.hpi.julianweise.utility.largeMessageTransfer.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largeMessageTransfer.ADBLargeMessageSenderFactory;
 import de.hpi.julianweise.utility.largeMessageTransfer.ADBPair;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Map;
@@ -24,14 +25,16 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
 
     @AllArgsConstructor
     @NoArgsConstructor
+    @Getter
     public static class RegisterHandler implements Command, CborSerializable {
-        ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
+        private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
     }
 
     @AllArgsConstructor
     @NoArgsConstructor
+    @Getter
     public static class HandleJoinShardsResults implements Command, ADBJoinQuerySessionHandler.Command, ADBLargeMessageSender.LargeMessage {
-        Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
+        private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
     }
 
     private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;

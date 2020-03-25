@@ -17,7 +17,7 @@ import java.util.function.Function;
 
 public abstract class ADBEntityType implements CborSerializable {
 
-    private static Map<String, Function<ADBEntityType, Comparable<Object>>> fieldGetter = new ConcurrentHashMap<>();
+    private final static Map<String, Function<ADBEntityType, Comparable<Object>>> getter = new ConcurrentHashMap<>();
 
     protected ADBEntityType() {
     }
@@ -70,8 +70,8 @@ public abstract class ADBEntityType implements CborSerializable {
     public static Function<ADBEntityType, Comparable<Object>> getGetterForField(String field, Class<?> targetClass) {
         String fieldKey = targetClass.getName() + field;
 
-        if (ADBEntityType.fieldGetter.containsKey(fieldKey)) {
-            return ADBEntityType.fieldGetter.get(fieldKey);
+        if (ADBEntityType.getter.containsKey(fieldKey)) {
+            return ADBEntityType.getter.get(fieldKey);
         }
 
         MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -90,7 +90,7 @@ public abstract class ADBEntityType implements CborSerializable {
 
         Function<ADBEntityType, Comparable<Object>> fieldGetter =
                 (Function<ADBEntityType, Comparable<Object>>) site.getTarget().invokeExact();
-        ADBEntityType.fieldGetter.put(fieldKey, fieldGetter);
+        ADBEntityType.getter.put(fieldKey, fieldGetter);
         return fieldGetter;
     }
 }

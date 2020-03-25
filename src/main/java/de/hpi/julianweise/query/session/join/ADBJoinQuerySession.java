@@ -29,23 +29,23 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RequestNextShardComparison implements ADBQuerySession.Command {
-        ActorRef<ADBShard.Command> requestingShard;
-        ActorRef<ADBQuerySessionHandler.Command> respondTo;
+        private ActorRef<ADBShard.Command> requestingShard;
+        private ActorRef<ADBQuerySessionHandler.Command> respondTo;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TriggerNextShardComparison implements ADBQuerySession.Command {
-        ActorRef<ADBShard.Command> requestingShard;
-        ActorRef<ADBShard.Command> nextJoiningShard;
-        ActorRef<ADBQuerySessionHandler.Command> respondTo;
+        private ActorRef<ADBShard.Command> requestingShard;
+        private ActorRef<ADBShard.Command> nextJoiningShard;
+        private ActorRef<ADBQuerySessionHandler.Command> respondTo;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
     @SuperBuilder
     public static class JoinQueryResults extends ADBQuerySession.QueryResults {
-        List<ADBPair<ADBEntityType, ADBEntityType>> joinResults;
+        private List<ADBPair<ADBEntityType, ADBEntityType>> joinResults;
     }
 
     private final JoinDistributionPlan distributionPlan;

@@ -49,7 +49,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     @AllArgsConstructor
     @Getter
     public static class Distribute implements Command, ADBShard.Command {
-        ADBEntityType entity;
+        private ADBEntityType entity;
     }
 
     @AllArgsConstructor
@@ -88,7 +88,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
                               @JsonSubTypes.Type(value = ADBFloatKey.class, name = "Float"),
                               @JsonSubTypes.Type(value = ADBDoubleKey.class, name = "Double"),
                       })
-        ADBKey entityPrimaryKey;
+        private ADBKey entityPrimaryKey;
     }
 
     private static final float MIN_FACTOR_NEXT_BATCH = 0.3f;

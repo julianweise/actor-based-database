@@ -9,8 +9,9 @@ import org.junit.rules.TemporaryFolder;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SettingsTest {
+
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
+    public final static TemporaryFolder folder = new TemporaryFolder();
 
     @After
     public void after() {

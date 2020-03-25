@@ -13,10 +13,10 @@ import java.nio.file.Paths;
 public class FileValidatorTest {
 
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
+    public final static TemporaryFolder folder = new TemporaryFolder();
 
     @Rule
-    public ExpectedException expectedEx = ExpectedException.none();
+    public final ExpectedException expectedEx = ExpectedException.none();
 
     @Test
     public void testThrowsExceptionFileNotFound() {

@@ -31,7 +31,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     @AllArgsConstructor
     @Getter
     public static class Start implements Command {
-        ActorRef<ADBMasterSupervisor.Command> respondTo;
+        private ActorRef<ADBMasterSupervisor.Command> respondTo;
     }
 
     private final ActorRef<CSVParsingActor.Command> csvParser;
@@ -73,17 +73,17 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         if (response.getResponse() instanceof CSVParsingActor.DomainDataChunk) {
             return this.handleCSVChunk((CSVParsingActor.DomainDataChunk) response.getResponse());
         } else if (response.getResponse() instanceof CSVParsingActor.CSVFullyParsed) {
-            return this.handleCSVFullyParsed((CSVParsingActor.CSVFullyParsed) response.getResponse());
+            return this.handleCSVFullyParsed();
         }
         return Behaviors.same();
     }
 
     private Behavior<Command> handleShardDistributorResponse(WrappedShardDistributorResponse response) {
         if (response.getResponse() instanceof ADBShardDistributor.BatchDistributed) {
-            return this.handleBatchDistributed((ADBShardDistributor.BatchDistributed) response.getResponse());
+            return this.handleBatchDistributed();
         }
         if (response.getResponse() instanceof ADBShardDistributor.DataFullyDistributed) {
-            return this.handleDataFullyDistributed((ADBShardDistributor.DataFullyDistributed) response.getResponse());
+            return this.handleDataFullyDistributed();
         }
         return Behaviors.same();
     }
@@ -94,18 +94,18 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleBatchDistributed(ADBShardDistributor.BatchDistributed command) {
+    private Behavior<Command> handleBatchDistributed() {
         this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleCSVFullyParsed(CSVParsingActor.CSVFullyParsed command) {
+    private Behavior<Command> handleCSVFullyParsed() {
         this.shardDistributor.tell(new ADBShardDistributor.ConcludeDistribution());
         this.getContext().stop(this.csvParser);
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleDataFullyDistributed(ADBShardDistributor.DataFullyDistributed response) {
+    private Behavior<Command> handleDataFullyDistributed() {
         this.getContext().getLog().info("### Data have been fully loaded into the database ###");
         this.client.tell(new ADBMasterSupervisor.StartOperationalService());
         this.getContext().stop(this.shardDistributor);

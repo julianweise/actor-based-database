@@ -24,9 +24,9 @@ public class ADBSelectionQueryTerm implements ADBQueryTerm {
                           @JsonSubTypes.Type(value = Character.class, name = "Character"),
                           @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
                   })
-    Comparable<?> value;
-    String fieldName;
-    ADBQueryTerm.RelationalOperator operator;
+    private Comparable<?> value;
+    private String fieldName;
+    private ADBQueryTerm.RelationalOperator operator;
 
     @Override
     public String toString() {

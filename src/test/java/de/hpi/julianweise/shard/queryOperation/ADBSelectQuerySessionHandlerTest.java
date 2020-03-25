@@ -25,9 +25,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBSelectQuerySessionHandlerTest {
 
-    private static int GLOBAL_SHARD_ID = 1;
+    private final static int GLOBAL_SHARD_ID = 1;
 
-    public static String config = "actor-db.csv.chunk-size = 1\n" +
+    public final static String config =
+            "actor-db.csv.chunk-size = 1\n" +
             "actor-db.query-response-chunk-size = 1 \n" +
             "actor-db.query-endpoint.hostname = localhost\n" +
             "actor-db.query-endpoint.port = 8080";

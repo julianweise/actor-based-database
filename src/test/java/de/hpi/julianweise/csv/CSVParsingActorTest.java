@@ -22,7 +22,7 @@ public class CSVParsingActorTest {
     public static final TestKitJunitResource testKit = new TestKitJunitResource();
 
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
+    public final static TemporaryFolder folder = new TemporaryFolder();
 
 
     @AfterClass

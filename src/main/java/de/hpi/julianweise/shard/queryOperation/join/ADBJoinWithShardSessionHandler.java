@@ -31,7 +31,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     @NoArgsConstructor
     @Builder
     public static class CompareJoinAttributesFor implements Command, ADBLargeMessageSender.LargeMessage {
-        String sourceAttribute;
+        private String sourceAttribute;
         @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
         @JsonSubTypes({
                               @JsonSubTypes.Type(value = String.class, name = "String"),
@@ -41,15 +41,15 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                               @JsonSubTypes.Type(value = Character.class, name = "Character"),
                               @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
                       })
-        List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
+        private List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
     }
 
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
     public static class JoinAttributesComparedFor implements Command {
-        String sourceAttributeName;
-        List<Pair<Integer, Integer>> joinCandidates;
+        private String sourceAttributeName;
+        private List<Pair<Integer, Integer>> joinCandidates;
         boolean isLastChunk;
     }
 

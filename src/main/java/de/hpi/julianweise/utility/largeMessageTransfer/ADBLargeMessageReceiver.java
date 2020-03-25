@@ -43,7 +43,7 @@ public class ADBLargeMessageReceiver<T> extends AbstractBehavior<ADBLargeMessage
 
     private byte[] payload;
     private int payloadPointer = 0;
-    private ActorRef<T> originalReceiver;
+    private final ActorRef<T> originalReceiver;
     private ActorRef<ADBLargeMessageSender.Command> sender;
     private boolean hasStarted;
     private final Serialization serialization;

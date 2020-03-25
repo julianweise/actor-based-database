@@ -7,7 +7,6 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
-import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.csv.TestEntity;
@@ -22,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBShardTest {
 
-    public static String config = "actor-db.csv.chunk-size = 1\n" +
+    public final static String config =
+            "actor-db.csv.chunk-size = 1\n" +
             "actor-db.query-response-chunk-size = 1 \n" +
             "actor-db.query-endpoint.hostname = localhost\n" +
             "actor-db.query-endpoint.port = 8080";
@@ -68,8 +68,6 @@ public class ADBShardTest {
 
         persistProbe.receiveMessage();
 
-        TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
-
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()
@@ -105,9 +103,6 @@ public class ADBShardTest {
         persistProbe.receiveMessage();
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), entityToPersist2));
         persistProbe.receiveMessage();
-
-
-        TestProbe<ADBShardInquirer.Command> queryProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm

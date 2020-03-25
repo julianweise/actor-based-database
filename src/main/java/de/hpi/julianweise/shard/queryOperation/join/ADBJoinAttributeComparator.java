@@ -31,7 +31,7 @@ public class ADBJoinAttributeComparator extends AbstractBehavior<ADBJoinAttribut
         private int startIndexSourceAttributeValues;
         private int endIndexSourceAttributeValues;
         private ADBJoinQueryTerm term;
-        Map<String, ADBSortedEntityAttributes> targetAttributeValues;
+        private Map<String, ADBSortedEntityAttributes> targetAttributeValues;
         private List<ADBPair<Comparable<?>, Integer>> sourceAttributeValues;
         private ActorRef<ADBLocalCompareAttributesSession.Command> respondTo;
     }

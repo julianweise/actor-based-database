@@ -38,7 +38,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     @AllArgsConstructor
     @Builder
     public static class QueryEntities implements Command {
-        int transactionId;
+        private int transactionId;
         private ActorRef<ADBQuerySession.Command> respondTo;
         private ADBQuery query;
     }
@@ -51,9 +51,10 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     }
 
 
-    public static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data-shard");
+    public final static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data" +
+            "-shard");
 
-    private ArrayList<ADBEntityType> data = new ArrayList<>();
+    private final ArrayList<ADBEntityType> data = new ArrayList<>();
     private int globalId;
 
     protected ADBShard(ActorContext<Command> context) {

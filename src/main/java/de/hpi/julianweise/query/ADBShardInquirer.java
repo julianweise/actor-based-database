@@ -7,7 +7,6 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
-import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.ADBQuerySessionFactory;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.utility.CborSerializable;
@@ -63,7 +62,6 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
 
     private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
     private final Map<Integer, Integer> transactionRequestMapping = new HashMap<>();
-    private final Map<Integer, ActorRef<ADBQuerySession.Command>> transactionSessions = new HashMap<>();
     private final Map<Integer, ActorRef<ADBShardInquirer.Response>> requestClientMapping = new HashMap<>();
     private final AtomicInteger transactionCounter = new AtomicInteger();
 
@@ -94,12 +92,12 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
         this.transactionRequestMapping.put(transactionID, command.getRequestId());
         this.requestClientMapping.put(command.getRequestId(), command.respondTo);
 
-        this.transactionSessions.put(transactionID, this.createNewQuerySession(transactionID, command.getQuery()));
+        this.createNewQuerySession(transactionID, command.getQuery());
         return Behaviors.same();
     }
 
-    private ActorRef<ADBQuerySession.Command> createNewQuerySession(int transactionID, ADBQuery query) {
-        return this.getContext().spawn(ADBQuerySessionFactory.create(new ArrayList<>(this.shards), query, transactionID,
+    private void createNewQuerySession(int transactionID, ADBQuery query) {
+        this.getContext().spawn(ADBQuerySessionFactory.create(new ArrayList<>(this.shards), query, transactionID,
                 this.getContext().getSelf()), ADBQuerySessionFactory.sessionName(query, transactionID));
     }
 
@@ -108,7 +106,6 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
         ActorRef<Response> client = this.requestClientMapping.get(requestId);
         client.tell(new AllQueryResults(requestId, command.getResults()));
 
-        this.transactionSessions.remove(command.getTransactionId());
         this.transactionRequestMapping.remove(command.getTransactionId());
         this.requestClientMapping.remove(requestId);
         return Behaviors.same();

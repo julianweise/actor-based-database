@@ -51,8 +51,8 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     public static class CSVFullyParsed implements Response {
     }
 
-    private InputStreamReader inputStreamReader;
-    private Iterator<CSVRecord> csvIterator;
+    private final InputStreamReader inputStreamReader;
+    private final Iterator<CSVRecord> csvIterator;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
 
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {

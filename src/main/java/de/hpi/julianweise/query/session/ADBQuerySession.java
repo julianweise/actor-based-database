@@ -29,8 +29,8 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateShardToHandlerMapping implements ADBQuerySession.Command {
-        ActorRef<ADBShard.Command> shard;
-        ActorRef<ADBQuerySessionHandler.Command> sessionHandler;
+        private ActorRef<ADBShard.Command> shard;
+        private ActorRef<ADBQuerySessionHandler.Command> sessionHandler;
     }
 
     @AllArgsConstructor

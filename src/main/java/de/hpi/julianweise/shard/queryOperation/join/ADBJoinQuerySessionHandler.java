@@ -17,6 +17,7 @@ import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandler;
 import de.hpi.julianweise.utility.largeMessageTransfer.ADBPair;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Collection;
@@ -29,28 +30,30 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
     public static class JoinWithShard implements ADBQuerySessionHandler.Command {
-        ActorRef<ADBQuerySessionHandler.Command> counterpart;
-        int globalShardIndex;
+        private ActorRef<ADBQuerySessionHandler.Command> counterpart;
+        private int globalShardIndex;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
     public static class NoMoreShardsToJoinWith implements ADBQuerySessionHandler.Command {
-        int transactionId;
+        private int transactionId;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
     public static class OpenNewJoinWithShardSession implements ADBQuerySessionHandler.Command {
-        ActorRef<ADBJoinWithShardSession.Command> session;
-        int shardId;
+        private ActorRef<ADBJoinWithShardSession.Command> session;
+        private int shardId;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Terminate implements Command {
-        int transactionId;
+        private int transactionId;
     }
 
     private Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
@@ -89,13 +92,13 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     }
 
     private Behavior<Command> handleJoinWithShard(JoinWithShard message) {
-        this.getContext().getLog().info("Received master request to join with " + message.globalShardIndex);
+        this.getContext().getLog().info("Received master request to join with " + message.getGlobalShardIndex());
         ActorRef<ADBJoinWithShardSession.Command> joinWithShardSession =
                 this.getContext().spawn(ADBJoinWithShardSessionFactory.createDefault(this.query,
                         this.sortedJoinAttributes, this.getContext().getSelf()),
                         ADBJoinWithShardSessionFactory.sessionName(this.transactionId, this.globalShardId,
-                                message.globalShardIndex));
-        message.counterpart.tell(new OpenNewJoinWithShardSession(joinWithShardSession, this.globalShardId));
+                                message.getGlobalShardIndex()));
+        message.getCounterpart().tell(new OpenNewJoinWithShardSession(joinWithShardSession, this.globalShardId));
         return Behaviors.same();
     }
 
@@ -108,11 +111,11 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     }
 
     private Behavior<Command> handleJoinWithShardResults(ADBJoinWithShardSession.HandleJoinShardsResults command) {
-        this.getContext().getLog().info("Generated " + command.joinCandidates.size() + " join candidates. Sending to " +
-                "master ...");
+        this.getContext().getLog().info("Generated " + command.getJoinCandidates().size() + " join candidates. " +
+                "Sending to master ...");
         this.client.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
         final AtomicInteger counter = new AtomicInteger();
-        Collection<List<ADBPair<ADBEntityType, ADBEntityType>>> results = command.joinCandidates
+        Collection<List<ADBPair<ADBEntityType, ADBEntityType>>> results = command.getJoinCandidates()
                 .stream().map(pair -> new ADBPair<>(this.data.get(pair.getKey()), pair.getValue()))
                 .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / (this.settings.QUERY_RESPONSE_CHUNK_SIZE / 3)))
                 .values();
@@ -128,6 +131,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     private Behavior<Command> handleNoMoreShardToJoinWith(NoMoreShardsToJoinWith command) {
         this.concludeTransaction();
+        this.getContext().getLog().info("No more shards to join with this shard for TX #" + command.getTransactionId());
         return Behaviors.same();
     }
 

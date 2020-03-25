@@ -34,15 +34,15 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     @AllArgsConstructor
     @Getter
     public static class StartTransfer implements Command {
-        ActorRef receiver;
-        Class<? extends LargeMessage> type;
+        private ActorRef receiver;
+        private Class<? extends LargeMessage> type;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
     public static class SendNextChunk implements Command {
-        akka.actor.typed.ActorRef<ADBLargeMessageReceiver.Command> respondTo;
+        private akka.actor.typed.ActorRef<ADBLargeMessageReceiver.Command> respondTo;
     }
 
     @NoArgsConstructor

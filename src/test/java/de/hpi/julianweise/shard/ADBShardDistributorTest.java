@@ -14,7 +14,7 @@ public class ADBShardDistributorTest {
     public static final TestKitJunitResource testKit = new TestKitJunitResource();
 
     @ClassRule
-    public static TemporaryFolder folder = new TemporaryFolder();
+    public final static TemporaryFolder folder = new TemporaryFolder();
 
     @AfterClass
     public static void after() {

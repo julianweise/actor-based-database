@@ -3,12 +3,10 @@ package de.hpi.julianweise.domain.custom;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.domain.key.ADBStringKey;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Builder
-@AllArgsConstructor
 @Getter
 public class Patient extends ADBEntityType {
 
