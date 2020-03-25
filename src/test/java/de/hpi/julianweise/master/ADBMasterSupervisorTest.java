@@ -43,8 +43,7 @@ public class ADBMasterSupervisorTest {
 
         LoggingTestKit.info("DBMaster started")
                       .expect(testKit.system(),
-                              () -> testKit.spawn(ADBMasterSupervisorFactory.createDefault(masterConfiguration,
-                                      mockedProcess)));
+                              () -> testKit.spawn(ADBMasterSupervisorFactory.createDefault(mockedProcess)));
     }
 
     @Test
@@ -61,8 +60,7 @@ public class ADBMasterSupervisorTest {
                 Behaviors.monitor(ADBLoadAndDistributeDataProcess.Command.class, testRef.ref(), mockedProcessBehavior);
 
         ActorRef<ADBMasterSupervisor.Command> masterSupervisor =
-                testKit.spawn(ADBMasterSupervisorFactory.createDefault(masterConfiguration,
-                        mockedProcess));
+                testKit.spawn(ADBMasterSupervisorFactory.createDefault(mockedProcess));
 
         masterSupervisor.tell(new ADBMasterSupervisor.StartOperationalService());
     }

@@ -40,8 +40,7 @@ public class ADBMasterSupervisor extends AbstractBehavior<ADBMasterSupervisor.Co
     private Behavior<Command> handleStartOperationalService(StartOperationalService command) {
         ActorRef<ADBShardInquirer.Command> shardInquirer =
                 this.getContext().spawn(ADBShardInquirerFactory.createDefault(), "shardInquirer");
-        ActorRef<ADBQueryEndpoint.Command> queryEndpoint =
-                this.getContext().spawn(ADBQueryEndpointFactory.createDefault(shardInquirer),
+        this.getContext().spawn(ADBQueryEndpointFactory.createDefault(shardInquirer),
                 "endpoint");
         return Behaviors.same();
     }
