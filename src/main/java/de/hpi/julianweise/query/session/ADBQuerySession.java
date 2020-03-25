@@ -10,7 +10,7 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.ADBShard;
-import de.hpi.julianweise.shard.queryOperation.ADBQuerySessionHandler;
+import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
