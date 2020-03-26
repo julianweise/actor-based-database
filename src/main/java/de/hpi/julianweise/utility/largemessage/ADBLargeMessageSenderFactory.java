@@ -7,7 +7,7 @@ import akka.actor.typed.javadsl.Behaviors;
 public class ADBLargeMessageSenderFactory {
 
     public static Behavior<ADBLargeMessageSender.Command> createDefault(Object message,
-                                                                        akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> respondTo,
+                                                                        ActorRef<ADBLargeMessageSender.Response> respondTo,
                                                                         String sessionName) {
         return Behaviors.setup(context -> new ADBLargeMessageSender(context, message, respondTo, sessionName));
     }

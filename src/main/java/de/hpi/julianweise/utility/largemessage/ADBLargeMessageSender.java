@@ -21,46 +21,47 @@ import java.util.Arrays;
 
 public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSender.Command> {
 
-    public interface LargeMessage extends CborSerializable {
-    }
-
-    public interface Command extends CborSerializable {
-    }
-
-    public interface Response extends CborSerializable {
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    public static class StartTransfer implements Command {
-        private ActorRef receiver;
-        private Class<? extends LargeMessage> type;
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    public static class SendNextChunk implements Command {
-        private akka.actor.typed.ActorRef<ADBLargeMessageReceiver.Command> respondTo;
-    }
-
-    @NoArgsConstructor
-    @Getter
-    public static class TransferCompleted implements Response {
-    }
-
-    private static int getChunkSize(Settings settings) {
-        Long maxMessageSize = settings.config().getBytes("akka.remote.artery.advanced.maximum-frame-size");
-        return Math.round(maxMessageSize * 0.7f);
-    }
-
     private final Serialization serialization;
     private int dataSent = 0;
     private final byte[] payload;
     private final int chunkSize;
     private final akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor;
     private final String sessionName;
+
+    public interface LargeMessage extends CborSerializable {
+
+    }
+    public interface Command extends CborSerializable {
+
+    }
+    public interface Response extends CborSerializable {
+
+    }
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class StartTransfer implements Command {
+        private ActorRef receiver;
+        private Class<? extends LargeMessage> type;
+
+    }
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class SendNextChunk implements Command {
+        private akka.actor.typed.ActorRef<ADBLargeMessageReceiver.Command> respondTo;
+
+    }
+    @NoArgsConstructor
+    @Getter
+    public static class TransferCompleted implements Response {
+
+    }
+
+    private static int getChunkSize(Settings settings) {
+        Long maxMessageSize = settings.config().getBytes("akka.remote.artery.advanced.maximum-frame-size");
+        return Math.round(maxMessageSize * 0.7f);
+    }
 
     public ADBLargeMessageSender(ActorContext<Command> context, Object serializableMessage,
                                  akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor,

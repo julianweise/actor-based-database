@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalCompareAttributesSession.Command> {
 
+    public static final int CHUNK_SIZE_COMPARISON = 2000;
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
     private final Map<String, ADBSortedEntityAttributes> sortedLocalJoinAttributes;
     private final ActorRef<ADBJoinWithShardSessionHandler.Command> respondTo;
@@ -31,8 +32,8 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
     private final Map<ADBJoinQueryTerm, List<Pair<Integer, Integer>>> intermediateJoinResults = new HashMap<>();
 
     public interface Command extends CborSerializable {
-    }
 
+    }
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
@@ -52,9 +53,6 @@ public class ADBLocalCompareAttributesSession extends AbstractBehavior<ADBLocalC
         private List<Pair<Integer, Integer>> joinPartners;
 
     }
-    public static final int CHUNK_SIZE_COMPARISON = 2000;
-
-
 
     public ADBLocalCompareAttributesSession(ActorContext<Command> context,
                                             ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,

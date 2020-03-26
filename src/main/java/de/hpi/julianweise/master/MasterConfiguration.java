@@ -18,14 +18,14 @@ public class MasterConfiguration implements ConfigurationBase {
 
     @Parameter(names = {"-i", "--input"}, description = "data to handle", validateValueWith = FileValidator.class,
                converter = StringToPathConverter.class)
-    Path inputFile;
+    private Path inputFile;
 
     @Parameter(names = {"-p", "--port"}, description = "port to run application on")
-    int port;
+    private int port;
 
     @Parameter(names = {"-d", "--data-loading-strategy"}, description = "fully-qualified class-name of loading " +
             "strategy")
-    String dataLoadingStrategy;
+    private String dataLoadingStrategy;
 
     private static class StringToPathConverter implements IStringConverter<Path> {
         @Override

@@ -11,15 +11,15 @@ import lombok.Getter;
 
 public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMessageActor.Command> {
 
-    public interface Command {}
+    protected final ActorRef<ADBLargeMessageSender.Response> largeMessageSenderWrapping;
 
+    public interface Command {}
     @AllArgsConstructor
     @Getter
     public static class WrappedLargeMessageSenderResponse implements Command {
         private ADBLargeMessageSender.Response response;
-    }
 
-    protected final ActorRef<ADBLargeMessageSender.Response> largeMessageSenderWrapping;
+    }
 
     public ADBLargeMessageActor(ActorContext<Command> context) {
         super(context);

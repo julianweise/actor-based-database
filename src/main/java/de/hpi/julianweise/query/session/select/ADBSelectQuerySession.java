@@ -20,15 +20,17 @@ import java.util.List;
 
 public class ADBSelectQuerySession extends ADBQuerySession {
 
+    private final List<ADBEntityType> queryResults = new ArrayList<>();
+
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
     @SuperBuilder
     public static class SelectQueryResults extends ADBQuerySession.QueryResults {
-        private List<ADBEntityType> results;
-    }
 
-    private final List<ADBEntityType> queryResults = new ArrayList<>();
+        private List<ADBEntityType> results;
+
+    }
 
     public ADBSelectQuerySession(ActorContext<Command> context, List<ActorRef<ADBShard.Command>> shards,
                                  int transactionId, ActorRef<ADBShardInquirer.Command> parent, ADBSelectionQuery query) {

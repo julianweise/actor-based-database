@@ -10,7 +10,7 @@ import lombok.Getter;
 public class SlaveConfiguration implements ConfigurationBase {
 
     @Parameter(names = {"-p", "--port"}, description = "port to run application on")
-    int port;
+    private int port;
 
     public OperationRole role() {
         return OperationRole.SLAVE;

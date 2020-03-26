@@ -57,7 +57,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     public static class JoinAttributesComparedFor implements Command {
         private String sourceAttributeName;
         private List<Pair<Integer, Integer>> joinCandidates;
-        boolean isLastChunk;
+        private boolean isLastChunk;
 
     }
 
