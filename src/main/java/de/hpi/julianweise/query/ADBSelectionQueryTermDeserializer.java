@@ -22,10 +22,10 @@ public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelec
         JsonNode node = oc.readTree(jsonParser);
 
         return ADBSelectionQueryTerm.builder()
-                                                   .fieldName(node.get("fieldName").asText())
-                                                   .operator(ADBQueryTerm.RelationalOperator.valueOf(node.get("operator").asText()))
-                                                   .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
-                                                   .build();
+                                    .fieldName(node.get("fieldName").asText())
+                                    .operator(ADBQueryTerm.RelationalOperator.valueOf(node.get("operator").asText()))
+                                    .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
+                                    .build();
     }
 
     private Comparable<?> convertToCorrectDataFormat(String fieldName, JsonNode node) throws NoSuchFieldException {

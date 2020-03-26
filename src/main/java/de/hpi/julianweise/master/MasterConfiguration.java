@@ -16,13 +16,6 @@ import java.nio.file.Paths;
 @Setter
 public class MasterConfiguration implements ConfigurationBase {
 
-    private static class StringToPathConverter implements IStringConverter<Path> {
-        @Override
-        public Path convert(String path) {
-            return Paths.get(path);
-        }
-    }
-
     @Parameter(names = {"-i", "--input"}, description = "data to handle", validateValueWith = FileValidator.class,
                converter = StringToPathConverter.class)
     Path inputFile;
@@ -33,6 +26,14 @@ public class MasterConfiguration implements ConfigurationBase {
     @Parameter(names = {"-d", "--data-loading-strategy"}, description = "fully-qualified class-name of loading " +
             "strategy")
     String dataLoadingStrategy;
+
+    private static class StringToPathConverter implements IStringConverter<Path> {
+        @Override
+        public Path convert(String path) {
+            return Paths.get(path);
+        }
+
+    }
 
     public OperationRole role() {
         return OperationRole.MASTER;

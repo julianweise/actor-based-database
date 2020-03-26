@@ -40,6 +40,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         private int globalShardIndex;
 
     }
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
@@ -47,15 +48,19 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         private int transactionId;
 
     }
+
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
     public static class OpenNewJoinWithShardSession implements ADBQuerySessionHandler.Command {
         private ActorRef<ADBJoinWithShardSession.Command> session;
         private int shardId;
 
     }
+
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
     public static class Terminate implements Command {
         private int transactionId;
 
@@ -117,10 +122,12 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                 "Sending to master ...");
         this.client.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
         final AtomicInteger counter = new AtomicInteger();
-        Collection<List<ADBPair<ADBEntityType, ADBEntityType>>> results = command.getJoinCandidates()
-                .stream().map(pair -> new ADBPair<>(this.data.get(pair.getKey()), pair.getValue()))
-                .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / (this.settings.QUERY_RESPONSE_CHUNK_SIZE / 3)))
-                .values();
+        Collection<List<ADBPair<ADBEntityType, ADBEntityType>>> results =
+                command.getJoinCandidates()
+                       .stream().map(pair -> new ADBPair<>(this.data.get(pair.getKey()), pair.getValue()))
+                       .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / Math.max(1, (
+                               this.settings.QUERY_RESPONSE_CHUNK_SIZE / 3))))
+                       .values();
 
         results.forEach(chunk -> this.client.tell(ADBJoinQuerySession.JoinQueryResults
                 .builder()
@@ -139,7 +146,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     private Behavior<Command> handleTerminate(Terminate command) {
         this.getContext().getLog().info("Going to shut down JoinQuery Session for transaction #"
-                + command.transactionId);
+                + command.getTransactionId());
         return Behaviors.stopped();
     }
 

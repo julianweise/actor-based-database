@@ -25,18 +25,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command> {
 
+    private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
+    private final Map<Integer, Integer> transactionRequestMapping = new HashMap<>();
+    private final Map<Integer, ActorRef<ADBShardInquirer.Response>> requestClientMapping = new HashMap<>();
+    private final AtomicInteger transactionCounter = new AtomicInteger();
+
     public interface Command extends CborSerializable {
-    }
 
+    }
     public interface Response extends CborSerializable {
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class WrappedListing implements Command {
         private Receptionist.Listing listing;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     @Builder
@@ -44,26 +49,22 @@ public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command>
         private int requestId;
         private ADBQuery query;
         private ActorRef<Response> respondTo;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class TransactionResults implements Command {
         private int transactionId;
         private Object[] results;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class AllQueryResults implements Response {
         private int requestId;
         private Object[] results;
-    }
 
-    private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
-    private final Map<Integer, Integer> transactionRequestMapping = new HashMap<>();
-    private final Map<Integer, ActorRef<ADBShardInquirer.Response>> requestClientMapping = new HashMap<>();
-    private final AtomicInteger transactionCounter = new AtomicInteger();
+    }
 
     protected ADBShardInquirer(ActorContext<Command> context) {
         super(context);

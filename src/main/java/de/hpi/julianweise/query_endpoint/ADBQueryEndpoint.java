@@ -34,6 +34,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command> {
 
+    private final ActorRef<ADBShardInquirer.Command> shardInquirer;
+    private final ActorRef<ADBShardInquirer.Response> shardInquirerResponseWrapper;
+    private final Map<Integer, CompletableFuture<Object[]>> requests = new HashMap<>();
+    private final AtomicInteger requestCounter = new AtomicInteger();
+    private CompletionStage<ServerBinding> binding;
+
     public interface Command {
     }
 
@@ -41,14 +47,8 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     @Getter
     public static class ShardInquirerResponseWrapper implements Command {
         private ADBShardInquirer.Response response;
+
     }
-
-    private CompletionStage<ServerBinding> binding;
-
-    private final ActorRef<ADBShardInquirer.Command> shardInquirer;
-    private final ActorRef<ADBShardInquirer.Response> shardInquirerResponseWrapper;
-    private final Map<Integer, CompletableFuture<Object[]>> requests = new HashMap<>();
-    private final AtomicInteger requestCounter = new AtomicInteger();
 
     public ADBQueryEndpoint(ActorContext<Command> context, String hostname, int port,
                             ActorRef<ADBShardInquirer.Command> shardInquirer,
@@ -78,8 +78,8 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     private Route createRoute() {
         return Directives.concat(Directives.path("query",
-                () -> Directives.withoutRequestTimeout( () -> Directives.post(() -> Directives.entity(
-                Jackson.unmarshaller(ADBQuery.class), this::handleQuery))))
+                () -> Directives.withoutRequestTimeout(() -> Directives.post(() -> Directives.entity(
+                        Jackson.unmarshaller(ADBQuery.class), this::handleQuery))))
         );
     }
 

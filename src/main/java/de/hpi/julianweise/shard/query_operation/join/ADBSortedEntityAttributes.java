@@ -21,10 +21,15 @@ import java.util.stream.Collectors;
 
 public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
+    private final int[] indices;
+    private final List<ADBEntityType> data;
+    private final Function<ADBEntityType, Comparable<Object>> fieldGetter;
+
     public static class CustomIterator implements Iterator<Comparable<?>> {
 
         private final ADBSortedEntityAttributes attributes;
         private int index = 0;
+
 
         public CustomIterator(ADBSortedEntityAttributes attributes) {
             this.attributes = attributes;
@@ -34,11 +39,11 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
         public boolean hasNext() {
             return this.index < this.attributes.size();
         }
-
         @Override
         public Comparable<?> next() {
             return this.attributes.get(this.index++);
         }
+
     }
 
     public static Map<String, ADBSortedEntityAttributes> of(ADBJoinQuery joinQuery, List<ADBEntityType> data) {
@@ -65,10 +70,6 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
         return new ADBSortedEntityAttributes(ADBEntityType.getGetterForField(fieldName,
                 ADBEntityFactoryProvider.getInstance().getTargetClass()), data);
     }
-
-    private final int[] indices;
-    private final List<ADBEntityType> data;
-    private final Function<ADBEntityType, Comparable<Object>> fieldGetter;
 
     public ADBSortedEntityAttributes(Function<ADBEntityType, Comparable<Object>> fieldGetter,
                                      List<ADBEntityType> data)  {

@@ -19,6 +19,14 @@ import java.io.NotSerializableException;
 
 public class ADBLargeMessageReceiver<T> extends AbstractBehavior<ADBLargeMessageReceiver.Command> {
 
+    private byte[] payload;
+    private int payloadPointer = 0;
+    private final ActorRef<T> originalReceiver;
+    private ActorRef<ADBLargeMessageSender.Command> sender;
+    private boolean hasStarted;
+    private final Serialization serialization;
+    private final Class<? extends CborSerializable> messageType;
+
     public interface Command extends ADBLargeMessageActor.Command {
     }
 
@@ -31,23 +39,16 @@ public class ADBLargeMessageReceiver<T> extends AbstractBehavior<ADBLargeMessage
         private int totalSize;
         private Class<? extends ADBLargeMessageSender.LargeMessage> type;
         private String transferSessionName;
-    }
 
+    }
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
     public static class ReceiveChunk implements Command, KryoSerializable {
         private byte[] chunk;
         private boolean lastChunk;
-    }
 
-    private byte[] payload;
-    private int payloadPointer = 0;
-    private final ActorRef<T> originalReceiver;
-    private ActorRef<ADBLargeMessageSender.Command> sender;
-    private boolean hasStarted;
-    private final Serialization serialization;
-    private final Class<? extends CborSerializable> messageType;
+    }
 
     public ADBLargeMessageReceiver(ActorContext<Command> context, ActorRef<T> originalReceiver,
                                    Class<? extends CborSerializable> messageType) {

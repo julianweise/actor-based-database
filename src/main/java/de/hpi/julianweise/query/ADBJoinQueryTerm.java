@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ADBJoinQueryTerm implements ADBQueryTerm {
 
-    ADBQueryTerm.RelationalOperator operator;
-    String sourceAttributeName;
-    String targetAttributeName;
+    private ADBQueryTerm.RelationalOperator operator;
+    private String sourceAttributeName;
+    private String targetAttributeName;
 
     @Override
     public String toString() {

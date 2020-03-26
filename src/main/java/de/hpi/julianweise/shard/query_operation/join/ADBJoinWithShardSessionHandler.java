@@ -27,6 +27,13 @@ import java.util.stream.Collectors;
 
 public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
 
+    private final ActorRef<ADBJoinWithShardSession.Command> session;
+    private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
+    private final Map<String, List<ADBJoinQueryTerm>> groupedQueryTerms;
+    private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
+    private List<Pair<Integer, Integer>> joinCandidates = new ArrayList<>();
+    private final List<ADBEntityType> data;
+
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
@@ -42,8 +49,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                               @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
                       })
         private List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
-    }
 
+    }
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
@@ -51,14 +58,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         private String sourceAttributeName;
         private List<Pair<Integer, Integer>> joinCandidates;
         boolean isLastChunk;
-    }
 
-    private final ActorRef<ADBJoinWithShardSession.Command> session;
-    private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
-    private final Map<String, List<ADBJoinQueryTerm>> groupedQueryTerms;
-    private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
-    private List<Pair<Integer, Integer>> joinCandidates = new ArrayList<>();
-    private final List<ADBEntityType> data;
+    }
 
     public ADBJoinWithShardSessionHandler(ActorContext<Command> context,
                                           ActorRef<ADBJoinWithShardSession.Command> session,

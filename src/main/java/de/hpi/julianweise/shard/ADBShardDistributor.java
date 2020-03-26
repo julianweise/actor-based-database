@@ -36,46 +36,59 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Command> {
 
+    private static final float MIN_FACTOR_NEXT_BATCH = 0.3f;
+    private static final int MAX_ROUND_TRIP_TIME = 3000;
+    private static final int VIRTUAL_NODES_FACTOR = 50;
+
+    private final Map<ADBKey, ADBShard.Command> pendingDistributions = new HashMap<>();
+    private final BlockingQueue<Pair<Long, ADBKey>> pendingDistTimer = new LinkedBlockingQueue<>();
+    private final TimerScheduler<Command> timers;
+    private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
+    private ConsistentHash<ActorRef<ADBShard.Command>> consistentHash = ConsistentHash.create(this.shards, VIRTUAL_NODES_FACTOR);
+    private ActorRef<Response> client;
+    private int batchSize = 0;
+    private boolean wrappingUp = false;
+
+
     public interface Command extends CborSerializable {}
 
     public interface Response extends CborSerializable {}
-
     @AllArgsConstructor
     @Getter
     public static class WrappedListing implements Command {
         private Receptionist.Listing listing;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class Distribute implements Command, ADBShard.Command {
         private ADBEntityType entity;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class CheckPendingDistributions implements Command {
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class DistributeBatch implements Command {
         private final ActorRef<Response> client;
         private final List<ADBEntityType> entities;
-    }
 
+    }
     @AllArgsConstructor
     public static class ConcludeDistribution implements Command {
-    }
 
+    }
     @AllArgsConstructor
     public static class BatchDistributed implements Response {
-    }
 
+    }
     @AllArgsConstructor
     public static class DataFullyDistributed implements Response {
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     @NoArgsConstructor
@@ -89,20 +102,8 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
                               @JsonSubTypes.Type(value = ADBDoubleKey.class, name = "Double"),
                       })
         private ADBKey entityPrimaryKey;
+
     }
-
-    private static final float MIN_FACTOR_NEXT_BATCH = 0.3f;
-    private static final int MAX_ROUND_TRIP_TIME = 3000;
-    private static final int VIRTUAL_NODES_FACTOR = 50;
-
-    private final Map<ADBKey, ADBShard.Command> pendingDistributions = new HashMap<>();
-    private final BlockingQueue<Pair<Long, ADBKey>> pendingDistTimer = new LinkedBlockingQueue<>();
-    private final TimerScheduler<Command> timers;
-    private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
-    private ConsistentHash<ActorRef<ADBShard.Command>> consistentHash = ConsistentHash.create(this.shards, VIRTUAL_NODES_FACTOR);
-    private ActorRef<Response> client;
-    private int batchSize = 0;
-    private boolean wrappingUp = false;
 
     protected ADBShardDistributor(ActorContext<Command> actorContext, TimerScheduler<Command> timers) {
         super(actorContext);

@@ -23,6 +23,12 @@ import java.util.Map;
 
 public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.Command> {
 
+    protected final int transactionId;
+    protected final ActorRef<ADBShardInquirer.Command> parent;
+    protected final List<ActorRef<ADBShard.Command>> shards;
+    protected final Map<ActorRef<ADBShard.Command>, ActorRef<ADBQuerySessionHandler.Command>> shardToSessionMapping =
+            new HashMap<>();
+
     public interface Command extends CborSerializable {
     }
 
@@ -31,34 +37,28 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     public static class UpdateShardToHandlerMapping implements ADBQuerySession.Command {
         private ActorRef<ADBShard.Command> shard;
         private ActorRef<ADBQuerySessionHandler.Command> sessionHandler;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     @NoArgsConstructor
     public static class ConcludeTransaction implements Command {
         private ActorRef<ADBShard.Command> shard;
         private int transactionId;
-    }
 
+    }
     @SuperBuilder
     @NoArgsConstructor
-    @AllArgsConstructor
     @Getter
     public abstract static class QueryResults implements Command {
         private int transactionId;
         private int globalShardId;
+
     }
 
     public static ServiceKey<ADBQuerySession.Command> getServiceKeyFor(int transactionId) {
         return ServiceKey.create(ADBQuerySession.Command.class, "ADBQuerySession-" + transactionId);
     }
-
-    protected final int transactionId;
-    protected final ActorRef<ADBShardInquirer.Command> parent;
-    protected final List<ActorRef<ADBShard.Command>> shards;
-    protected final Map<ActorRef<ADBShard.Command>, ActorRef<ADBQuerySessionHandler.Command>> shardToSessionMapping =
-            new HashMap<>();
 
     public ADBQuerySession(ActorContext<Command> context, List<ActorRef<ADBShard.Command>> shards,
                            int transactionId, ActorRef<ADBShardInquirer.Command> parent) {

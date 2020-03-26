@@ -14,6 +14,7 @@ import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
@@ -33,6 +34,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
 
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
     public static class RequestNextShardComparison implements ADBQuerySession.Command {
         private ActorRef<ADBShard.Command> requestingShard;
         private ActorRef<ADBQuerySessionHandler.Command> respondTo;
@@ -49,6 +51,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     @NoArgsConstructor
     @AllArgsConstructor
     @SuperBuilder
+    @Getter
     public static class JoinQueryResults extends ADBQuerySession.QueryResults {
         private List<ADBPair<ADBEntityType, ADBEntityType>> joinResults;
 
@@ -110,7 +113,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
 
     private Behavior<ADBQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
         this.getContext().getLog().info("Received " + results.joinResults.size() + " join result tuples from shard#"
-                + results.getGlobalShardId());
+                + results.getGlobalShardId() + " for transaction #" + results.getTransactionId());
         this.queryResults.addAll(results.joinResults);
         return Behaviors.same();
     }

@@ -24,16 +24,21 @@ import java.util.Comparator;
 
 public class ADBShard extends AbstractBehavior<ADBShard.Command> {
 
-    public interface Command extends CborSerializable {
-    }
+    public final static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data" +
+            "-shard");
+    private final ArrayList<ADBEntityType> data = new ArrayList<>();
+    private int globalId;
 
+    public interface Command extends CborSerializable {
+
+    }
     @Getter
     @AllArgsConstructor
     public static class PersistEntity implements Command {
         private ActorRef<ADBShardDistributor.Command> respondTo;
         private ADBEntityType entity;
-    }
 
+    }
     @Getter
     @AllArgsConstructor
     @Builder
@@ -41,21 +46,16 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         private int transactionId;
         private ActorRef<ADBQuerySession.Command> respondTo;
         private ADBQuery query;
-    }
 
+    }
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
     public static class ConcludeTransfer implements Command {
         private int shardId;
+
     }
 
-
-    public final static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data" +
-            "-shard");
-
-    private final ArrayList<ADBEntityType> data = new ArrayList<>();
-    private int globalId;
 
     protected ADBShard(ActorContext<Command> context) {
         super(context);

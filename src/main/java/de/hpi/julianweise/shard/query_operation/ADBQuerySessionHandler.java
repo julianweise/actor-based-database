@@ -14,6 +14,13 @@ import java.util.List;
 
 public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySessionHandler.Command> {
 
+    protected final ActorRef<ADBQuerySession.Command> client;
+    protected final ADBQuery query;
+    protected final List<ADBEntityType> data;
+    protected final ActorRef<ADBShard.Command> shard;
+    protected final int globalShardId;
+    protected final int transactionId;
+
     public interface Command extends CborSerializable {
     }
 
@@ -21,13 +28,6 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     public static class Execute implements Command {
     }
 
-
-    protected final ActorRef<ADBQuerySession.Command> client;
-    protected final ADBQuery query;
-    protected final List<ADBEntityType> data;
-    protected final ActorRef<ADBShard.Command> shard;
-    protected final int globalShardId;
-    protected final int transactionId;
 
     public ADBQuerySessionHandler(ActorContext<ADBQuerySessionHandler.Command> context,
                                   ActorRef<ADBShard.Command> shard,

@@ -13,6 +13,12 @@ import lombok.Getter;
 
 public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAndDistributeDataProcess.Command> {
 
+    private final ActorRef<CSVParsingActor.Command> csvParser;
+    private final ActorRef<ADBShardDistributor.Command> shardDistributor;
+    private final ActorRef<CSVParsingActor.Response> csvResponseWrapper;
+    private final ActorRef<ADBShardDistributor.Response> shardDistributorWrapper;
+    private ActorRef<ADBMasterSupervisor.Command> client;
+
     public interface Command {
     }
 
@@ -20,25 +26,20 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     @Getter
     public static class WrappedCSVParserResponse implements Command {
         private CSVParsingActor.Response response;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class WrappedShardDistributorResponse implements Command {
         private ADBShardDistributor.Response response;
-    }
 
+    }
     @AllArgsConstructor
     @Getter
     public static class Start implements Command {
         private ActorRef<ADBMasterSupervisor.Command> respondTo;
-    }
 
-    private final ActorRef<CSVParsingActor.Command> csvParser;
-    private final ActorRef<ADBShardDistributor.Command> shardDistributor;
-    private final ActorRef<CSVParsingActor.Response> csvResponseWrapper;
-    private final ActorRef<ADBShardDistributor.Response> shardDistributorWrapper;
-    private ActorRef<ADBMasterSupervisor.Command> client;
+    }
 
 
     protected ADBLoadAndDistributeDataProcess(ActorContext<Command> context,
