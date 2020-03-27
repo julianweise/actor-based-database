@@ -215,6 +215,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectJoinSessionHandlerToStopOnTerminateCommand() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBQuerySessionHandler.Command> joinHandlerProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
@@ -233,6 +234,8 @@ public class ADBJoinQuerySessionHandlerTest {
                 .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.Terminate(TRANSACTION_ID));
+
+        joinHandlerProbe.expectTerminated(joinHandler);
     }
 
 }
