@@ -66,7 +66,6 @@ public class ADBLargeMessageSenderTest {
 
         assertThat(initializationMessage.getType()).isEqualTo(LargeTestMessage.class);
         assertThat(initializationMessage.getTotalSize()).isEqualTo(KRYO_SIZE_OVERHEAD + payload.payload.length);
-        assertThat(initializationMessage.getOriginalSender()).isEqualTo(largeMessageSender.path().parent().name());
         assertThat(initializationMessage.getRespondTo()).isEqualTo(largeMessageSender);
     }
 

@@ -34,7 +34,6 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
     @NoArgsConstructor
     @Getter
     public static class InitializeTransfer implements Command, CborSerializable {
-        private String originalSender;
         private ActorRef<ADBLargeMessageSender.Command> respondTo;
         private int totalSize;
         private Class<? extends ADBLargeMessageSender.LargeMessage> type;
@@ -80,20 +79,20 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
     }
 
     private Behavior<Command> handleReceiveNextChunk(ReceiveChunk command) throws NotSerializableException {
-        System.arraycopy(command.chunk, 0, this.payload, this.payloadPointer, command.chunk.length);
-        this.payloadPointer += command.chunk.length;
+        System.arraycopy(command.getChunk(), 0, this.payload, this.payloadPointer, command.getChunk().length);
+        this.payloadPointer += command.getChunk().length;
         return this.concludeTransfer(command);
     }
 
     private Behavior<Command> concludeTransfer(ReceiveChunk command) throws NotSerializableException {
-        if (!command.lastChunk) {
+        if (!command.isLastChunk()) {
             this.sender.tell(new ADBLargeMessageSender.SendNextChunk(this.getContext().getSelf()));
             return Behaviors.same();
         }
         this.getContext().getLog().info("Received all data - Terminating");
         Serializer serializer = serialization.serializerFor(this.messageType);
         Object message = serializer.fromBinary(this.payload, this.messageType);
-        this.originalReceiver.tell((ADBLargeMessageActor.Command) this.messageType.cast(message));
+        this.originalReceiver.tell((ADBLargeMessageSender.LargeMessage) this.messageType.cast(message));
         return Behaviors.stopped();
     }
 }

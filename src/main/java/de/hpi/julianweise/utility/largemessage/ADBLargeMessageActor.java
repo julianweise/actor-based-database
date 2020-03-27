@@ -36,8 +36,7 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
     protected Behavior<Command> handleStartLargeMessageTransfer(ADBLargeMessageReceiver.InitializeTransfer command) {
         this.getContext().spawn(ADBLargeMessageReceiverFactory.createDefault(this.getContext().getSelf(),
                 command.getType(), command.getRespondTo()),
-                ADBLargeMessageReceiverFactory.receiverName(command.getOriginalSender(), this.getContext().getSelf(),
-                        command.getType()))
+                ADBLargeMessageReceiverFactory.receiverName(this.getContext().getSelf(), command.getType()))
             .tell(command);
         return Behaviors.same();
     }

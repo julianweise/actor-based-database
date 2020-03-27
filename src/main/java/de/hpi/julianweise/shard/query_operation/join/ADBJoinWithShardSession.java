@@ -39,7 +39,7 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
-    public static class HandleJoinShardsResults implements ADBLargeMessageSender.LargeMessage, Command{
+    public static class HandleJoinShardsResults implements ADBLargeMessageSender.LargeMessage, Command {
         private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
     }
 

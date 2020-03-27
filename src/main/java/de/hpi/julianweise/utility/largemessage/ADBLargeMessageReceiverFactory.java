@@ -15,10 +15,9 @@ public class ADBLargeMessageReceiverFactory {
         return Behaviors.setup(context -> new ADBLargeMessageReceiver(context, originalReceiver, messageType, sender));
     }
 
-    public static String receiverName(String sender,
-                                    ActorRef<ADBLargeMessageActor.Command> receiver,
+    public static String receiverName(ActorRef<ADBLargeMessageActor.Command> receiver,
                                     Class<? extends ADBLargeMessageSender.LargeMessage> payLoad) {
-        return sender + "-::" + payLoad.getSimpleName() + "::-" + receiver.path().name() + "@ADBLargeMessageReceiver" +
+        return  "Unknown-::" + payLoad.getSimpleName() + "::-" + receiver.path().name() + "@ADBLargeMessageReceiver" +
                 "-" + UUID.randomUUID().toString();
     }
 

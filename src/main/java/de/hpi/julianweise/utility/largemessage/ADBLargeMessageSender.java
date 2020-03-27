@@ -28,7 +28,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     private final int chunkSize;
     private final akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor;
 
-    public interface LargeMessage extends KryoSerializable {
+    public interface LargeMessage extends KryoSerializable, ADBLargeMessageActor.Command {
     }
 
     public interface Command extends CborSerializable {
@@ -82,7 +82,6 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
 
     private Behavior<Command> handleStartTransfer(StartTransfer command) {
         command.getReceiver().tell(new ADBLargeMessageReceiver.InitializeTransfer(
-                        this.getContext().classicActorContext().parent().path().name(),
                         this.getContext().getSelf(), this.payload.length, command.getType()),
                 this.getContext().classicActorContext().self());
         return Behaviors.same();
