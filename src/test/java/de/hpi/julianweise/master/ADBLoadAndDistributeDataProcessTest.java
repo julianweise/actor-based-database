@@ -140,6 +140,7 @@ public class ADBLoadAndDistributeDataProcessTest {
     public void testDistributorIsStoppedAfterSuccessfulDistribution() {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
         TestProbe<ADBShardDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBLoadAndDistributeDataProcess.Command> processUnderTestProbe = testKit.createTestProbe();
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
@@ -159,6 +160,7 @@ public class ADBLoadAndDistributeDataProcessTest {
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
 
         distributorTestProbe.expectNoMessage();
+        processUnderTestProbe.expectTerminated(processUnderTest);
     }
 
 

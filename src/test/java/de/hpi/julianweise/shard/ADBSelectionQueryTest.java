@@ -1,6 +1,5 @@
 package de.hpi.julianweise.shard;
 
-import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import org.junit.Test;
@@ -32,7 +31,7 @@ public class ADBSelectionQueryTest {
     public void queryTermStringRepresentation() {
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm.builder()
                                                           .fieldName("aInteger")
-                                                          .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
+                                                          .operator(EQUALITY)
                                                           .value(2)
                                                           .build();
 
@@ -46,7 +45,7 @@ public class ADBSelectionQueryTest {
     public void queryStringRepresentation() {
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm.builder()
                                                           .fieldName("aInteger")
-                                                          .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
+                                                          .operator(EQUALITY)
                                                           .value(2)
                                                           .build();
 
