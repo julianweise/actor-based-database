@@ -22,14 +22,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBLargeMessageReceiverTest {
 
+    @ClassRule
+    public static TestKitJunitResource testKit = new TestKitJunitResource();
+
     @NoArgsConstructor
     @AllArgsConstructor
     private static class LargeTestMessage implements ADBLargeMessageSender.LargeMessage {
-        byte[] payload;
-    }
+        private byte[] payload;
 
-    @ClassRule
-    public static TestKitJunitResource testKit = new TestKitJunitResource();
+    }
 
     @After
     public void cleanup() {

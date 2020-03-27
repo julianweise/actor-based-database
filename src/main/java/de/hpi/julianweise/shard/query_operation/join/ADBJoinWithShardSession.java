@@ -10,7 +10,6 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.CborSerializable;
-import de.hpi.julianweise.utility.KryoSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
@@ -56,9 +55,9 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     @Override
     public Receive<Command> createReceive() {
         return this.createReceiveBuilder()
-                .onMessage(RegisterHandler.class, this::handleRegisterHandler)
-                .onMessage(HandleJoinShardsResults.class, this::handleJoinShardsResults)
-                .build();
+                   .onMessage(RegisterHandler.class, this::handleRegisterHandler)
+                   .onMessage(HandleJoinShardsResults.class, this::handleJoinShardsResults)
+                   .build();
     }
 
     private Behavior<Command> handleRegisterHandler(RegisterHandler command) {

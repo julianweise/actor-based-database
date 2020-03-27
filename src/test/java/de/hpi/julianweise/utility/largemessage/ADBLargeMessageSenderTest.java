@@ -21,15 +21,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBLargeMessageSenderTest {
 
-    private int KRYO_SIZE_OVERHEAD = 89;
+    @ClassRule
+    public static TestKitJunitResource testKit = new TestKitJunitResource();
+    private static int KRYO_SIZE_OVERHEAD = 89;
 
     @AllArgsConstructor
     private static class LargeTestMessage implements ADBLargeMessageSender.LargeMessage {
-        byte[] payload;
-    }
+        private byte[] payload;
 
-    @ClassRule
-    public static TestKitJunitResource testKit = new TestKitJunitResource();
+    }
 
     @After
     public void cleanup() {
