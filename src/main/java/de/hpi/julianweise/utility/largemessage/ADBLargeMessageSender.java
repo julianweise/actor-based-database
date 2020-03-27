@@ -11,11 +11,12 @@ import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
 import de.hpi.julianweise.utility.CborSerializable;
+import de.hpi.julianweise.utility.KryoSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
 
+import java.io.NotSerializableException;
 import java.util.Arrays;
 
 
@@ -26,25 +27,24 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     private final byte[] payload;
     private final int chunkSize;
     private final akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor;
-    private final String sessionName;
 
-    public interface LargeMessage extends CborSerializable {
-
+    public interface LargeMessage extends KryoSerializable {
     }
+
     public interface Command extends CborSerializable {
-
     }
+
     public interface Response extends CborSerializable {
-
     }
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
     public static class StartTransfer implements Command {
         private ActorRef receiver;
         private Class<? extends LargeMessage> type;
-
     }
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
@@ -58,20 +58,18 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
 
     }
 
-    private static int getChunkSize(Settings settings) {
+    public static int getChunkSize(Settings settings) {
         Long maxMessageSize = settings.config().getBytes("akka.remote.artery.advanced.maximum-frame-size");
-        return Math.round(maxMessageSize * 0.7f);
+        return Math.round(maxMessageSize * 0.9f);
     }
 
-    public ADBLargeMessageSender(ActorContext<Command> context, Object serializableMessage,
-                                 akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor,
-                                 String sessionName) {
+    public ADBLargeMessageSender(ActorContext<Command> context, LargeMessage serializableMessage,
+                                 akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor) throws NotSerializableException {
         super(context);
         this.serialization = SerializationExtension.get(this.getContext().getSystem());
         this.payload = this.serializePayload(serializableMessage);
         this.chunkSize = ADBLargeMessageSender.getChunkSize(context.getSystem().settings());
         this.supervisor = supervisor;
-        this.sessionName = sessionName;
     }
 
     @Override
@@ -83,16 +81,16 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     }
 
     private Behavior<Command> handleStartTransfer(StartTransfer command) {
-        command.receiver.tell(new ADBLargeMessageReceiver.InitializeTransfer(
+        command.getReceiver().tell(new ADBLargeMessageReceiver.InitializeTransfer(
                         this.getContext().classicActorContext().parent().path().name(),
-                        this.getContext().getSelf(), this.payload.length, command.type, this.sessionName),
+                        this.getContext().getSelf(), this.payload.length, command.getType()),
                 this.getContext().classicActorContext().self());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleSendNextChunk(SendNextChunk command) {
         int end = Math.min(payload.length, this.dataSent + this.chunkSize);
-        command.respondTo.tell(new ADBLargeMessageReceiver.ReceiveChunk(
+        command.getRespondTo().tell(new ADBLargeMessageReceiver.ReceiveChunk(
                 Arrays.copyOfRange(this.payload, this.dataSent, end),
                 end >= payload.length
         ));
@@ -111,8 +109,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
         return Behaviors.stopped();
     }
 
-    @SneakyThrows
-    private byte[] serializePayload(Object payload) {
+    private byte[] serializePayload(LargeMessage payload) throws NotSerializableException {
         Serializer serializer = serialization.serializerFor(payload.getClass());
         return serializer.toBinary(payload);
     }

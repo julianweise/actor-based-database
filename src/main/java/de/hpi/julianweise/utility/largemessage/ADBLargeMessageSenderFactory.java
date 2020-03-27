@@ -6,16 +6,16 @@ import akka.actor.typed.javadsl.Behaviors;
 
 public class ADBLargeMessageSenderFactory {
 
-    public static Behavior<ADBLargeMessageSender.Command> createDefault(Object message,
-                                                                        ActorRef<ADBLargeMessageSender.Response> respondTo,
-                                                                        String sessionName) {
-        return Behaviors.setup(context -> new ADBLargeMessageSender(context, message, respondTo, sessionName));
+    public static Behavior<ADBLargeMessageSender.Command> createDefault(ADBLargeMessageSender.LargeMessage message,
+                                                                        ActorRef<ADBLargeMessageSender.Response> respondTo) {
+        return Behaviors.setup(context -> new ADBLargeMessageSender(context, message, respondTo));
     }
 
     public static String senderName(ActorRef<ADBLargeMessageActor.Command> sender,
                                     ActorRef<ADBLargeMessageActor.Command> receiver,
-                                    Class<? extends ADBLargeMessageSender.LargeMessage> payLoad,
-                                    String transferSessionName) {
-        return "ADBLargeMessageSender@" + sender.path().name() + "-::" + payLoad.getSimpleName() + ":" + transferSessionName + "::-" + receiver.path().name();
+                                    Class<? extends ADBLargeMessageSender.LargeMessage> payLoadMessage,
+                                    String payload) {
+        return "ADBLargeMessageSender@" + sender.path().name() + "-::" + payLoadMessage.getSimpleName() + ":" + payload +
+                "::-" + receiver.path().name();
     }
 }

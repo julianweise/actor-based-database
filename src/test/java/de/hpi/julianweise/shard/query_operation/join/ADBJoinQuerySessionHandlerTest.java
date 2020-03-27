@@ -162,7 +162,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
                 .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
 
-        joinHandler.tell(new ADBJoinWithShardSession.HandleJoinShardsResults(Collections.singleton(new ADBPair<>(0,
+        joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singleton(new ADBPair<>(0,
                 remoteData.get(0)))));
 
         ADBJoinQuerySession.RequestNextShardComparison request =

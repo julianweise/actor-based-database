@@ -6,29 +6,31 @@ import de.hpi.julianweise.domain.key.ADBKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 @Getter
 public class SFEmployeeSalary extends ADBEntityType {
 
-    private final String yearType;
-    private final int year;
-    private final int organizationGroupCode;
-    private final String departmentCode;
-    private final String unionCode;
-    private final String jobFamilyCode;
-    private final String jobCode;
-    private final int employeeIdentifier;
-    private final double salaries;
-    private final double overtime;
-    private final double otherSalaries;
-    private final double totalSalary;
-    private final double retirement;
-    private final double health;
-    private final double otherBenefits;
-    private final double totalBenefits;
-    private final double totalCompensation;
+    private String yearType;
+    private int year;
+    private int organizationGroupCode;
+    private String departmentCode;
+    private String unionCode;
+    private String jobFamilyCode;
+    private String jobCode;
+    private int employeeIdentifier;
+    private double salaries;
+    private double overtime;
+    private double otherSalaries;
+    private double totalSalary;
+    private double retirement;
+    private double health;
+    private double otherBenefits;
+    private double totalBenefits;
+    private double totalCompensation;
 
     @Override
     public ADBKey getPrimaryKey() {

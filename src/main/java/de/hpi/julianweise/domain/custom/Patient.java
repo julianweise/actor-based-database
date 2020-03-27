@@ -10,16 +10,16 @@ import lombok.Getter;
 @Getter
 public class Patient extends ADBEntityType {
 
-    private final int ausgleichsjahr;
-    private final int berichtsjahr;
-    private final int psid2;
-    private final String psid;
-    private final boolean kvNrKennzeichen;
-    private final int geburtsjahr;
-    private final char geschlecht;
-    private final int versichertenTage;
-    private final boolean verstorben;
-    private final int versichertentageKrankenGeld;
+    private int ausgleichsjahr;
+    private int berichtsjahr;
+    private int psid2;
+    private String psid;
+    private boolean kvNrKennzeichen;
+    private int geburtsjahr;
+    private char geschlecht;
+    private int versichertenTage;
+    private boolean verstorben;
+    private int versichertentageKrankenGeld;
 
     @Override
     public ADBKey getPrimaryKey() {

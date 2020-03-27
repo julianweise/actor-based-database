@@ -129,10 +129,9 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                         .map(pair -> new ADBPair<>(pair.getKey(), this.data.get(pair.getValue())))
                         .collect(Collectors.toSet()));
 
-        this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping,
-                "JoinAttributeResults"),
+        this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
                 ADBLargeMessageSenderFactory.senderName(this.getContext().getSelf(), this.session, message.getClass()
-                        , "JoinAttributeResults"))
+                        , this.joinCandidates.size() + ""))
             .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.session), message.getClass()));
         return Behaviors.same();
     }

@@ -10,6 +10,7 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.CborSerializable;
+import de.hpi.julianweise.utility.KryoSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
@@ -32,16 +33,14 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     @NoArgsConstructor
     @Getter
     public static class RegisterHandler implements Command, CborSerializable {
-
         private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
-
     }
+
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
-    public static class HandleJoinShardsResults implements Command, ADBJoinQuerySessionHandler.Command, ADBLargeMessageSender.LargeMessage {
+    public static class HandleJoinShardsResults implements ADBLargeMessageSender.LargeMessage, Command{
         private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
-
     }
 
 
@@ -86,8 +85,7 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
                 .sourceAttributes(this.sortedJoinAttributes.get(attributeName).getAllWithOriginalIndex())
                 .build();
 
-        this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping,
-                attributeName),
+        this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
                 ADBLargeMessageSenderFactory.senderName(this.getContext().getSelf(), this.sessionHandler,
                         message.getClass(), attributeName))
             .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.sessionHandler), message.getClass()));
@@ -95,7 +93,7 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleJoinShardsResults(HandleJoinShardsResults command) {
-        this.supervisor.tell(command);
+        this.supervisor.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(command.getJoinCandidates()));
         return Behaviors.stopped();
     }
 

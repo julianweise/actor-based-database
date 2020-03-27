@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -35,10 +36,8 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @AllArgsConstructor
     @Getter
     public static class JoinWithShard implements ADBQuerySessionHandler.Command {
-
         private ActorRef<ADBQuerySessionHandler.Command> counterpart;
         private int globalShardIndex;
-
     }
 
     @NoArgsConstructor
@@ -46,7 +45,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @Getter
     public static class NoMoreShardsToJoinWith implements ADBQuerySessionHandler.Command {
         private int transactionId;
-
     }
 
     @NoArgsConstructor
@@ -55,7 +53,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     public static class OpenNewJoinWithShardSession implements ADBQuerySessionHandler.Command {
         private ActorRef<ADBJoinWithShardSession.Command> session;
         private int shardId;
-
     }
 
     @NoArgsConstructor
@@ -63,7 +60,13 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @Getter
     public static class Terminate implements Command {
         private int transactionId;
+    }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class HandleJoinShardResults implements Command {
+        private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
     }
 
     public ADBJoinQuerySessionHandler(ActorContext<Command> context,
@@ -80,7 +83,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                 .onMessage(OpenNewJoinWithShardSession.class, this::handleOpenNewJoinWithShardSession)
                 .onMessage(Execute.class, this::handleExecute)
                 .onMessage(JoinWithShard.class, this::handleJoinWithShard)
-                .onMessage(ADBJoinWithShardSession.HandleJoinShardsResults.class, this::handleJoinWithShardResults)
+                .onMessage(HandleJoinShardResults.class, this::handleJoinWithShardResults)
                 .onMessage(NoMoreShardsToJoinWith.class, this::handleNoMoreShardToJoinWith)
                 .onMessage(Terminate.class, this::handleTerminate)
                 .build();
@@ -117,7 +120,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleJoinWithShardResults(ADBJoinWithShardSession.HandleJoinShardsResults command) {
+    private Behavior<Command> handleJoinWithShardResults(HandleJoinShardResults command) {
         this.getContext().getLog().info("Generated " + command.getJoinCandidates().size() + " join candidates. " +
                 "Sending to master ...");
         this.client.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
