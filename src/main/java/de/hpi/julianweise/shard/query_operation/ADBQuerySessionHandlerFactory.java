@@ -6,7 +6,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
 
