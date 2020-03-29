@@ -10,6 +10,7 @@ import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -64,6 +65,8 @@ public class ADBShardTest {
 
         TestProbe<ADBShardDistributor.Command> persistProbe = testKit.createTestProbe();
         TestProbe<ADBQuerySession.Command> querySessionProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
+
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), entityToPersist));
 
         persistProbe.receiveMessage();
@@ -76,7 +79,8 @@ public class ADBShardTest {
                 .value(1)
                 .build();
         query.addTerm(term);
-        shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(), query));
+        shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(),
+                initializeTransferTestProbe.ref(), query));
 
         querySessionProbe.receiveMessage();
         ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
@@ -99,6 +103,8 @@ public class ADBShardTest {
 
         TestProbe<ADBShardDistributor.Command> persistProbe = testKit.createTestProbe();
         TestProbe<ADBQuerySession.Command> querySessionProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
+
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), entityToPersist));
         persistProbe.receiveMessage();
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), entityToPersist2));
@@ -112,7 +118,8 @@ public class ADBShardTest {
                 .value(1.01f)
                 .build();
         query.addTerm(term);
-        shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(), query));
+        shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(),
+                initializeTransferTestProbe.ref(), query));
 
         querySessionProbe.receiveMessage();
         ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();
@@ -141,6 +148,8 @@ public class ADBShardTest {
 
         TestProbe<ADBShardDistributor.Command> persistProbe = testKit.createTestProbe();
         TestProbe<ADBQuerySession.Command> querySessionProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
+
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), entityToPersist2));
         persistProbe.receiveMessage();
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), entityToPersist));
@@ -155,7 +164,8 @@ public class ADBShardTest {
                 .value(3)
                 .build();
         query.addTerm(term);
-        shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(), query));
+        shard.tell(new ADBShard.QueryEntities(transactionId, querySessionProbe.ref(),
+                initializeTransferTestProbe.ref(), query));
 
         querySessionProbe.receiveMessage();
         ADBSelectQuerySession.SelectQueryResults results = (ADBSelectQuerySession.SelectQueryResults) querySessionProbe.receiveMessage();

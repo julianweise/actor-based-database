@@ -20,7 +20,7 @@ import java.io.NotSerializableException;
 public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageReceiver.Command> {
 
     private final Class<?> messageType;
-    private final ActorRef<ADBLargeMessageActor.Command> originalReceiver;
+    private final akka.actor.ActorRef originalReceiver;
     private final ActorRef<ADBLargeMessageSender.Command> sender;
 
     private final Serialization serialization;
@@ -48,7 +48,7 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
     }
 
     public ADBLargeMessageReceiver(ActorContext<Command> context,
-                                   ActorRef<ADBLargeMessageActor.Command> originalReceiver,
+                                   akka.actor.ActorRef originalReceiver,
                                    Class<? extends ADBLargeMessageSender.LargeMessage> messageType,
                                    ActorRef<ADBLargeMessageSender.Command> sender) {
         super(context);
@@ -92,7 +92,7 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
         this.getContext().getLog().info("Received all data - Terminating");
         Serializer serializer = serialization.serializerFor(this.messageType);
         Object message = serializer.fromBinary(this.payload, this.messageType);
-        this.originalReceiver.tell((ADBLargeMessageSender.LargeMessage) this.messageType.cast(message));
+        this.originalReceiver.tell(this.messageType.cast(message), akka.actor.ActorRef.noSender());
         return Behaviors.stopped();
     }
 }

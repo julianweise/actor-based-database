@@ -12,6 +12,7 @@ import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
+import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,14 +36,14 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class RequestNextShardComparison implements ADBQuerySession.Command {
+    public static class RequestNextShardComparison implements ADBQuerySession.Command, CborSerializable {
         private ActorRef<ADBShard.Command> requestingShard;
         private ActorRef<ADBQuerySessionHandler.Command> respondTo;
 
     }
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TriggerNextShardComparison implements ADBQuerySession.Command {
+    public static class TriggerNextShardComparison implements ADBQuerySession.Command, CborSerializable {
         private ActorRef<ADBShard.Command> requestingShard;
         private ActorRef<ADBShard.Command> nextJoiningShard;
         private ActorRef<ADBQuerySessionHandler.Command> respondTo;
@@ -54,7 +55,6 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     @Getter
     public static class JoinQueryResults extends ADBQuerySession.QueryResults {
         private List<ADBPair<ADBEntityType, ADBEntityType>> joinResults;
-
     }
 
     public ADBJoinQuerySession(ActorContext<ADBQuerySession.Command> context,
@@ -68,6 +68,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
         this.shards.forEach(shard -> shard.tell(ADBShard.QueryEntities.builder()
                                                                       .transactionId(transactionId)
                                                                       .query(query)
+                                                                      .clientLargeMessageReceiver(this.initializeTransferWrapper)
                                                                       .respondTo(this.getContext().getSelf())
                                                                       .build()));
     }

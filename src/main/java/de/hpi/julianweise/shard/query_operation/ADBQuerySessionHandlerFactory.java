@@ -9,6 +9,7 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 
 import java.util.List;
 
@@ -31,7 +32,8 @@ public class ADBQuerySessionHandlerFactory {
                                                                                    final List<ADBEntityType> data,
                                                                                    int globalShardId) {
         return Behaviors.setup(context ->
-                new ADBSelectQuerySessionHandler(context, shard, command.getRespondTo(), command.getTransactionId(),
+                new ADBSelectQuerySessionHandler(context, shard, command.getRespondTo(),
+                        command.getClientLargeMessageReceiver(), command.getTransactionId(),
                         (ADBSelectionQuery) command.getQuery(), data, globalShardId));
     }
 
@@ -40,7 +42,8 @@ public class ADBQuerySessionHandlerFactory {
                                                                               final List<ADBEntityType> data,
                                                                               int globalShardId) {
         return Behaviors.setup(context ->
-                new ADBJoinQuerySessionHandler(context, shard, command.getRespondTo(), command.getTransactionId(),
+                new ADBJoinQuerySessionHandler(context, shard, command.getRespondTo(),
+                        command.getClientLargeMessageReceiver(), command.getTransactionId(),
                         (ADBJoinQuery) command.getQuery(), data, globalShardId));
     }
 

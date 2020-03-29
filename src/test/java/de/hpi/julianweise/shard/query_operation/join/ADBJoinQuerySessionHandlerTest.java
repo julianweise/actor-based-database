@@ -13,12 +13,14 @@ import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandlerFactory;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +50,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectRequestForNextShardComparisonAfterExecuteCommand() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
@@ -59,6 +62,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ADBShard.QueryEntities queryCommand = ADBShard.QueryEntities.builder()
                                                                     .query(joinQuery)
                                                                     .respondTo(querySession.ref())
+                                                                    .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                     .transactionId(TRANSACTION_ID)
                                                                     .build();
 
@@ -79,6 +83,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
         TestProbe<ADBQuerySessionHandler.Command> otherShardJoinHandler = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
@@ -90,6 +95,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ADBShard.QueryEntities queryCommand = ADBShard.QueryEntities.builder()
                                                                     .query(joinQuery)
                                                                     .respondTo(querySession.ref())
+                                                                    .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                     .transactionId(TRANSACTION_ID)
                                                                     .build();
 
@@ -110,6 +116,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
         TestProbe<ADBJoinWithShardSession.Command> joinWithShardSession = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
@@ -121,6 +128,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ADBShard.QueryEntities queryCommand = ADBShard.QueryEntities.builder()
                                                                     .query(joinQuery)
                                                                     .respondTo(querySession.ref())
+                                                                    .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                     .transactionId(TRANSACTION_ID)
                                                                     .build();
 
@@ -141,6 +149,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectHandlerToRequestNextShardComparisonAndDeliverResults() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> remoteData = new ArrayList<>();
         remoteData.add(new TestEntity(3, "Test", 1f, true, 1.1, 'a'));
@@ -156,6 +165,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ADBShard.QueryEntities queryCommand = ADBShard.QueryEntities.builder()
                                                                     .query(joinQuery)
                                                                     .respondTo(querySession.ref())
+                                                                    .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                     .transactionId(TRANSACTION_ID)
                                                                     .build();
 
@@ -171,20 +181,17 @@ public class ADBJoinQuerySessionHandlerTest {
         assertThat(request.getRequestingShard()).isEqualTo(shard.ref());
         assertThat(request.getRespondTo()).isEqualTo(joinHandler);
 
-        ADBJoinQuerySession.JoinQueryResults results =
-                querySession.expectMessageClass(ADBJoinQuerySession.JoinQueryResults.class);
+        ADBLargeMessageReceiver.InitializeTransfer initializeTransfer =
+                initializeTransferTestProbe.expectMessageClass(ADBLargeMessageReceiver.InitializeTransfer.class);
 
-        assertThat(results.getGlobalShardId()).isEqualTo(GLOBAL_SHARD_ID);
-        assertThat(results.getTransactionId()).isEqualTo(TRANSACTION_ID);
-        assertThat(results.getJoinResults().size()).isEqualTo(1);
-        assertThat(results.getJoinResults().get(0).getKey()).isEqualTo(localData.get(0));
-        assertThat(results.getJoinResults().get(0).getValue()).isEqualTo(remoteData.get(0));
+        assertThat(initializeTransfer.getType()).isEqualTo(ADBJoinQuerySession.JoinQueryResults.class);
     }
 
     @Test
     public void expectConcludeTransactionForNoMoreShardsToJoinWith() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
@@ -196,6 +203,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ADBShard.QueryEntities queryCommand = ADBShard.QueryEntities.builder()
                                                                     .query(joinQuery)
                                                                     .respondTo(querySession.ref())
+                                                                    .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                     .transactionId(TRANSACTION_ID)
                                                                     .build();
 
@@ -216,6 +224,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
         TestProbe<ADBQuerySessionHandler.Command> joinHandlerProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
@@ -227,6 +236,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ADBShard.QueryEntities queryCommand = ADBShard.QueryEntities.builder()
                                                                     .query(joinQuery)
                                                                     .respondTo(querySession.ref())
+                                                                    .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                     .transactionId(TRANSACTION_ID)
                                                                     .build();
 

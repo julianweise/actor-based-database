@@ -11,26 +11,22 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
-import de.hpi.julianweise.settings.Settings;
-import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     private Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
-    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -71,14 +67,18 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     public ADBJoinQuerySessionHandler(ActorContext<Command> context,
                                       ActorRef<ADBShard.Command> shard,
-                                      ActorRef<ADBQuerySession.Command> client, int transactionId,
-                                      ADBJoinQuery query, final List<ADBEntityType> data, int globalShardId) {
-        super(context, shard, client, transactionId, query, data, globalShardId);
+                                      ActorRef<ADBQuerySession.Command> client,
+                                      ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
+                                      int transactionId,
+                                      ADBJoinQuery query,
+                                      final List<ADBEntityType> data,
+                                      int globalShardId) {
+        super(context, shard, client, clientLargeMessageReceiver, transactionId, query, data, globalShardId);
     }
 
     @Override
     public Receive<Command> createReceive() {
-        return newReceiveBuilder()
+        return this.createReceiveBuilder()
                 .onSignal(PostStop.class, this::handlePostStop)
                 .onMessage(OpenNewJoinWithShardSession.class, this::handleOpenNewJoinWithShardSession)
                 .onMessage(Execute.class, this::handleExecute)
@@ -124,20 +124,19 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         this.getContext().getLog().info("Generated " + command.getJoinCandidates().size() + " join candidates. " +
                 "Sending to master ...");
         this.client.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
-        final AtomicInteger counter = new AtomicInteger();
-        Collection<List<ADBPair<ADBEntityType, ADBEntityType>>> results =
-                command.getJoinCandidates()
-                       .stream().map(pair -> new ADBPair<>(this.data.get(pair.getKey()), pair.getValue()))
-                       .collect(Collectors.groupingBy(it -> counter.getAndIncrement() / Math.max(1, (
-                               this.settings.QUERY_RESPONSE_CHUNK_SIZE / 3))))
-                       .values();
+        List<ADBPair<ADBEntityType, ADBEntityType>> results = command
+                .getJoinCandidates()
+                .stream()
+                .map(pair -> new ADBPair<>(this.data.get(pair.getKey()), pair.getValue()))
+                .collect(Collectors.toList());
 
-        results.forEach(chunk -> this.client.tell(ADBJoinQuerySession.JoinQueryResults
+        this.sendToSession(ADBJoinQuerySession.JoinQueryResults
                 .builder()
                 .transactionId(this.transactionId)
                 .globalShardId(this.globalShardId)
-                .joinResults(chunk)
-                .build()));
+                .joinResults(results)
+                .build(), results.size());
+
         return Behaviors.same();
     }
 

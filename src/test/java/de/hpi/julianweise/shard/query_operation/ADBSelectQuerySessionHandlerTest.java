@@ -4,13 +4,14 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
-import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -53,6 +54,7 @@ public class ADBSelectQuerySessionHandlerTest {
         int transactionId = 1;
         TestProbe<ADBQuerySession.Command> responseProbe = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm
@@ -64,7 +66,8 @@ public class ADBSelectQuerySessionHandlerTest {
         query.addTerm(term);
 
 
-        ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
+        ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(),
+                initializeTransferTestProbe.ref(), query);
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
                 shardProbe.ref(), new ArrayList<>(), GLOBAL_SHARD_ID);
@@ -84,6 +87,8 @@ public class ADBSelectQuerySessionHandlerTest {
         int transactionId = 1;
         TestProbe<ADBQuerySession.Command> responseProbe = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
+
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm
@@ -94,7 +99,8 @@ public class ADBSelectQuerySessionHandlerTest {
                 .build();
         query.addTerm(term);
 
-        ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
+        ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(),
+                initializeTransferTestProbe.ref(), query);
 
         List<ADBEntityType> dataset = new ArrayList<>();
         dataset.add(new TestEntity(1, "Test", 1f, true, 1.01, 'w'));
@@ -122,6 +128,8 @@ public class ADBSelectQuerySessionHandlerTest {
         int transactionId = 1;
         TestProbe<ADBQuerySession.Command> responseProbe = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardProbe = testKit.createTestProbe();
+        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
+
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm
@@ -132,7 +140,8 @@ public class ADBSelectQuerySessionHandlerTest {
                 .build();
         query.addTerm(term);
 
-        ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(), query);
+        ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(),
+                initializeTransferTestProbe.ref(), query);
 
         List<ADBEntityType> dataset = new ArrayList<>();
         dataset.add(new TestEntity(1, "Test", 1f, true, 1.01, 'w'));

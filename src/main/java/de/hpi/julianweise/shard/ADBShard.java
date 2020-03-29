@@ -14,6 +14,7 @@ import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandlerFactory;
 import de.hpi.julianweise.utility.CborSerializable;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,6 +46,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     public static class QueryEntities implements Command {
         private int transactionId;
         private ActorRef<ADBQuerySession.Command> respondTo;
+        private ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver;
         private ADBQuery query;
 
     }

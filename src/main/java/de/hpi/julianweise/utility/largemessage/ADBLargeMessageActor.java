@@ -18,7 +18,6 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
     @Getter
     public static class WrappedLargeMessageSenderResponse implements Command {
         private ADBLargeMessageSender.Response response;
-
     }
 
     public ADBLargeMessageActor(ActorContext<Command> context) {
@@ -34,7 +33,7 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
     }
 
     protected Behavior<Command> handleStartLargeMessageTransfer(ADBLargeMessageReceiver.InitializeTransfer command) {
-        this.getContext().spawn(ADBLargeMessageReceiverFactory.createDefault(this.getContext().getSelf(),
+        this.getContext().spawn(ADBLargeMessageReceiverFactory.createDefault(this.getContext().classicActorContext().self(),
                 command.getType(), command.getRespondTo()),
                 ADBLargeMessageReceiverFactory.receiverName(this.getContext().getSelf(), command.getType()))
             .tell(command);

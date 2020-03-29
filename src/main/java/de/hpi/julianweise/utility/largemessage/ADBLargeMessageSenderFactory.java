@@ -11,8 +11,8 @@ public class ADBLargeMessageSenderFactory {
         return Behaviors.setup(context -> new ADBLargeMessageSender(context, message, respondTo));
     }
 
-    public static String senderName(ActorRef<ADBLargeMessageActor.Command> sender,
-                                    ActorRef<ADBLargeMessageActor.Command> receiver,
+    public static String senderName(ActorRef<?> sender,
+                                    ActorRef<?> receiver,
                                     Class<? extends ADBLargeMessageSender.LargeMessage> payLoadMessage,
                                     String payload) {
         return "ADBLargeMessageSender@" + sender.path().name() + "-::" + payLoadMessage.getSimpleName() + ":" + payload +
