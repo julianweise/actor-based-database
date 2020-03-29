@@ -16,6 +16,8 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.Duration;
+
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -168,12 +170,12 @@ public class ADBShardInquirerTest {
                                                   .respondTo(resultProbe.ref())
                                                   .build());
 
-        ADBShardInquirer.Response results = resultProbe.receiveMessage();
-        ADBShardInquirer.AllQueryResults typedResults = (ADBShardInquirer.AllQueryResults) results;
+        ADBShardInquirer.AllQueryResults results =
+                resultProbe.expectMessageClass(ADBShardInquirer.AllQueryResults.class);
 
-        assertThat(typedResults.getResults().length).isOne();
-        assertThat(typedResults.getResults()[0]).isEqualTo(testEntity);
-        assertThat(typedResults.getRequestId()).isEqualTo(requestId);
+        assertThat(results.getResults().length).isOne();
+        assertThat(((TestEntity) results.getResults()[0]).getPrimaryKey()).isEqualTo(testEntity.getPrimaryKey());
+        assertThat(results.getRequestId()).isEqualTo(requestId);
     }
 
     @Test

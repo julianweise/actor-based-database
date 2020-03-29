@@ -44,7 +44,7 @@ public class ADBQuerySessionFactory {
         if (query instanceof ADBJoinQuery) {
             return "ADBJoinQuerySession" + "-for-" + transactionId;
         }
-        else if (query instanceof ADBSelectQuerySession) {
+        else if (query instanceof ADBSelectionQuery) {
             return "ADBSelectQuerySession" + "-for-" + transactionId;
         }
         return "UnspecifiedQuerySession" + "-for-" + transactionId;

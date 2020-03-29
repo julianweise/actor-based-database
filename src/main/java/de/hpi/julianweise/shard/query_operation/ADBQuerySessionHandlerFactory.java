@@ -50,7 +50,7 @@ public class ADBQuerySessionHandlerFactory {
         if (command.getQuery() instanceof ADBJoinQuery) {
             return "ADBJoinQuerySessionHandler" + "-for-" + command.getTransactionId() + "-on-shard-" + globalShardId;
         }
-        else if (command.getQuery() instanceof ADBSelectQuerySession) {
+        else if (command.getQuery() instanceof ADBSelectionQuery) {
             return "ADBSelectQuerySessionHandler" + "-for-" + command.getTransactionId() + "-on-shard-" + globalShardId;
         }
         return "UnspecifiedQuerySessionHandler" + "-for-" + command.getTransactionId() + "-on-shard-" + globalShardId;

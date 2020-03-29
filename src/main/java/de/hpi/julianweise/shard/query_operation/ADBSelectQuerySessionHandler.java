@@ -47,7 +47,16 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
                                                                    .transactionId(transactionId)
                                                                    .build(), results.size());
         this.concludeTransaction();
-        return Behaviors.stopped();
+        return Behaviors.same();
+    }
+
+    @Override
+    protected Behavior<ADBQuerySessionHandler.Command> handleLargeMessageSenderResponse(WrappedLargeMessageSenderResponse response) {
+        if(this.openTransferSessions.decrementAndGet() < 1 && this.concluding) {
+            this.sendTransactionConclusion();
+            return Behaviors.stopped();
+        }
+        return Behaviors.same();
     }
 
     @Override

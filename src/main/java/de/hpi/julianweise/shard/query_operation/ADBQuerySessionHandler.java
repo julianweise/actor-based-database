@@ -91,7 +91,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
         this.sendTransactionConclusion();
     }
 
-    private void sendTransactionConclusion() {
+    protected void sendTransactionConclusion() {
         this.client.tell(new ADBQuerySession.ConcludeTransaction(this.shard, transactionId));
         this.getContext().getLog().info(String.format("Concluding QuerySessionHandler for transaction %d handling %s",
                 this.transactionId, this.getQuerySessionName()));

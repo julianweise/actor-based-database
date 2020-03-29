@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JoinDistributionPlanTest {
 
     @ClassRule
-    public static TestKitJunitResource testKit = new TestKitJunitResource(ADBShardTest.config);
+    public static TestKitJunitResource testKit = new TestKitJunitResource();
 
     @After
     public void cleanup() {

@@ -37,6 +37,7 @@ public class ADBSelectQuerySession extends ADBQuerySession {
         // Send initial query
         this.shards.forEach(shard -> shard.tell(ADBShard.QueryEntities.builder()
                                                                       .transactionId(transactionId)
+                                                                      .clientLargeMessageReceiver(this.initializeTransferWrapper)
                                                                       .query(query)
                                                                       .respondTo(this.getContext().getSelf())
                                                                       .build()));
@@ -52,15 +53,15 @@ public class ADBSelectQuerySession extends ADBQuerySession {
 
     private Behavior<ADBQuerySession.Command> handleQueryResults(SelectQueryResults response) {
         this.queryResults.addAll(response.getResults());
-        return Behaviors.same();
-    }
-
-    private Behavior<ADBQuerySession.Command> handleConcludeTransaction(ConcludeTransaction response) {
-        this.shards.remove(response.getShard());
+        this.shards.remove(response.getGlobalShardId());
         if (this.shards.isEmpty()) {
             this.parent.tell(new ADBShardInquirer.TransactionResults(this.transactionId, this.queryResults.toArray()));
             return this.concludeTransaction();
         }
+        return Behaviors.same();
+    }
+
+    private Behavior<ADBQuerySession.Command> handleConcludeTransaction(ConcludeTransaction response) {
         return Behaviors.same();
     }
 
