@@ -9,7 +9,6 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 
 import java.util.List;
 

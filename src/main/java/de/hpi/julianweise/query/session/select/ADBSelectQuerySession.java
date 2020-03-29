@@ -10,7 +10,6 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
-import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
