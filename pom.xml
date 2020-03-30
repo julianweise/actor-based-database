@@ -88,6 +88,11 @@
             <artifactId>chill-akka_2.13</artifactId>
             <version>0.9.5</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>28.2-jre</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

@@ -54,13 +54,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class Terminate implements Command {
-        private int transactionId;
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
     public static class HandleJoinShardResults implements Command {
         private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
     }
@@ -85,7 +78,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                 .onMessage(JoinWithShard.class, this::handleJoinWithShard)
                 .onMessage(HandleJoinShardResults.class, this::handleJoinWithShardResults)
                 .onMessage(NoMoreShardsToJoinWith.class, this::handleNoMoreShardToJoinWith)
-                .onMessage(Terminate.class, this::handleTerminate)
                 .build();
     }
 
@@ -144,12 +136,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         this.concludeTransaction();
         this.getContext().getLog().info("No more shards to join with this shard for TX #" + command.getTransactionId());
         return Behaviors.same();
-    }
-
-    private Behavior<Command> handleTerminate(Terminate command) {
-        this.getContext().getLog().info("Going to shut down JoinQuery Session for transaction #"
-                + command.getTransactionId());
-        return Behaviors.stopped();
     }
 
     @Override

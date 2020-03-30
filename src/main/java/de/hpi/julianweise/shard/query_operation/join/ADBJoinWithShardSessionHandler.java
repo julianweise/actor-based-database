@@ -18,9 +18,9 @@ import de.hpi.julianweise.utility.largemessage.ADBPair;
 import javafx.util.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,8 +31,9 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
     private final Map<String, List<ADBJoinQueryTerm>> groupedQueryTerms;
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
-    private List<Pair<Integer, Integer>> joinCandidates = new ArrayList<>();
     private final List<ADBEntityType> data;
+    private ActorRef<ADBJoinAttributeIntersector.Command> intersector;
+    private ActorRef<ADBJoinAttributeIntersector.Result> intersectorResultWrapper;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -49,8 +50,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                               @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
                       })
         private List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
-
     }
+
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
@@ -58,7 +59,13 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         private String sourceAttributeName;
         private List<Pair<Integer, Integer>> joinCandidates;
         private boolean isLastChunk;
+    }
 
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class WrappedIntersectorResult implements Command {
+        private ADBJoinAttributeIntersector.Result result;
     }
 
     public ADBJoinWithShardSessionHandler(ActorContext<Command> context,
@@ -71,6 +78,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         this.data = data;
         this.sortedJoinAttributes = sortedJoinAttributes;
         this.comparatorPool = ADBLocalCompareAttributeSessionFactory.getComparatorPool(this.getContext());
+        this.intersectorResultWrapper = this.getContext().messageAdapter(ADBJoinAttributeIntersector.Result.class,
+                WrappedIntersectorResult::new);
         this.groupedQueryTerms = query.getTerms()
                                       .stream()
                                       .map(term -> ((ADBJoinQueryTerm) term))
@@ -85,6 +94,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         return this.createReceiveBuilder()
                    .onMessage(CompareJoinAttributesFor.class, this::handleCompareJoinAttributes)
                    .onMessage(JoinAttributesComparedFor.class, this::handleJoinAttributesCompared)
+                   .onMessage(WrappedIntersectorResult.class, this::handleIntersectorResult)
                    .build();
     }
 
@@ -108,32 +118,42 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     private Behavior<Command> handleJoinAttributesCompared(JoinAttributesComparedFor command) {
         this.getContext().getLog().info("Received " + command.joinCandidates.size() + " join candidates to be " +
                 "intersected");
-        if (this.joinCandidates.isEmpty()) {
-            this.joinCandidates.addAll(command.joinCandidates);
+        if (this.intersector == null) {
+            this.intersector = this.getContext().spawn(ADBJoinAttributeIntersectorFactory.createDefault(
+                    command.joinCandidates), ADBJoinAttributeIntersectorFactory.getName(command.sourceAttributeName));
         } else {
-            this.joinCandidates = ADBJoinAttributeIntersector.intersect(this.joinCandidates, command.joinCandidates);
+            this.intersector.tell(new ADBJoinAttributeIntersector.Intersect(command.joinCandidates));
         }
         this.groupedQueryTerms.remove(command.sourceAttributeName);
-        this.getContext().getLog().info("Remaining attributes to be joined: " + this.groupedQueryTerms.keySet());
-        return this.submitResults();
+        this.conditionallyCollectResults();
+        return Behaviors.same();
     }
 
-    private Behavior<Command> submitResults() {
+    private void conditionallyCollectResults() {
+        this.getContext().getLog().info("Remaining attributes to be joined: " + this.groupedQueryTerms.keySet());
         if (this.groupedQueryTerms.size() > 0) {
-            return Behaviors.same();
+            return;
         }
-        this.getContext().getLog().info("About to return " + this.joinCandidates.size() + " join candidates to " + this.session);
-        ADBJoinWithShardSession.HandleJoinShardsResults message = new ADBJoinWithShardSession.HandleJoinShardsResults(
-                this.joinCandidates
-                        .stream()
-                        .map(pair -> new ADBPair<>(pair.getKey(), this.data.get(pair.getValue())))
-                        .collect(Collectors.toSet()));
+        this.intersector.tell(new ADBJoinAttributeIntersector.ReturnResults(this.intersectorResultWrapper));
+    }
 
-        this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
-                ADBLargeMessageSenderFactory.senderName(this.getContext().getSelf(), this.session, message.getClass()
-                        , this.joinCandidates.size() + ""))
-            .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.session), message.getClass()));
+    private Behavior<Command> handleIntersectorResult(WrappedIntersectorResult response) {
+        if (response.result instanceof ADBJoinAttributeIntersector.Results) {
+            this.submitResults(((ADBJoinAttributeIntersector.Results) response.result).getCandidates());
+        }
         return Behaviors.same();
+    }
+
+    private void submitResults(List<Pair<Integer, Integer>> candidates) {
+        this.getContext().getLog().info("About to return " + candidates.size() + " join candidates to " + this.session);
+        ADBJoinWithShardSession.HandleJoinShardsResults message = new ADBJoinWithShardSession.HandleJoinShardsResults(
+                candidates.stream()
+                          .map(pair -> new ADBPair<>(pair.getKey(), this.data.get(pair.getValue())))
+                          .collect(Collectors.toSet()));
+        this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
+                ADBLargeMessageSenderFactory.senderName(this.getContext().getSelf(), this.session, message.getClass(),
+                        candidates.size() + ""))
+            .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.session), message.getClass()));
     }
 
     @Override
