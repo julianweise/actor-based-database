@@ -11,6 +11,7 @@ import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
+import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiverFactory;
@@ -21,8 +22,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.Command> {
 
@@ -32,6 +36,9 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     protected final Map<ActorRef<ADBShard.Command>, ActorRef<ADBQuerySessionHandler.Command>> shardToSessionMapping =
             new HashMap<>();
     protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferWrapper;
+    protected final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions = new HashSet<>();
+    protected final AtomicInteger expectedPartialResults = new AtomicInteger();
+
 
     public interface Command {
     }
@@ -88,7 +95,8 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     protected ReceiveBuilder<Command> createReceiveBuilder() {
         return newReceiveBuilder()
                 .onMessage(UpdateShardToHandlerMapping.class, this::handleUpdateShardToHandlerMapping)
-                .onMessage(InitializeTransferWrapper.class, this::handleInitializeTransfer);
+                .onMessage(InitializeTransferWrapper.class, this::handleInitializeTransfer)
+                .onMessage(ConcludeTransaction.class, this::handleConcludeTransaction);
     }
 
     protected Behavior<ADBQuerySession.Command> handleUpdateShardToHandlerMapping(UpdateShardToHandlerMapping command) {
@@ -105,11 +113,26 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
         return Behaviors.same();
     }
 
-    protected Behavior<ADBQuerySession.Command> concludeTransaction() {
+    protected Behavior<ADBQuerySession.Command> concludeSession() {
         this.getContext().getLog().info(String.format("Concluding QuerySession for transaction %d handling %s",
                 this.transactionId, this.getQuerySessionName()));
         return Behaviors.stopped();
     }
 
+    protected Behavior<ADBQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
+        this.completedSessions.add(this.shardToSessionMapping.get(command.getShard()));
+        return this.conditionallyConcludeTransaction();
+    }
+
+    protected Behavior<ADBQuerySession.Command> conditionallyConcludeTransaction() {
+        if (this.shards.size() == this.completedSessions.size() && this.expectedPartialResults.get() < 1) {
+            this.completedSessions.forEach(handler -> handler.tell(new ADBQuerySessionHandler.Terminate(this.transactionId)));
+            this.submitResults();
+            return this.concludeSession();
+        }
+        return Behaviors.same();
+    }
+
     protected abstract String getQuerySessionName();
+    protected abstract void submitResults();
 }

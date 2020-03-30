@@ -21,17 +21,12 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBJoinQuerySession extends ADBQuerySession {
 
     private final JoinDistributionPlan distributionPlan;
-    private final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions;
     private final List<ADBPair<ADBEntityType, ADBEntityType>> queryResults = new ArrayList<>();
-    private final AtomicInteger expectedPartialResults = new AtomicInteger();
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -63,7 +58,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
                                ADBJoinQuery query) {
         super(context, shards, transactionId, parent);
         this.distributionPlan = new JoinDistributionPlan(shards, context.getLog());
-        this.completedSessions = new HashSet<>();
+
         // Send initial query
         this.shards.forEach(shard -> shard.tell(ADBShard.QueryEntities.builder()
                                                                       .transactionId(transactionId)
@@ -78,7 +73,6 @@ public class ADBJoinQuerySession extends ADBQuerySession {
         return this.createReceiveBuilder()
                    .onMessage(RequestNextShardComparison.class, this::handleRequestNextShardComparison)
                    .onMessage(JoinQueryResults.class, this::handleJoinQueryResults)
-                   .onMessage(ConcludeTransaction.class, this::handleConcludeTransaction)
                    .onMessage(TriggerNextShardComparison.class, this::handleTriggerNextShardComparison)
                    .build();
     }
@@ -92,7 +86,6 @@ public class ADBJoinQuerySession extends ADBQuerySession {
             command.respondTo.tell(new ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith(this.transactionId));
             return Behaviors.same();
         }
-
         this.getContext().getSelf().tell(
                 new TriggerNextShardComparison(command.requestingShard, nextJoinShard, command.respondTo));
         return Behaviors.same();
@@ -113,25 +106,20 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     }
 
     private Behavior<ADBQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
+        this.expectedPartialResults.decrementAndGet();
         this.getContext().getLog().info("Received " + results.joinResults.size() + " join result tuples from shard#"
                 + results.getGlobalShardId() + " for transaction #" + results.getTransactionId());
         this.queryResults.addAll(results.joinResults);
-        return Behaviors.same();
-    }
-
-    private Behavior<ADBQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
-        this.completedSessions.add(this.shardToSessionMapping.get(command.getShard()));
-        if (this.shards.size() == this.completedSessions.size()) {
-            this.completedSessions.forEach(sessionHandler ->
-                    sessionHandler.tell(new ADBJoinQuerySessionHandler.Terminate(this.transactionId)));
-            this.parent.tell(new ADBShardInquirer.TransactionResults(this.transactionId, this.queryResults.toArray()));
-            return this.concludeTransaction();
-        }
-        return Behaviors.same();
+        return this.conditionallyConcludeTransaction();
     }
 
     @Override
     protected String getQuerySessionName() {
         return "Join Query";
+    }
+
+    @Override
+    protected void submitResults() {
+        this.parent.tell(new ADBShardInquirer.TransactionResults(this.transactionId, this.queryResults.toArray()));
     }
 }

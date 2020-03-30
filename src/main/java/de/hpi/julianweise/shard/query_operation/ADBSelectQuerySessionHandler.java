@@ -10,6 +10,7 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 
 import java.util.List;
@@ -47,15 +48,6 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
                                                                    .transactionId(transactionId)
                                                                    .build(), results.size());
         this.concludeTransaction();
-        return Behaviors.same();
-    }
-
-    @Override
-    protected Behavior<ADBQuerySessionHandler.Command> handleLargeMessageSenderResponse(WrappedLargeMessageSenderResponse response) {
-        if(this.openTransferSessions.decrementAndGet() < 1 && this.concluding) {
-            this.sendTransactionConclusion();
-            return Behaviors.stopped();
-        }
         return Behaviors.same();
     }
 

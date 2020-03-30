@@ -33,7 +33,6 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     protected final ActorRef<ADBLargeMessageSender.Response> largeMessageSenderWrapping;
     protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver;
     protected final AtomicInteger openTransferSessions = new AtomicInteger(0);
-    protected boolean concluding = false;
 
     public interface Command extends CborSerializable {
     }
@@ -48,6 +47,12 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     public static class Execute implements Command {
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class Terminate implements Command {
+        private int transactionId;
+    }
 
     public ADBQuerySessionHandler(ActorContext<ADBQuerySessionHandler.Command> context,
                                   ActorRef<ADBShard.Command> shard,
@@ -73,25 +78,21 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
 
     protected ReceiveBuilder<ADBQuerySessionHandler.Command> createReceiveBuilder() {
         return newReceiveBuilder()
-                .onMessage(WrappedLargeMessageSenderResponse.class, this::handleLargeMessageSenderResponse);
+                .onMessage(WrappedLargeMessageSenderResponse.class, this::handleLargeMessageSenderResponse)
+                .onMessage(Terminate.class, this::handleTerminate);
     }
 
     protected Behavior<ADBQuerySessionHandler.Command> handleLargeMessageSenderResponse(WrappedLargeMessageSenderResponse response) {
-        if(this.openTransferSessions.decrementAndGet() < 1 && this.concluding) {
-            this.sendTransactionConclusion();
-        }
         return Behaviors.same();
     }
 
-    protected void concludeTransaction() {
-        this.concluding = true;
-        if (this.openTransferSessions.get() > 0) {
-            return;
-        }
-        this.sendTransactionConclusion();
+    private Behavior<Command> handleTerminate(Terminate command) {
+        this.getContext().getLog().info("Going to shut down " + this.getQuerySessionName() + " Session for transaction #"
+                + command.getTransactionId());
+        return Behaviors.stopped();
     }
 
-    protected void sendTransactionConclusion() {
+    protected void concludeTransaction() {
         this.client.tell(new ADBQuerySession.ConcludeTransaction(this.shard, transactionId));
         this.getContext().getLog().info(String.format("Concluding QuerySessionHandler for transaction %d handling %s",
                 this.transactionId, this.getQuerySessionName()));
