@@ -24,6 +24,11 @@ public abstract class ADBEntityType implements CborSerializable {
 
     public abstract ADBKey getPrimaryKey();
 
+    @Override
+    public int hashCode() {
+        return this.getPrimaryKey().hashCode() + 13;
+    }
+
     public final boolean matches(ADBSelectionQuery query) {
         for (ADBSelectionQueryTerm term : query.getTerms()) {
             if (!this.matches(term)) {
