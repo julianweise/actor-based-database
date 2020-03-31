@@ -10,17 +10,12 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 public class ADBShardDistributorFactory {
-
-    private static final Duration TIMER_DURATION = Duration.of(3000, ChronoUnit.MILLIS);
-
     public static Behavior<ADBShardDistributor.Command> createDefault() {
-        return Behaviors.setup(context ->
-                Behaviors.withTimers(timers -> {
+        return Behaviors.setup(context -> {
                     ActorRef<Receptionist.Listing> wrapper = ADBShardDistributorFactory.createListingWrapper(context);
                     context.getSystem().receptionist().tell(Receptionist.subscribe(ADBShard.SERVICE_KEY, wrapper));
-                    timers.startTimerWithFixedDelay(new Object(), new ADBShardDistributor.CheckPendingDistributions(), TIMER_DURATION);
-                    return new ADBShardDistributor(context, timers);
-                }));
+                    return new ADBShardDistributor(context);
+                });
     }
 
     private static ActorRef<Receptionist.Listing> createListingWrapper(ActorContext<ADBShardDistributor.Command> context) {
