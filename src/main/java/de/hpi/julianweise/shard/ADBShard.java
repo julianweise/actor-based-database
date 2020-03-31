@@ -22,12 +22,16 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ADBShard extends AbstractBehavior<ADBShard.Command> {
 
     public final static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data" +
             "-shard");
-    private final ArrayList<ADBEntityType> data = new ArrayList<>();
+    private Set<ADBEntityType> transferData = new HashSet<>();
+    private ArrayList<ADBEntityType> data;
     private int globalId;
 
     public interface Command extends CborSerializable {
@@ -55,7 +59,6 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     @NoArgsConstructor
     public static class ConcludeTransfer implements Command {
         private int shardId;
-
     }
 
 
@@ -73,7 +76,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     }
 
     private Behavior<Command> handleEntity(PersistEntity command) {
-        this.data.add(command.getEntity());
+        this.transferData.add(command.getEntity());
         command.respondTo.tell(new ADBShardDistributor.ConfirmEntityPersisted(command.getEntity().getPrimaryKey()));
         return Behaviors.same();
     }
@@ -91,6 +94,8 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
 
     private Behavior<Command> handleConcludeTransfer(ConcludeTransfer command) {
         this.globalId = command.shardId;
+        this.data = new ArrayList<>(this.transferData);
+        this.transferData = null;
         this.getContext().getLog().info("GlobalID of this shard: " + command.shardId);
         this.getContext().getLog().info("Distribution concluded. Shard owns " + this.data.size() + " elements");
         this.data.trimToSize();
