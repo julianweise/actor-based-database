@@ -116,8 +116,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleJoinAttributesCompared(JoinAttributesComparedFor command) {
-        this.getContext().getLog().info("Received " + command.joinCandidates.size() + " join candidates to be " +
-                "intersected");
+        this.getContext().getLog().info("Received " + command.joinCandidates.size() + " join candidates to be intersected");
         if (this.intersector == null) {
             this.intersector = this.getContext().spawn(ADBJoinAttributeIntersectorFactory.createDefault(
                     command.joinCandidates), ADBJoinAttributeIntersectorFactory.getName(command.sourceAttributeName));

@@ -67,6 +67,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
         if (data.size() > 0) {
             return new ADBSortedEntityAttributes(data.get(0).getGetterForField(fieldName), data);
         }
+        System.out.println("[ERROR] Creating SortedEntityAttributes for an empty list of data!");
         return new ADBSortedEntityAttributes(ADBEntityType.getGetterForField(fieldName,
                 ADBEntityFactoryProvider.getInstance().getTargetClass()), data);
     }
@@ -82,7 +83,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
     private List<Pair<Integer, Comparable<Object>>> getFieldValues() {
         List<Pair<Integer, Comparable<Object>>> fieldJoinAttributes = new ArrayList<>(data.size());
         for (int i = 0; i < data.size(); i++) {
-            fieldJoinAttributes.add(new Pair<>(i, fieldGetter.apply(data.get(i))));
+            fieldJoinAttributes.add(new Pair<>(i, this.fieldGetter.apply(data.get(i))));
         }
         fieldJoinAttributes.sort(Comparator.comparing(Pair::getValue));
         return fieldJoinAttributes;
@@ -107,7 +108,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
     }
 
     public ADBPair<Comparable<?>, Integer> getWithOriginalIndex(int index) {
-        return new ADBPair<>(this.get(index), this.indices[index]);
+        return new ADBPair<>(this.get(index), this.getOriginalIndex(index));
     }
 
     public List<ADBPair<Comparable<?>, Integer>> getAllWithOriginalIndex() {
