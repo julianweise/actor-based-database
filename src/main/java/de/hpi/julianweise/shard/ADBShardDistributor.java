@@ -145,7 +145,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     }
 
     private Behavior<Command> handleDistributeBatchToShards(DistributeBatch command) {
-        if (this.consistentHash.isEmpty() && this.shards.size() < this.minNumberOfShards) {
+        if (this.consistentHash == null || this.consistentHash.isEmpty() || this.shards.size() < this.minNumberOfShards) {
             this.getContext().scheduleOnce(Duration.ofMillis(500), this.getContext().getSelf(), command);
             return Behaviors.same();
         }

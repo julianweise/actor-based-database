@@ -104,7 +104,6 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
         if (this.supervisor != null) {
             this.supervisor.tell(new TransferCompleted());
         }
-        this.getContext().getLog().info("Data sent - Terminating");
         return Behaviors.stopped();
     }
 

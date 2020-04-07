@@ -89,7 +89,6 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
             this.sender.tell(new ADBLargeMessageSender.SendNextChunk(this.getContext().getSelf()));
             return Behaviors.same();
         }
-        this.getContext().getLog().info("Received all data - Terminating");
         Serializer serializer = serialization.serializerFor(this.messageType);
         Object message = serializer.fromBinary(this.payload, this.messageType);
         this.originalReceiver.tell(this.messageType.cast(message), akka.actor.ActorRef.noSender());
