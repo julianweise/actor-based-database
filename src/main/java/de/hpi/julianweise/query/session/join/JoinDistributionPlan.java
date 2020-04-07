@@ -34,7 +34,7 @@ public class JoinDistributionPlan {
         BitSet[] map = new BitSet[numberOfShards];
         for (int i = 0; i < numberOfShards; i++) {
             map[i] = new BitSet(numberOfShards);
-            for (int j = 0; j < i; j++) {
+            for (int j = 0; j <= i; j++) {
                 map[i].set(j);
             }
         }
