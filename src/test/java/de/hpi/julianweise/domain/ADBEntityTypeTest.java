@@ -97,13 +97,13 @@ public class ADBEntityTypeTest {
                 .build();
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(term)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isTrue();
 
         TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(term)).isFalse();
     }
 
     @Test
@@ -116,13 +116,13 @@ public class ADBEntityTypeTest {
                 .build();
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(term)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isTrue();
 
         TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(term)).isTrue();
     }
 
     // ##### Float #####
@@ -207,13 +207,13 @@ public class ADBEntityTypeTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(term)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "Test", 1.02f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(term)).isFalse();
     }
 
     @Test
@@ -226,13 +226,13 @@ public class ADBEntityTypeTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(term)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(term)).isTrue();
     }
 
     // ##### String #####
