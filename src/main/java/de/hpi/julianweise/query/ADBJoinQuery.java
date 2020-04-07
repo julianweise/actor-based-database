@@ -1,7 +1,9 @@
 package de.hpi.julianweise.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
@@ -13,10 +15,11 @@ import java.util.stream.Collectors;
 @Setter
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 public class ADBJoinQuery implements ADBQuery {
 
     @Getter
-    protected final List<ADBJoinQueryTerm> terms = new ArrayList<>();
+    protected List<ADBJoinQueryTerm> terms = new ArrayList<>();
 
     public void addTerm(ADBJoinQueryTerm term) {
         this.terms.add(term);
@@ -39,5 +42,10 @@ public class ADBJoinQuery implements ADBQuery {
         return "[JoinQuery] " + this.terms.stream()
                                           .map(ADBJoinQueryTerm::toString)
                                           .reduce((term, acc) -> acc + " & " + term).orElse("");
+    }
+
+    @JsonIgnore
+    public ADBJoinQuery reverse() {
+        return new ADBJoinQuery(this.getTerms().stream().map(ADBJoinQueryTerm::getReverse).collect(Collectors.toList()));
     }
 }
