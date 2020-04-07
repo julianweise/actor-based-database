@@ -13,7 +13,6 @@ import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.ADBQuerySessionFactory;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
-import de.hpi.julianweise.shard.query_operation.join.ADBJoinWithShardSession;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;

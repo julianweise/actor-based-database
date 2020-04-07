@@ -4,7 +4,6 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.shard.ADBShard;
-import de.hpi.julianweise.shard.ADBShardTest;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;

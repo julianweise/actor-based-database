@@ -3,13 +3,12 @@ package de.hpi.julianweise.shard;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
+import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
-import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -17,7 +16,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
-import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.INEQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBShardTest {
