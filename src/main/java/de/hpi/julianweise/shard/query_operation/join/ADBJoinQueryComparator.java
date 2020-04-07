@@ -25,6 +25,7 @@ public class ADBJoinQueryComparator extends AbstractBehavior<ADBJoinQueryCompara
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
     private final ActorRef<ADBJoinWithShardSession.Command> supervisor;
     private final ActorRef<ADBJoinAttributeIntersector.Result> intersectorResultWrapper;
+    private final ADBJoinQuery query;
     private ActorRef<ADBJoinAttributeIntersector.Command> intersector;
 
 
@@ -58,6 +59,7 @@ public class ADBJoinQueryComparator extends AbstractBehavior<ADBJoinQueryCompara
                                   ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                   ActorRef<ADBJoinWithShardSession.Command> supervisor) {
         super(context);
+        this.query = query;
         this.groupedQueryTerms = this.groupQueryTermsByLeftHandSide(query);
         this.localSortedAttributes = localSortedAttributes;
         this.comparatorPool = comparatorPool;
@@ -99,7 +101,7 @@ public class ADBJoinQueryComparator extends AbstractBehavior<ADBJoinQueryCompara
             this.getContext().getLog().info("Received " + results.candidates.size() + " results from term " +
                     results.getTerm() + " for setting up intersector");
             this.intersector = this.getContext().spawn(ADBJoinAttributeIntersectorFactory
-                            .createDefault(results.candidates), "intersector");
+                            .createDefault(results.candidates), ADBJoinAttributeIntersectorFactory.getName(this.query));
         } else {
             intersector.tell(new ADBJoinAttributeIntersector.Intersect(results.candidates));
             this.getContext().getLog().info("Received " + results.candidates.size() + " results from term " +

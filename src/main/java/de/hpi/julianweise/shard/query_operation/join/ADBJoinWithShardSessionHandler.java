@@ -18,7 +18,6 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -56,13 +55,6 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     public static class ForeignAttributesCompared implements Command {
         private List<ADBKeyPair> joinCandidates;
         private ActorRef<ADBJoinQueryComparator.Command> sender;
-    }
-
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
-    public static class WrappedIntersectorResult implements Command {
-        private ADBJoinAttributeIntersector.Result result;
     }
 
     public ADBJoinWithShardSessionHandler(ActorContext<Command> context,

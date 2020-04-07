@@ -6,6 +6,7 @@ import de.hpi.julianweise.domain.key.ADBStringKey;
 import lombok.Builder;
 import lombok.Getter;
 
+@SuppressWarnings("SpellCheckingInspection")
 @Builder
 @Getter
 public class Patient extends ADBEntityType {

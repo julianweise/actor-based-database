@@ -25,8 +25,8 @@ public class ADBJoinTermComparator extends AbstractBehavior<ADBJoinTermComparato
     private final ADBJoinQueryTerm term;
     private final AtomicInteger chunkCounter = new AtomicInteger(0);
     private List<ADBKeyPair> comparisonResults;
-    private ActorRef<ADBJoinQueryComparator.Command> supervisor;
-    private ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
+    private final ActorRef<ADBJoinQueryComparator.Command> supervisor;
+    private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
 
     public interface Command {}
     @AllArgsConstructor

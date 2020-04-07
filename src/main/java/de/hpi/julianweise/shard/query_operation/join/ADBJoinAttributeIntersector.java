@@ -20,7 +20,7 @@ import java.util.List;
 @SuppressWarnings("UnstableApiUsage")
 public class ADBJoinAttributeIntersector extends AbstractBehavior<ADBJoinAttributeIntersector.Command> {
 
-    public static boolean USE_BLOOM_FILTER = false;
+    public static final boolean USE_BLOOM_FILTER = false;
     private List<ADBKeyPair> joinCandidates;
     private BloomFilter<ADBKeyPair> bloomFilter;
 

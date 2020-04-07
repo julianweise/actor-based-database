@@ -19,12 +19,12 @@ import akka.http.javadsl.server.Route;
 import akka.http.javadsl.server.directives.RouteAdapter;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Flow;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import de.hpi.julianweise.domain.custom.SFEmployeeSalary;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
+import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.SneakyThrows;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -94,7 +94,17 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
                                                             .respondTo(this.shardInquirerResponseWrapper)
                                                             .build());
         return Directives.onSuccess(future,
-                extracted -> Directives.complete(extracted.length + " elements"));
+                extracted -> Directives.complete(this.printListOfEmployeeIdentifiers(extracted)));
+    }
+
+    @SuppressWarnings("unchecked")
+    private String printListOfEmployeeIdentifiers(Object[] extracted) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Object o : extracted) {
+            ADBPair<SFEmployeeSalary, SFEmployeeSalary> tuple = (ADBPair<SFEmployeeSalary, SFEmployeeSalary>) o;
+            stringBuilder.append(tuple.getKey().getEmployeeIdentifier()).append(", ").append(tuple.getValue().getEmployeeIdentifier()).append("\n");
+        }
+        return stringBuilder.toString();
     }
 
     private Behavior<Command> handlePostStop(PostStop signal) {
@@ -108,12 +118,6 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
             this.requests.get(response.getRequestId()).complete(response.getResults());
         }
         return Behaviors.same();
-    }
-
-    @SneakyThrows
-    private String toJSON(Object[] results) {
-        final ObjectMapper mapper = new ObjectMapper();
-        return mapper.writeValueAsString(results);
     }
 
 }

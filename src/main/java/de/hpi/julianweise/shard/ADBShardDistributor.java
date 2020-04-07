@@ -38,7 +38,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     private final AtomicInteger pendingDistributions = new AtomicInteger(0);
     private ConsistentHash<ActorRef<ADBShard.Command>> consistentHash;
     private ActorRef<Response> client;
-    private int minNumberOfShards = this.getContext().getSystem().settings().config().getInt("akka.cluster" +
+    private final int minNumberOfShards = this.getContext().getSystem().settings().config().getInt("akka.cluster" +
             ".min-nr-of-members");
 
 
