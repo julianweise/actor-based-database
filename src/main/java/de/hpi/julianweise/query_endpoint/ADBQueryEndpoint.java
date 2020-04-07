@@ -94,7 +94,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
                                                             .respondTo(this.shardInquirerResponseWrapper)
                                                             .build());
         return Directives.onSuccess(future,
-                extracted -> Directives.complete(this.toJSON(extracted)));
+                extracted -> Directives.complete(extracted.length + " elements"));
     }
 
     private Behavior<Command> handlePostStop(PostStop signal) {

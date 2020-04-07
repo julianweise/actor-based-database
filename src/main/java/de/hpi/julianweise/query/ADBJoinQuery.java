@@ -22,7 +22,7 @@ public class ADBJoinQuery implements ADBQuery {
     protected List<ADBJoinQueryTerm> terms = new ArrayList<>();
 
     public void addTerm(ADBJoinQueryTerm term) {
-        this.terms.add(term);
+        this.getTerms().add(term);
     }
 
     public Set<String> getAllFields() {
@@ -39,13 +39,13 @@ public class ADBJoinQuery implements ADBQuery {
 
     @Override
     public String toString() {
-        return "[JoinQuery] " + this.terms.stream()
+        return "[JoinQuery] " + this.getTerms().stream()
                                           .map(ADBJoinQueryTerm::toString)
                                           .reduce((term, acc) -> acc + " & " + term).orElse("");
     }
 
     @JsonIgnore
-    public ADBJoinQuery reverse() {
+    public ADBJoinQuery getReverse() {
         return new ADBJoinQuery(this.getTerms().stream().map(ADBJoinQueryTerm::getReverse).collect(Collectors.toList()));
     }
 }

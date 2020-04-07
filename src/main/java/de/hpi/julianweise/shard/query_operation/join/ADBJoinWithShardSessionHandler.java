@@ -78,7 +78,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         this.data = data;
         this.joinQueryComparator = this.spawnJoinQueryComparator(joinQuery, localSortedAttributes, "QueryComparator");
         if (!this.isSelfComparison()) {
-            this.joinInverseQueryComparator = this.spawnJoinQueryComparator(joinQuery.reverse(), localSortedAttributes, "QueryComparatorInverse");
+            this.joinInverseQueryComparator = this.spawnJoinQueryComparator(joinQuery.getReverse(), localSortedAttributes, "QueryComparatorInverse");
         }
 
         this.getContext().getLog().info("Create new session handler on  shard #" + localShardId + " (local) to " +
