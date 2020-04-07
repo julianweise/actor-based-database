@@ -69,7 +69,6 @@ public class ADBJoinQueryComparator extends AbstractBehavior<ADBJoinQueryCompara
         return query.getTerms().stream().collect(Collectors.groupingBy(ADBJoinQueryTerm::getLeftHandSideAttribute));
     }
 
-
     @Override
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
