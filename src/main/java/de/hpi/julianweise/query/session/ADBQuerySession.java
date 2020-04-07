@@ -31,7 +31,7 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     protected final int transactionId;
     protected final ActorRef<ADBShardInquirer.Command> parent;
     protected final List<ActorRef<ADBShard.Command>> shards;
-    protected final Map<ActorRef<ADBShard.Command>, ActorRef<ADBQuerySessionHandler.Command>> shardToSessionMapping =
+    protected final Map<ActorRef<ADBShard.Command>, ActorRef<ADBQuerySessionHandler.Command>> sessionHandlers =
             new HashMap<>();
     protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferWrapper;
     protected final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions = new HashSet<>();
@@ -43,7 +43,8 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
 
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class UpdateShardToHandlerMapping implements ADBQuerySession.Command, CborSerializable {
+    @Getter
+    public static class RegisterQuerySessionHandler implements ADBQuerySession.Command, CborSerializable {
         private ActorRef<ADBShard.Command> shard;
         private ActorRef<ADBQuerySessionHandler.Command> sessionHandler;
 
@@ -71,18 +72,12 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
         private ADBLargeMessageReceiver.InitializeTransfer initializeTransfer;
     }
 
-    public static ServiceKey<ADBQuerySession.Command> getServiceKeyFor(int transactionId) {
-        return ServiceKey.create(ADBQuerySession.Command.class, "ADBQuerySession-" + transactionId);
-    }
-
     public ADBQuerySession(ActorContext<Command> context, List<ActorRef<ADBShard.Command>> shards,
                            int transactionId, ActorRef<ADBShardInquirer.Command> parent) {
         super(context);
         this.shards = shards;
         this.transactionId = transactionId;
         this.parent = parent;
-        context.getSystem().receptionist().tell(Receptionist.register(ADBQuerySession.getServiceKeyFor(transactionId),
-                this.getContext().getSelf()));
         this.getContext().getLog().info(String.format("Started new QuerySession %d for %s",
                 this.transactionId, this.getQuerySessionName()));
         this.initializeTransferWrapper = this.getContext().messageAdapter(
@@ -92,13 +87,13 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
 
     protected ReceiveBuilder<Command> createReceiveBuilder() {
         return newReceiveBuilder()
-                .onMessage(UpdateShardToHandlerMapping.class, this::handleUpdateShardToHandlerMapping)
+                .onMessage(RegisterQuerySessionHandler.class, this::handleRegisterQuerySessionHandler)
                 .onMessage(InitializeTransferWrapper.class, this::handleInitializeTransfer)
                 .onMessage(ConcludeTransaction.class, this::handleConcludeTransaction);
     }
 
-    protected Behavior<ADBQuerySession.Command> handleUpdateShardToHandlerMapping(UpdateShardToHandlerMapping command) {
-        this.shardToSessionMapping.put(command.shard, command.sessionHandler);
+    protected Behavior<ADBQuerySession.Command> handleRegisterQuerySessionHandler(RegisterQuerySessionHandler command) {
+        this.sessionHandlers.put(command.shard, command.sessionHandler);
         return Behaviors.same();
     }
 
@@ -118,7 +113,7 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     }
 
     protected Behavior<ADBQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
-        this.completedSessions.add(this.shardToSessionMapping.get(command.getShard()));
+        this.completedSessions.add(this.sessionHandlers.get(command.getShard()));
         return this.conditionallyConcludeTransaction();
     }
 

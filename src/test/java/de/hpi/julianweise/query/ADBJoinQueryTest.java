@@ -2,14 +2,16 @@ package de.hpi.julianweise.query;
 
 import org.junit.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class ADBJoinQueryTest {
 
     @Test
     public void addTermsToQuery() {
-        ADBJoinQuery joinQuery = new ADBJoinQuery();
         ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
+        ADBJoinQuery joinQuery = new ADBJoinQuery(Collections.singletonList(term));
 
         assertThat(joinQuery.terms.size()).isZero();
         joinQuery.addTerm(term);
@@ -19,8 +21,8 @@ public class ADBJoinQueryTest {
 
     @Test
     public void queryHasInformativeStringRepresentation() {
-        ADBJoinQuery joinQuery = new ADBJoinQuery();
         ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
+        ADBJoinQuery joinQuery = new ADBJoinQuery(Collections.singletonList(term));
 
         joinQuery.addTerm(term);
         assertThat(joinQuery.toString()).contains("test", "testTarget", "EQUALITY", "JoinQuery");

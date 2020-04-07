@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
-    private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
+    private Map<String, ADBSortedEntityAttributes> sortedAttributes;
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -46,9 +46,9 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class OpenNewJoinWithShardSession implements ADBQuerySessionHandler.Command {
-        private ActorRef<ADBJoinWithShardSession.Command> session;
-        private int shardId;
+    public static class OpenInterShardJoinSession implements ADBQuerySessionHandler.Command {
+        private ActorRef<ADBJoinWithShardSession.Command> initiatingSession;
+        private int initiatingShardId;
     }
 
     @NoArgsConstructor
@@ -67,14 +67,13 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                                       final List<ADBEntityType> data,
                                       int globalShardId) {
         super(context, shard, client, clientLargeMessageReceiver, transactionId, query, data, globalShardId);
-        this.sortedJoinAttributes = ADBSortedEntityAttributes.of((ADBJoinQuery) this.query, this.data);
     }
 
     @Override
     public Receive<Command> createReceive() {
         return this.createReceiveBuilder()
                 .onSignal(PostStop.class, this::handlePostStop)
-                .onMessage(OpenNewJoinWithShardSession.class, this::handleOpenNewJoinWithShardSession)
+                .onMessage(OpenInterShardJoinSession.class, this::handleOpenInterShardJoinSession)
                 .onMessage(Execute.class, this::handleExecute)
                 .onMessage(JoinWithShard.class, this::handleJoinWithShard)
                 .onMessage(HandleJoinShardResults.class, this::handleJoinWithShardResults)
@@ -83,38 +82,40 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     }
 
     private Behavior<Command> handlePostStop(Signal postStop) {
+        this.sortedAttributes = null;
         System.gc();
         return Behaviors.same();
     }
 
     private Behavior<Command> handleExecute(Execute command) {
-        this.client.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
+        this.sortedAttributes = ADBSortedEntityAttributes.of((ADBJoinQuery) this.query, this.data);
+        this.getContext().getSelf().tell(new JoinWithShard(this.getContext().getSelf(), this.globalShardId));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleJoinWithShard(JoinWithShard message) {
         this.getContext().getLog().info("Received master request to join with " + message.getGlobalShardIndex());
         ActorRef<ADBJoinWithShardSession.Command> joinWithShardSession =
-                this.getContext().spawn(ADBJoinWithShardSessionFactory.createDefault(this.query,
-                        this.sortedJoinAttributes, this.getContext().getSelf()),
+                this.getContext().spawn(ADBJoinWithShardSessionFactory.createDefault((ADBJoinQuery) this.query,
+                        this.sortedAttributes, this.getContext().getSelf(), this.globalShardId, message.globalShardIndex),
                         ADBJoinWithShardSessionFactory.sessionName(this.transactionId, this.globalShardId,
                                 message.getGlobalShardIndex()));
-        message.getCounterpart().tell(new OpenNewJoinWithShardSession(joinWithShardSession, this.globalShardId));
+        message.getCounterpart().tell(new OpenInterShardJoinSession(joinWithShardSession, this.globalShardId));
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleOpenNewJoinWithShardSession(OpenNewJoinWithShardSession command) {
+    private Behavior<Command> handleOpenInterShardJoinSession(OpenInterShardJoinSession command) {
         this.getContext().spawn(ADBJoinWithShardSessionHandlerFactory
-                        .createDefault(command.getSession(), this.query, this.sortedJoinAttributes, this.data),
+                        .createDefault(command.getInitiatingSession(), this.query, this.sortedAttributes, this.data,
+                                this.globalShardId, command.getInitiatingShardId()),
                 ADBJoinWithShardSessionHandlerFactory.sessionHandlerName(this.transactionId, this.globalShardId,
-                        command.shardId));
+                        command.initiatingShardId));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleJoinWithShardResults(HandleJoinShardResults command) {
-        this.client.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
-        this.getContext().getLog().info("Generated " + command.getJoinCandidates().size() + " join candidates. " +
-                "Sending to master ...");
+        this.session.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
+        this.getContext().getLog().info("Sending " + command.getJoinCandidates().size() + " candidates to master.");
         List<ADBPair<ADBEntityType, ADBEntityType>> results = command
                 .getJoinCandidates()
                 .stream()

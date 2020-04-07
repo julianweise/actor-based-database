@@ -20,7 +20,6 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -104,11 +103,11 @@ public class ADBJoinQuerySessionHandlerTest {
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.JoinWithShard(otherShardJoinHandler.ref(), GLOBAL_SHARD_ID));
 
-        ADBJoinQuerySessionHandler.OpenNewJoinWithShardSession request =
-                otherShardJoinHandler.expectMessageClass(ADBJoinQuerySessionHandler.OpenNewJoinWithShardSession.class);
+        ADBJoinQuerySessionHandler.OpenInterShardJoinSession request =
+                otherShardJoinHandler.expectMessageClass(ADBJoinQuerySessionHandler.OpenInterShardJoinSession.class);
 
-        assertThat(request.getSession().path().parent()).isEqualTo(joinHandler.path());
-        assertThat(request.getShardId()).isEqualTo(GLOBAL_SHARD_ID);
+        assertThat(request.getInitiatingSession().path().parent()).isEqualTo(joinHandler.path());
+        assertThat(request.getInitiatingShardId()).isEqualTo(GLOBAL_SHARD_ID);
     }
 
     @Test
@@ -135,7 +134,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
                 .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
 
-        joinHandler.tell(new ADBJoinQuerySessionHandler.OpenNewJoinWithShardSession(joinWithShardSession.ref(),
+        joinHandler.tell(new ADBJoinQuerySessionHandler.OpenInterShardJoinSession(joinWithShardSession.ref(),
                 GLOBAL_SHARD_ID));
 
         ADBJoinWithShardSession.RegisterHandler registration =
@@ -172,8 +171,8 @@ public class ADBJoinQuerySessionHandlerTest {
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
                 .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
 
-        joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singleton(new ADBPair<>(0,
-                remoteData.get(0)))));
+        joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singleton(
+                new ADBPair<>(0, remoteData.get(0)))));
 
         ADBJoinQuerySession.RequestNextShardComparison request =
                 querySession.expectMessageClass(ADBJoinQuerySession.RequestNextShardComparison.class);

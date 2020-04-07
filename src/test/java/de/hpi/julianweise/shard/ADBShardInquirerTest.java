@@ -150,6 +150,7 @@ public class ADBShardInquirerTest {
         testKit.system().receptionist().tell(Receptionist.register(ADBShard.SERVICE_KEY, shard));
         ADBEntityType testEntity = new TestEntity(1, "Test", 2f, true, 12.02132, 'w');
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), testEntity));
+        shard.tell(new ADBShard.ConcludeTransfer(0));
 
         ActorRef<ADBShardInquirer.Command> inquirer = testKit.spawn(ADBShardInquirerFactory.createDefault());
 

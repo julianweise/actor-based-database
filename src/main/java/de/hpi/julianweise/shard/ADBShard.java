@@ -10,7 +10,6 @@ import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
-import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandlerFactory;
 import de.hpi.julianweise.utility.CborSerializable;
@@ -23,7 +22,6 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ADBShard extends AbstractBehavior<ADBShard.Command> {
@@ -31,7 +29,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     public final static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data" +
             "-shard");
     private Set<ADBEntityType> transferData = new HashSet<>();
-    private ArrayList<ADBEntityType> data;
+    private ArrayList<ADBEntityType> data = new ArrayList<>();
     private int globalId;
 
     public interface Command extends CborSerializable {
@@ -46,6 +44,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     }
     @Getter
     @AllArgsConstructor
+    @NoArgsConstructor
     @Builder
     public static class QueryEntities implements Command {
         private int transactionId;
@@ -86,8 +85,6 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         ActorRef<ADBQuerySessionHandler.Command> sessionHandler = this.getContext().spawn(
                 ADBQuerySessionHandlerFactory.create(command, this.getContext().getSelf(), this.data, this.globalId),
                 ADBQuerySessionHandlerFactory.sessionHandlerName(command, this.globalId));
-        command.getRespondTo().tell(new ADBJoinQuerySession.UpdateShardToHandlerMapping(this.getContext().getSelf(),
-                sessionHandler));
         sessionHandler.tell(new ADBQuerySessionHandler.Execute());
         return Behaviors.same();
     }

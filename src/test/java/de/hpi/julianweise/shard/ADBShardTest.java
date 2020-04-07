@@ -65,6 +65,8 @@ public class ADBShardTest {
 
         persistProbe.receiveMessage();
 
+        shard.tell(new ADBShard.ConcludeTransfer(0));
+
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm
                 .builder()

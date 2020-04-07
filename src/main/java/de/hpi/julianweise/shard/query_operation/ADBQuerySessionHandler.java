@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySessionHandler.Command> {
 
-    protected final ActorRef<ADBQuerySession.Command> client;
+    protected final ActorRef<ADBQuerySession.Command> session;
     protected final ADBQuery query;
     protected final List<ADBEntityType> data;
     protected final ActorRef<ADBShard.Command> shard;
@@ -56,7 +56,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
 
     public ADBQuerySessionHandler(ActorContext<ADBQuerySessionHandler.Command> context,
                                   ActorRef<ADBShard.Command> shard,
-                                  ActorRef<ADBQuerySession.Command> client,
+                                  ActorRef<ADBQuerySession.Command> session,
                                   ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
                                   int transactionId, ADBQuery query,
                                   final List<ADBEntityType> data,
@@ -64,11 +64,13 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
         super(context);
         this.data = data;
         this.shard = shard;
-        this.client = client;
+        this.session = session;
         this.transactionId = transactionId;
         this.globalShardId = globalShardId;
         this.query = query;
         this.clientLargeMessageReceiver = clientLargeMessageReceiver;
+
+        this.session.tell(new ADBQuerySession.RegisterQuerySessionHandler(this.shard, this.getContext().getSelf()));
 
         this.largeMessageSenderWrapping = context.messageAdapter(ADBLargeMessageSender.Response.class,
                 WrappedLargeMessageSenderResponse::new);
@@ -93,7 +95,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     }
 
     protected void concludeTransaction() {
-        this.client.tell(new ADBQuerySession.ConcludeTransaction(this.shard, transactionId));
+        this.session.tell(new ADBQuerySession.ConcludeTransaction(this.shard, transactionId));
         this.getContext().getLog().info(String.format("Concluding QuerySessionHandler for transaction %d handling %s",
                 this.transactionId, this.getQuerySessionName()));
     }

@@ -38,7 +38,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     }
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TriggerNextShardComparison implements ADBQuerySession.Command, CborSerializable {
+    public static class TriggerShardComparison implements ADBQuerySession.Command, CborSerializable {
         private ActorRef<ADBShard.Command> requestingShard;
         private ActorRef<ADBShard.Command> nextJoiningShard;
         private ActorRef<ADBQuerySessionHandler.Command> respondTo;
@@ -66,6 +66,8 @@ public class ADBJoinQuerySession extends ADBQuerySession {
                                                                       .clientLargeMessageReceiver(this.initializeTransferWrapper)
                                                                       .respondTo(this.getContext().getSelf())
                                                                       .build()));
+        // Each shard performs self-join without explicit request (distribution plan consultation)
+        this.expectedPartialResults.set(shards.size());
     }
 
     @Override
@@ -73,7 +75,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
         return this.createReceiveBuilder()
                    .onMessage(RequestNextShardComparison.class, this::handleRequestNextShardComparison)
                    .onMessage(JoinQueryResults.class, this::handleJoinQueryResults)
-                   .onMessage(TriggerNextShardComparison.class, this::handleTriggerNextShardComparison)
+                   .onMessage(TriggerShardComparison.class, this::handleTriggerNextShardComparison)
                    .build();
     }
 
@@ -86,18 +88,17 @@ public class ADBJoinQuerySession extends ADBQuerySession {
             command.respondTo.tell(new ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith(this.transactionId));
             return Behaviors.same();
         }
-        this.getContext().getSelf().tell(
-                new TriggerNextShardComparison(command.requestingShard, nextJoinShard, command.respondTo));
+        this.getContext().getSelf().tell(new TriggerShardComparison(command.requestingShard, nextJoinShard, command.respondTo));
         return Behaviors.same();
     }
 
-    private Behavior<ADBQuerySession.Command> handleTriggerNextShardComparison(TriggerNextShardComparison command) {
-        if (this.shardToSessionMapping.containsKey(command.nextJoiningShard)) {
+    private Behavior<ADBQuerySession.Command> handleTriggerNextShardComparison(TriggerShardComparison command) {
+        if (this.sessionHandlers.containsKey(command.nextJoiningShard)) {
             this.expectedPartialResults.incrementAndGet();
             this.getContext().getLog().info(String.format("Asking shard #%d to join with shard #%d",
                     this.shards.indexOf(command.requestingShard), this.shards.indexOf(command.nextJoiningShard)));
             command.respondTo.tell(new ADBJoinQuerySessionHandler.JoinWithShard(
-                    this.shardToSessionMapping.get(command.nextJoiningShard), this.shards.indexOf(command.nextJoiningShard)));
+                    this.sessionHandlers.get(command.nextJoiningShard), this.shards.indexOf(command.nextJoiningShard)));
         } else {
             this.getContext().getLog().warn("No Shard-to-Session mapping present for " + command.nextJoiningShard);
             this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), command);
@@ -120,6 +121,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
 
     @Override
     protected void submitResults() {
+        this.getContext().getLog().info("[FINAL RESULT]: Submitting " + this.queryResults.size() + " elements.");
         this.parent.tell(new ADBShardInquirer.TransactionResults(this.transactionId, this.queryResults.toArray()));
     }
 }
