@@ -34,4 +34,13 @@ public class ADBPair<A, B> {
                           @JsonSubTypes.Type(value = ADBEntityType.class, name = "ADBEntityType"),
                   })
     private B value;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public boolean equals(Object o) {
+        if (!(o instanceof ADBPair)) {
+            return false;
+        }
+        return this.key.equals(((ADBPair<A,B>) o).key) && this.value.equals(((ADBPair<A,B>) o).value);
+    }
 }
