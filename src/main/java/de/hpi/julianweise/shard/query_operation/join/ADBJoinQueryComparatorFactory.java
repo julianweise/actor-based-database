@@ -6,24 +6,23 @@ import akka.actor.typed.SupervisorStrategy;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Routers;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
+import de.hpi.julianweise.query.ADBJoinQuery;
 
 import java.util.Map;
 
-public class ADBLocalCompareAttributeSessionFactory {
+public class ADBJoinQueryComparatorFactory {
 
     private final static int COMPARATOR_POOL_SIZE = 8;
+
+    public static Behavior<ADBJoinQueryComparator.Command> createDefault(ADBJoinQuery query,
+                                                                         Map<String, ADBSortedEntityAttributes> localSortedAttributes,
+                                                                         ActorRef<ADBJoinWithShardSession.Command> supervisor) {
+        return Behaviors.setup(context -> new ADBJoinQueryComparator(context, query, localSortedAttributes,
+                ADBJoinQueryComparatorFactory.getComparatorPool(context), supervisor));
+    }
 
     public static ActorRef<ADBJoinAttributeComparator.Command> getComparatorPool(ActorContext<?> context) {
         return context.spawn(Routers.pool(COMPARATOR_POOL_SIZE, Behaviors.supervise(ADBJoinAttributeComparatorFactory
                 .createDefault()).onFailure(SupervisorStrategy.restart())), "join-comparator-pool");
-    }
-
-    public static Behavior<ADBLocalCompareAttributesSession.Command> createDefault(
-            ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
-            Map<String, ADBSortedEntityAttributes> sortedLocalJoinAttributes,
-            ActorRef<ADBLargeMessageActor.Command> respondTo) {
-        return Behaviors.setup(context ->
-                new ADBLocalCompareAttributesSession(context, comparatorPool, sortedLocalJoinAttributes, respondTo));
     }
 }

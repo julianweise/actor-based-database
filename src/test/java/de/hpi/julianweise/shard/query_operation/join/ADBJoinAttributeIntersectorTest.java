@@ -197,4 +197,63 @@ public class ADBJoinAttributeIntersectorTest {
         assertThat(result.getCandidates().get(1)).isEqualTo(setA.get(5));
     }
 
+    @Test
+    public void intersectTwoUnequallyFilledListsCorrectly() {
+        List<ADBKeyPair> setA = new ArrayList<>(6);
+        setA.add(new ADBKeyPair(1,2));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(3,4));
+        setA.add(new ADBKeyPair(6,4));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(5,6));
+        List<ADBKeyPair> setB = new ArrayList<>(3);
+        setB.add(new ADBKeyPair(1,2));
+        setB.add(new ADBKeyPair(3,3));
+        setB.add(new ADBKeyPair(4,5));
+
+        TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
+
+        ActorRef<ADBJoinAttributeIntersector.Command> intersector = testKit.spawn(
+                ADBJoinAttributeIntersectorFactory.createDefault(setA));
+
+        intersector.tell(new ADBJoinAttributeIntersector.Intersect(setB));
+        intersector.tell(new ADBJoinAttributeIntersector.ReturnResults(resultTestProbe.ref()));
+
+        ADBJoinAttributeIntersector.Results result =
+                resultTestProbe.expectMessageClass(ADBJoinAttributeIntersector.Results.class);
+
+        assertThat(result.getCandidates().size()).isEqualTo(2);
+        assertThat(result.getCandidates().get(0)).isEqualTo(setA.get(0));
+        assertThat(result.getCandidates().get(1)).isEqualTo(setA.get(3));
+    }
+
+    @Test
+    public void intersectTwoUnequallyFilled2ListsCorrectly() {
+        List<ADBKeyPair> setA = new ArrayList<>(6);
+        setA.add(new ADBKeyPair(4,6));
+        List<ADBKeyPair> setB = new ArrayList<>(3);
+        setB.add(new ADBKeyPair(6,3));
+        setB.add(new ADBKeyPair(3,1));
+        setB.add(new ADBKeyPair(6,97));
+        setB.add(new ADBKeyPair(12,34));
+        setB.add(new ADBKeyPair(3,7));
+        setB.add(new ADBKeyPair(8,2));
+        setB.add(new ADBKeyPair(4,6));
+        setB.add(new ADBKeyPair(0,0));
+        setB.add(new ADBKeyPair(0,1));
+
+        TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
+
+        ActorRef<ADBJoinAttributeIntersector.Command> intersector = testKit.spawn(
+                ADBJoinAttributeIntersectorFactory.createDefault(setA));
+
+        intersector.tell(new ADBJoinAttributeIntersector.Intersect(setB));
+        intersector.tell(new ADBJoinAttributeIntersector.ReturnResults(resultTestProbe.ref()));
+
+        ADBJoinAttributeIntersector.Results result =
+                resultTestProbe.expectMessageClass(ADBJoinAttributeIntersector.Results.class);
+
+        assertThat(result.getCandidates().size()).isEqualTo(1);
+        assertThat(result.getCandidates().get(0)).isEqualTo(setA.get(0));
+    }
 }

@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
@@ -28,9 +28,6 @@ import java.util.stream.Collectors;
 public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
 
     private final ActorRef<ADBJoinWithShardSession.Command> session;
-    private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
-    private final Map<String, List<ADBJoinQueryTerm>> groupedQueryTerms;
-    private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
     private final List<ADBEntityType> data;
     private final ActorRef<ADBJoinQueryComparator.Command> joinQueryComparator;
     private ActorRef<ADBJoinQueryComparator.Command> joinInverseQueryComparator;
@@ -39,8 +36,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class CompareJoinAttributesFor implements Command, ADBLargeMessageSender.LargeMessage {
-        private String sourceAttribute;
+    public static class ForeignAttributes implements Command, ADBLargeMessageSender.LargeMessage {
+        private String attributeName;
         @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
         @JsonSubTypes({
                               @JsonSubTypes.Type(value = String.class, name = "String"),
@@ -50,7 +47,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                               @JsonSubTypes.Type(value = Character.class, name = "Character"),
                               @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
                       })
-        private List<ADBPair<Comparable<?>, Integer>> sourceAttributes;
+        private List<ADBPair<Comparable<?>, Integer>> attributeValues;
     }
 
     @AllArgsConstructor
@@ -71,75 +68,74 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     public ADBJoinWithShardSessionHandler(ActorContext<Command> context,
                                           ActorRef<ADBJoinWithShardSession.Command> session,
                                           ADBQuery query,
-                                          Map<String, ADBSortedEntityAttributes> sortedJoinAttributes,
-                                          List<ADBEntityType> data) {
+                                          Map<String, ADBSortedEntityAttributes> localSortedAttributes,
+                                          List<ADBEntityType> data, int localShardId, int remoteShardId) {
         super(context);
+        session.tell(new ADBJoinWithShardSession.RegisterHandler(this.getContext().getSelf()));
+
+        ADBJoinQuery joinQuery = (ADBJoinQuery) query;
         this.session = session;
         this.data = data;
-        this.sortedJoinAttributes = sortedJoinAttributes;
-        this.comparatorPool = ADBLocalCompareAttributeSessionFactory.getComparatorPool(this.getContext());
-        this.intersectorResultWrapper = this.getContext().messageAdapter(ADBJoinAttributeIntersector.Result.class,
-                WrappedIntersectorResult::new);
-        this.groupedQueryTerms = query.getTerms()
-                                      .stream()
-                                      .map(term -> ((ADBJoinQueryTerm) term))
-                                      .collect(Collectors.groupingBy(ADBJoinQueryTerm::getSourceAttributeName));
-        session.tell(new ADBJoinWithShardSession.RegisterHandler(this.getContext().getSelf()));
-        this.getContext().getLog().info("Start new SessionHandler for joining with " + this.session.path().name());
+        this.joinQueryComparator = this.spawnJoinQueryComparator(joinQuery, localSortedAttributes, "QueryComparator");
+        if (!this.isSelfComparison()) {
+            this.joinInverseQueryComparator = this.spawnJoinQueryComparator(joinQuery.reverse(), localSortedAttributes, "QueryComparatorInverse");
+        }
 
+        this.getContext().getLog().info("Create new session handler on  shard #" + localShardId + " (local) to " +
+                "join with shard #" + remoteShardId + " (remote)." );
+    }
+
+    private ActorRef<ADBJoinQueryComparator.Command> spawnJoinQueryComparator(ADBJoinQuery query,
+                                                                              Map<String, ADBSortedEntityAttributes> localSortedAttributes,
+                                                                              String name) {
+        return this.getContext().spawn(ADBJoinQueryComparatorFactory.createDefault(query, localSortedAttributes,
+                this.getContext().getSelf()), name);
+    }
+
+    private boolean isSelfComparison() {
+        return this.session.path().root().equals(this.getContext().getSelf().path().root());
     }
 
     @Override
     public Receive<Command> createReceive() {
         return this.createReceiveBuilder()
-                   .onMessage(CompareJoinAttributesFor.class, this::handleCompareJoinAttributes)
-                   .onMessage(JoinAttributesComparedFor.class, this::handleJoinAttributesCompared)
-                   .onMessage(WrappedIntersectorResult.class, this::handleIntersectorResult)
+                   .onMessage(ForeignAttributes.class, this::handleCompareJoinAttributes)
+                   .onMessage(ForeignAttributesCompared.class, this::handleForeignAttributesCompared)
                    .build();
     }
 
 
-    private Behavior<Command> handleCompareJoinAttributes(CompareJoinAttributesFor command) {
-        this.getContext().getLog().info("Received attributes for join comparison: " + command.sourceAttribute);
-        ActorRef<ADBLocalCompareAttributesSession.Command> localJoinAttributeCompareSession =
-                this.getContext().spawn(ADBLocalCompareAttributeSessionFactory.createDefault(this.comparatorPool,
-                        this.sortedJoinAttributes, this.getContext().getSelf()),
-                        "LocalJoinAttributeComparator-for-" + command.sourceAttribute.replace(" ", ""));
+    private Behavior<Command> handleCompareJoinAttributes(ForeignAttributes command) {
+        this.getContext().getLog().info("Received attributes for join comparison: " + command.attributeName);
 
-        localJoinAttributeCompareSession.tell(ADBLocalCompareAttributesSession.CompareJoinAttributes
-                .builder()
-                .terms(this.groupedQueryTerms.get(command.sourceAttribute).toArray(new ADBJoinQueryTerm[0]))
-                .sourceAttributeName(command.sourceAttribute)
-                .sourceAttributes(command.sourceAttributes)
-                .build());
+        this.joinQueryComparator.tell(new ADBJoinQueryComparator.ProcessForeignAttributes(
+                command.attributeName,
+                command.attributeValues));
+
+        if (this.joinInverseQueryComparator == null) {
+            return Behaviors.same();
+        }
+
+        this.joinInverseQueryComparator.tell(new ADBJoinQueryComparator.ProcessForeignAttributes(
+                command.attributeName,
+                command.attributeValues));
+
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleJoinAttributesCompared(JoinAttributesComparedFor command) {
-        this.getContext().getLog().info("Received " + command.joinCandidates.size() + " join candidates to be intersected");
-        if (this.intersector == null) {
-            this.intersector = this.getContext().spawn(ADBJoinAttributeIntersectorFactory.createDefault(
-                    command.joinCandidates), ADBJoinAttributeIntersectorFactory.getName(command.sourceAttributeName));
-        } else {
-            this.intersector.tell(new ADBJoinAttributeIntersector.Intersect(command.joinCandidates));
+    private Behavior<Command> handleForeignAttributesCompared(ForeignAttributesCompared result) {
+        if (this.isSelfComparison()) {
+            this.submitResults(result.joinCandidates);
+            return Behaviors.same();
         }
-        this.groupedQueryTerms.remove(command.sourceAttributeName);
-        this.conditionallyCollectResults();
-        return Behaviors.same();
-    }
-
-    private void conditionallyCollectResults() {
-        this.getContext().getLog().info("Remaining attributes to be joined: " + this.groupedQueryTerms.keySet());
-        if (this.groupedQueryTerms.size() > 0) {
-            return;
+        if (this.joinCandidates == null) {
+            this.joinCandidates = result.sender == this.joinInverseQueryComparator ?
+                    result.joinCandidates.stream().map(ADBKeyPair::flip).collect(Collectors.toList()) : result.joinCandidates;
+            return Behaviors.same();
         }
-        this.intersector.tell(new ADBJoinAttributeIntersector.ReturnResults(this.intersectorResultWrapper));
-    }
-
-    private Behavior<Command> handleIntersectorResult(WrappedIntersectorResult response) {
-        if (response.result instanceof ADBJoinAttributeIntersector.Results) {
-            this.submitResults(((ADBJoinAttributeIntersector.Results) response.result).getCandidates());
-        }
+        this.joinCandidates.addAll(result.sender == this.joinInverseQueryComparator ?
+                result.joinCandidates.stream().map(ADBKeyPair::flip).collect(Collectors.toList()) : result.joinCandidates);
+        this.submitResults(this.joinCandidates);
         return Behaviors.same();
     }
 
@@ -151,7 +147,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                           .collect(Collectors.toSet()));
         this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
                 ADBLargeMessageSenderFactory.senderName(this.getContext().getSelf(), this.session, message.getClass(),
-                        candidates.size() + ""))
+                        candidates.size() + "-candidates-to-" + this.largeMessageSenderWrapping.hashCode()))
             .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.session), message.getClass()));
     }
 

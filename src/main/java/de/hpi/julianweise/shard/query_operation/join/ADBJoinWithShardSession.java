@@ -7,8 +7,7 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
-import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
@@ -25,8 +24,10 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
 
     private ActorRef<ADBJoinWithShardSessionHandler.Command> sessionHandler;
     private final ActorRef<ADBJoinQuerySessionHandler.Command> supervisor;
-    private final ADBQuery query;
+    private final ADBJoinQuery query;
     private final Map<String, ADBSortedEntityAttributes> sortedJoinAttributes;
+    private final int localShardId;
+    private final int remoteShardId;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -43,13 +44,16 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     }
 
 
-    public ADBJoinWithShardSession(ActorContext<Command> context, ADBQuery query,
+    public ADBJoinWithShardSession(ActorContext<Command> context, ADBJoinQuery query,
                                    Map<String, ADBSortedEntityAttributes> sortedJoinAttributes,
-                                   ActorRef<ADBJoinQuerySessionHandler.Command> supervisor) {
+                                   ActorRef<ADBJoinQuerySessionHandler.Command> supervisor, int localShardId,
+                                   int remoteShardId) {
         super(context);
         this.query = query;
         this.supervisor = supervisor;
         this.sortedJoinAttributes = sortedJoinAttributes;
+        this.localShardId = localShardId;
+        this.remoteShardId = remoteShardId;
     }
 
     @Override
@@ -62,26 +66,17 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
 
     private Behavior<Command> handleRegisterHandler(RegisterHandler command) {
         this.sessionHandler = command.sessionHandler;
-        this.getContext().getLog().info("Start new Session for joining with " + this.sessionHandler.path().name());
-        this.sendRequiredJoinAttributes();
+        this.getContext().getLog().info("Created new session on shard #" + this.localShardId + " (local) to join with" +
+                " shard #" + this.remoteShardId + " (remote)");
+        this.query.getAllFields().forEach(this::sendRequiredJoinAttribute);
         return Behaviors.same();
     }
 
-    private void sendRequiredJoinAttributes() {
-        this.query.getTerms().stream()
-                  .map(term -> ((ADBJoinQueryTerm) term).getSourceAttributeName())
-                  .distinct()
-                  .forEach(this::sendRequiredJoinAttribute);
-    }
-
     private void sendRequiredJoinAttribute(String attributeName) {
-        assert this.sessionHandler != null;
-
-        ADBJoinWithShardSessionHandler.CompareJoinAttributesFor message = ADBJoinWithShardSessionHandler
-                .CompareJoinAttributesFor
+        ADBJoinWithShardSessionHandler.ForeignAttributes message = ADBJoinWithShardSessionHandler.ForeignAttributes
                 .builder()
-                .sourceAttribute(attributeName)
-                .sourceAttributes(this.sortedJoinAttributes.get(attributeName).getAllWithOriginalIndex())
+                .attributeName(attributeName)
+                .attributeValues(this.sortedJoinAttributes.get(attributeName).getAllWithOriginalIndex())
                 .build();
 
         this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
