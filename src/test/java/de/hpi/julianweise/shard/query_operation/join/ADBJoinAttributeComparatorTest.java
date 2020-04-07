@@ -4,13 +4,12 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
-import de.hpi.julianweise.query.ADBQueryTerm;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
+import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
+import de.hpi.julianweise.query.ADBQueryTerm;
+import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -46,30 +45,27 @@ public class ADBJoinAttributeComparatorTest {
 
     @Test
     public void testCompareOneTupleWithExpectedResultEquality() {
-        TestProbe<ADBLocalCompareAttributesSession.Command> respondTo = testKit.createTestProbe();
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
 
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
 
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger");
-        List<ADBEntityType> localEntities = Collections.singletonList(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
+        List<ADBEntityType> localEntities = Collections
+                .singletonList(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
 
-        ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare.builder()
-                                                                                       .startIndexSourceAttributeValues(0)
-                                                                                       .endIndexSourceAttributeValues(1)
-                                                                                       .term(term)
-                                                                                       .respondTo(respondTo.ref())
-                                                                                       .sourceAttributeValues(Collections.singletonList(new ADBPair<>(1, 2)))
-                                                                                       .targetAttributeValues(Collections.singletonMap("aInteger", ADBSortedEntityAttributes
-                                                                                               .of("aInteger", localEntities)))
-                                                                                       .build();
+        ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
+                .builder()
+                .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
+                .respondTo(respondTo.ref())
+                .leftSideValues(Collections.singletonList(new ADBPair<>(1, 2)))
+                .rightSideValues(ADBSortedEntityAttributes.of("aInteger", localEntities).getAllWithOriginalIndex())
+                .build();
 
         comparator.tell(message);
 
-        ADBLocalCompareAttributesSession.HandleResults results =
-                respondTo.expectMessageClass(ADBLocalCompareAttributesSession.HandleResults.class);
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
 
-        assertThat(results.getTerm()).isEqualTo(term);
         assertThat(results.getJoinPartners().size()).isOne();
         // index for data stored on source
         assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(2);
@@ -80,42 +76,37 @@ public class ADBJoinAttributeComparatorTest {
 
     @Test
     public void testCompareOneTupleWithNoExpectedResultEquality() {
-        TestProbe<ADBLocalCompareAttributesSession.Command> respondTo = testKit.createTestProbe();
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
 
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
 
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger");
         List<ADBEntityType> targetEntities = Collections.singletonList(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
 
         ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
                 .builder()
-                .startIndexSourceAttributeValues(0)
-                .endIndexSourceAttributeValues(1)
-                .term(term)
+                .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
                 .respondTo(respondTo.ref())
-                .sourceAttributeValues(Collections.singletonList(new ADBPair<>(2, 2)))
-                .targetAttributeValues(Collections.singletonMap("aInteger", ADBSortedEntityAttributes
-                        .of("aInteger", targetEntities)))
+                .leftSideValues(Collections.singletonList(new ADBPair<>(2, 2)))
+                .rightSideValues(ADBSortedEntityAttributes
+                        .of("aInteger", targetEntities).getAllWithOriginalIndex())
                 .build();
 
         comparator.tell(message);
 
-        ADBLocalCompareAttributesSession.HandleResults results =
-                respondTo.expectMessageClass(ADBLocalCompareAttributesSession.HandleResults.class);
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
 
-        assertThat(results.getTerm()).isEqualTo(term);
         assertThat(results.getJoinPartners().size()).isZero();
     }
 
     @Test
     public void testCompareMultipleTargetTuplesWithExpectedResultEquality() {
-        TestProbe<ADBLocalCompareAttributesSession.Command> respondTo = testKit.createTestProbe();
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
 
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
 
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString");
         List<ADBEntityType> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(2, "Test", 2f, true, 2.01, 'b'));
@@ -123,21 +114,17 @@ public class ADBJoinAttributeComparatorTest {
 
         ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
                 .builder()
-                .startIndexSourceAttributeValues(0)
-                .endIndexSourceAttributeValues(1)
-                .term(term)
+                .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
                 .respondTo(respondTo.ref())
-                .sourceAttributeValues(Collections.singletonList(new ADBPair<>("Test", 2)))
-                .targetAttributeValues(Collections.singletonMap("bString", ADBSortedEntityAttributes
-                        .of("bString", targetEntities)))
+                .leftSideValues(Collections.singletonList(new ADBPair<>("Test", 2)))
+                .rightSideValues(ADBSortedEntityAttributes.of("bString", targetEntities).getAllWithOriginalIndex())
                 .build();
 
         comparator.tell(message);
 
-        ADBLocalCompareAttributesSession.HandleResults results =
-                respondTo.expectMessageClass(ADBLocalCompareAttributesSession.HandleResults.class);
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
 
-        assertThat(results.getTerm()).isEqualTo(term);
         assertThat(results.getJoinPartners().size()).isEqualTo(3);
 
         assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(2);
@@ -152,12 +139,10 @@ public class ADBJoinAttributeComparatorTest {
 
     @Test
     public void testCompareMultipleSourceAndTargetTuplesWithExpectedResultEquality() {
-        TestProbe<ADBLocalCompareAttributesSession.Command> respondTo = testKit.createTestProbe();
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
 
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
-
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString");
 
         List<ADBPair<Comparable<?>, Integer>> sourceEntities = new ArrayList<>();
         sourceEntities.add(new ADBPair<>("Test", 4));
@@ -171,21 +156,17 @@ public class ADBJoinAttributeComparatorTest {
 
         ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
                 .builder()
-                .startIndexSourceAttributeValues(0)
-                .endIndexSourceAttributeValues(3)
-                .term(term)
+                .operator(ADBQueryTerm.RelationalOperator.EQUALITY)
                 .respondTo(respondTo.ref())
-                .sourceAttributeValues(sourceEntities)
-                .targetAttributeValues(Collections.singletonMap("bString", ADBSortedEntityAttributes
-                        .of("bString", targetEntities)))
+                .leftSideValues(sourceEntities)
+                .rightSideValues(ADBSortedEntityAttributes.of("bString", targetEntities).getAllWithOriginalIndex())
                 .build();
 
         comparator.tell(message);
 
-        ADBLocalCompareAttributesSession.HandleResults results =
-                respondTo.expectMessageClass(ADBLocalCompareAttributesSession.HandleResults.class);
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
 
-        assertThat(results.getTerm()).isEqualTo(term);
         assertThat(results.getJoinPartners().size()).isEqualTo(4);
 
         assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(4);
@@ -199,51 +180,6 @@ public class ADBJoinAttributeComparatorTest {
 
         assertThat(results.getJoinPartners().get(3).getKey()).isEqualTo(6);
         assertThat(results.getJoinPartners().get(3).getValue()).isEqualTo(1);
-    }
-
-    @Test
-    public void testCompareMultipleSourceAndTargetTuplesWithExpectedResultEqualityCorrectlyChunked() {
-        TestProbe<ADBLocalCompareAttributesSession.Command> respondTo = testKit.createTestProbe();
-
-        Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
-        ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
-
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString");
-
-        List<ADBPair<Comparable<?>, Integer>> sourceEntities = new ArrayList<>();
-        sourceEntities.add(new ADBPair<>("Test", 4));
-        sourceEntities.add(new ADBPair<>("Test2", 5));
-        sourceEntities.add(new ADBPair<>("Test", 6));
-
-        List<ADBEntityType> targetEntities = new ArrayList<>();
-        targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
-        targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
-        targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
-
-        ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
-                .builder()
-                .startIndexSourceAttributeValues(0)
-                .endIndexSourceAttributeValues(2)
-                .term(term)
-                .respondTo(respondTo.ref())
-                .sourceAttributeValues(sourceEntities)
-                .targetAttributeValues(Collections.singletonMap("bString", ADBSortedEntityAttributes
-                        .of("bString", targetEntities)))
-                .build();
-
-        comparator.tell(message);
-
-        ADBLocalCompareAttributesSession.HandleResults results =
-                respondTo.expectMessageClass(ADBLocalCompareAttributesSession.HandleResults.class);
-
-        assertThat(results.getTerm()).isEqualTo(term);
-        assertThat(results.getJoinPartners().size()).isEqualTo(2);
-
-        assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(4);
-        assertThat(results.getJoinPartners().get(0).getValue()).isEqualTo(0);
-
-        assertThat(results.getJoinPartners().get(1).getKey()).isEqualTo(4);
-        assertThat(results.getJoinPartners().get(1).getValue()).isEqualTo(1);
     }
 
 }

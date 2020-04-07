@@ -3,7 +3,7 @@ package de.hpi.julianweise.shard.query_operation.join;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
-import javafx.util.Pair;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -33,8 +33,8 @@ public class ADBJoinAttributeIntersectorTest {
 
     @Test
     public void intersectEmptyLists() {
-        List<Pair<Integer, Integer>> setA = new ArrayList<>();
-        List<Pair<Integer, Integer>> setB = new ArrayList<>();
+        List<ADBKeyPair> setA = new ArrayList<>();
+        List<ADBKeyPair> setB = new ArrayList<>();
         TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
 
         ActorRef<ADBJoinAttributeIntersector.Command> intersector = testKit.spawn(
@@ -52,13 +52,13 @@ public class ADBJoinAttributeIntersectorTest {
 
     @Test
     public void intersectWithOneEmptyList() {
-        List<Pair<Integer, Integer>> setA = new ArrayList<>(5);
-        setA.add(new Pair<>(1,2));
-        setA.add(new Pair<>(2,3));
-        setA.add(new Pair<>(3,4));
-        setA.add(new Pair<>(4,5));
-        setA.add(new Pair<>(5,6));
-        List<Pair<Integer, Integer>> setB = new ArrayList<>();
+        List<ADBKeyPair> setA = new ArrayList<>(5);
+        setA.add(new ADBKeyPair(1,2));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(3,4));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(5,6));
+        List<ADBKeyPair> setB = new ArrayList<>();
 
         TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
 
@@ -76,13 +76,13 @@ public class ADBJoinAttributeIntersectorTest {
 
     @Test
     public void intersectWithOtherEmptyList() {
-        List<Pair<Integer, Integer>> setA = new ArrayList<>(5);
-        setA.add(new Pair<>(1,2));
-        setA.add(new Pair<>(2,3));
-        setA.add(new Pair<>(3,4));
-        setA.add(new Pair<>(4,5));
-        setA.add(new Pair<>(5,6));
-        List<Pair<Integer, Integer>> setB = new ArrayList<>();
+        List<ADBKeyPair> setA = new ArrayList<>(5);
+        setA.add(new ADBKeyPair(1,2));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(3,4));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(5,6));
+        List<ADBKeyPair> setB = new ArrayList<>();
 
         TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
 
@@ -100,18 +100,18 @@ public class ADBJoinAttributeIntersectorTest {
 
     @Test
     public void intersectTwoFilledListsCorrectly() {
-        List<Pair<Integer, Integer>> setA = new ArrayList<>(5);
-        setA.add(new Pair<>(1,2));
-        setA.add(new Pair<>(2,3));
-        setA.add(new Pair<>(3,4));
-        setA.add(new Pair<>(4,5));
-        setA.add(new Pair<>(5,6));
-        List<Pair<Integer, Integer>> setB = new ArrayList<>();
-        setB.add(new Pair<>(1,2));
-        setB.add(new Pair<>(3,3));
-        setB.add(new Pair<>(6,4));
-        setB.add(new Pair<>(4,5));
-        setB.add(new Pair<>(9,6));
+        List<ADBKeyPair> setA = new ArrayList<>(5);
+        setA.add(new ADBKeyPair(1,2));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(3,4));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(5,6));
+        List<ADBKeyPair> setB = new ArrayList<>();
+        setB.add(new ADBKeyPair(1,2));
+        setB.add(new ADBKeyPair(3,3));
+        setB.add(new ADBKeyPair(6,4));
+        setB.add(new ADBKeyPair(4,5));
+        setB.add(new ADBKeyPair(9,6));
 
         TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
 
@@ -131,20 +131,20 @@ public class ADBJoinAttributeIntersectorTest {
 
     @Test
     public void intersectTwoFilledListsCorrectlyRemoveNotIntersectedDuplicates() {
-        List<Pair<Integer, Integer>> setA = new ArrayList<>(5);
-        setA.add(new Pair<>(1,2));
-        setA.add(new Pair<>(2,3));
-        setA.add(new Pair<>(2,3));
-        setA.add(new Pair<>(3,4));
-        setA.add(new Pair<>(4,5));
-        setA.add(new Pair<>(5,6));
-        List<Pair<Integer, Integer>> setB = new ArrayList<>();
-        setB.add(new Pair<>(1,2));
-        setB.add(new Pair<>(3,3));
-        setB.add(new Pair<>(6,4));
-        setB.add(new Pair<>(4,5));
-        setB.add(new Pair<>(9,6));
-        setB.add(new Pair<>(9,6));
+        List<ADBKeyPair> setA = new ArrayList<>(5);
+        setA.add(new ADBKeyPair(1,2));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(3,4));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(5,6));
+        List<ADBKeyPair> setB = new ArrayList<>();
+        setB.add(new ADBKeyPair(1,2));
+        setB.add(new ADBKeyPair(3,3));
+        setB.add(new ADBKeyPair(6,4));
+        setB.add(new ADBKeyPair(4,5));
+        setB.add(new ADBKeyPair(9,6));
+        setB.add(new ADBKeyPair(9,6));
 
         TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
 
@@ -164,22 +164,22 @@ public class ADBJoinAttributeIntersectorTest {
 
     @Test
     public void intersectTwoFilledListsCorrectlyRemoveIntersectedDuplicates() {
-        List<Pair<Integer, Integer>> setA = new ArrayList<>(5);
-        setA.add(new Pair<>(1,2));
-        setA.add(new Pair<>(2,3));
-        setA.add(new Pair<>(3,4));
-        setA.add(new Pair<>(4,5));
-        setA.add(new Pair<>(5,6));
-        setA.add(new Pair<>(4,5));
-        setA.add(new Pair<>(1,2));
-        List<Pair<Integer, Integer>> setB = new ArrayList<>();
-        setB.add(new Pair<>(1,2));
-        setB.add(new Pair<>(3,3));
-        setB.add(new Pair<>(6,4));
-        setB.add(new Pair<>(4,5));
-        setB.add(new Pair<>(9,6));
-        setB.add(new Pair<>(4,5));
-        setB.add(new Pair<>(1,2));
+        List<ADBKeyPair> setA = new ArrayList<>(5);
+        setA.add(new ADBKeyPair(1,2));
+        setA.add(new ADBKeyPair(2,3));
+        setA.add(new ADBKeyPair(3,4));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(5,6));
+        setA.add(new ADBKeyPair(4,5));
+        setA.add(new ADBKeyPair(1,2));
+        List<ADBKeyPair> setB = new ArrayList<>();
+        setB.add(new ADBKeyPair(1,2));
+        setB.add(new ADBKeyPair(3,3));
+        setB.add(new ADBKeyPair(6,4));
+        setB.add(new ADBKeyPair(4,5));
+        setB.add(new ADBKeyPair(9,6));
+        setB.add(new ADBKeyPair(4,5));
+        setB.add(new ADBKeyPair(1,2));
 
         TestProbe<ADBJoinAttributeIntersector.Result> resultTestProbe = testKit.createTestProbe();
 

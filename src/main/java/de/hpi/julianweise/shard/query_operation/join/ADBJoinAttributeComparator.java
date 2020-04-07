@@ -7,33 +7,31 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.CborSerializable;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
-import javafx.util.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ADBJoinAttributeComparator extends AbstractBehavior<ADBJoinAttributeComparator.Command> {
 
-    public interface Command extends CborSerializable {
-    }
+    public static final float JOIN_RESULT_REDUCTION_FACTOR = 0.3f;
+
+    public interface Command extends CborSerializable {}
 
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
     public static class Compare implements Command {
-        private int startIndexSourceAttributeValues;
-        private int endIndexSourceAttributeValues;
-        private ADBJoinQueryTerm term;
-        private Map<String, ADBSortedEntityAttributes> targetAttributeValues;
-        private List<ADBPair<Comparable<?>, Integer>> sourceAttributeValues;
-        private ActorRef<ADBLocalCompareAttributesSession.Command> respondTo;
+        private ADBQueryTerm.RelationalOperator operator;
+        private List<ADBPair<Comparable<?>, Integer>> leftSideValues;
+        private List<ADBPair<Comparable<?>, Integer>> rightSideValues;
+        private ActorRef<ADBJoinTermComparator.Command> respondTo;
     }
 
     public ADBJoinAttributeComparator(ActorContext<Command> context) {
@@ -49,22 +47,23 @@ public class ADBJoinAttributeComparator extends AbstractBehavior<ADBJoinAttribut
 
     @SuppressWarnings("unchecked")
     private Behavior<Command> handleCompare(Compare command) {
-        ArrayList<Pair<Integer, Integer>> joinPartners = new ArrayList<>();
-        ADBSortedEntityAttributes targetVals = command.targetAttributeValues.get(command.term.getTargetAttributeName());
-        for (int a = command.startIndexSourceAttributeValues; a < command.endIndexSourceAttributeValues; a++) {
-            Comparable<Object> sourceAttributeVal = (Comparable<Object>) command.sourceAttributeValues.get(a).getKey();
-            for (int b = 0; b < targetVals.size(); b++) {
-                Comparable<?> targetAttributeVal = targetVals.get(b);
-                if (ADBEntityType.matches(sourceAttributeVal, targetAttributeVal, command.term.getOperator())) {
-                    joinPartners.add(new Pair<>(command.sourceAttributeValues.get(a).getValue(), targetVals.getOriginalIndex(b)));
+        int estimatedResultSize = this.estimateResultSize(command.leftSideValues, command.rightSideValues);
+        ArrayList<ADBKeyPair> joinCandidates = new ArrayList<>(estimatedResultSize);
+
+        for (ADBPair<Comparable<?>, Integer> leftValue : command.leftSideValues) {
+            for (ADBPair<Comparable<?>, Integer> rightValue : command.rightSideValues) {
+                if (ADBEntityType.matches((Comparable<Object>) leftValue.getKey(), rightValue.getKey(), command.operator)) {
+                    joinCandidates.add(new ADBKeyPair(leftValue.getValue(), rightValue.getValue()));
                 }
             }
         }
-        command.respondTo.tell(ADBLocalCompareAttributesSession.HandleResults
-                .builder()
-                .term(command.term)
-                .joinPartners(joinPartners)
-                .build());
+
+        joinCandidates.trimToSize();
+        command.respondTo.tell(new ADBJoinTermComparator.CompareAttributesChunkResult(joinCandidates));
         return Behaviors.same();
+    }
+
+    private int estimateResultSize(List<ADBPair<Comparable<?>, Integer>> l, List<ADBPair<Comparable<?>, Integer>> r) {
+        return Math.round(l.size() * r.size() * JOIN_RESULT_REDUCTION_FACTOR);
     }
 }

@@ -11,11 +11,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
-import javafx.util.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,8 +32,9 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     private final Map<String, List<ADBJoinQueryTerm>> groupedQueryTerms;
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
     private final List<ADBEntityType> data;
-    private ActorRef<ADBJoinAttributeIntersector.Command> intersector;
-    private ActorRef<ADBJoinAttributeIntersector.Result> intersectorResultWrapper;
+    private final ActorRef<ADBJoinQueryComparator.Command> joinQueryComparator;
+    private ActorRef<ADBJoinQueryComparator.Command> joinInverseQueryComparator;
+    private List<ADBKeyPair> joinCandidates = null;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -55,10 +56,9 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     @AllArgsConstructor
     @NoArgsConstructor
     @Builder
-    public static class JoinAttributesComparedFor implements Command {
-        private String sourceAttributeName;
-        private List<Pair<Integer, Integer>> joinCandidates;
-        private boolean isLastChunk;
+    public static class ForeignAttributesCompared implements Command {
+        private List<ADBKeyPair> joinCandidates;
+        private ActorRef<ADBJoinQueryComparator.Command> sender;
     }
 
     @AllArgsConstructor
@@ -143,7 +143,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         return Behaviors.same();
     }
 
-    private void submitResults(List<Pair<Integer, Integer>> candidates) {
+    private void submitResults(List<ADBKeyPair> candidates) {
         this.getContext().getLog().info("About to return " + candidates.size() + " join candidates to " + this.session);
         ADBJoinWithShardSession.HandleJoinShardsResults message = new ADBJoinWithShardSession.HandleJoinShardsResults(
                 candidates.stream()
