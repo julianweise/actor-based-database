@@ -119,7 +119,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         List<ADBPair<ADBEntityType, ADBEntityType>> results = command
                 .getJoinCandidates()
                 .stream()
-                .map(pair -> new ADBPair<>(this.data.get(pair.getKey()), pair.getValue()))
+                .map(this::materializeResultTuple)
                 .collect(Collectors.toList());
 
         this.sendToSession(ADBJoinQuerySession.JoinQueryResults
@@ -130,6 +130,13 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                 .build(), results.size());
 
         return Behaviors.same();
+    }
+
+    private ADBPair<ADBEntityType, ADBEntityType> materializeResultTuple(ADBPair<Integer, ADBEntityType> resultTuple) {
+        if (resultTuple.isFlipped()) {
+            return new ADBPair<>(resultTuple.getValue(), this.data.get(resultTuple.getKey()));
+        }
+        return new ADBPair<>(this.data.get(resultTuple.getKey()), resultTuple.getValue());
     }
 
     private Behavior<Command> handleNoMoreShardToJoinWith(NoMoreShardsToJoinWith command) {

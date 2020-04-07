@@ -125,29 +125,36 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
 
     private Behavior<Command> handleForeignAttributesCompared(ForeignAttributesCompared result) {
         if (this.isSelfComparison()) {
-            this.submitResults(result.joinCandidates);
+            this.joinCandidates = this.materializeResult(result);
+            this.submitResults();
             return Behaviors.same();
         }
         if (this.joinCandidates == null) {
-            this.joinCandidates = result.sender == this.joinInverseQueryComparator ?
-                    result.joinCandidates.stream().map(ADBKeyPair::flip).collect(Collectors.toList()) : result.joinCandidates;
+            this.joinCandidates = this.materializeResult(result);
             return Behaviors.same();
         }
-        this.joinCandidates.addAll(result.sender == this.joinInverseQueryComparator ?
-                result.joinCandidates.stream().map(ADBKeyPair::flip).collect(Collectors.toList()) : result.joinCandidates);
-        this.submitResults(this.joinCandidates);
+        this.joinCandidates.addAll(this.materializeResult(result));
+        this.submitResults();
         return Behaviors.same();
     }
 
-    private void submitResults(List<ADBKeyPair> candidates) {
-        this.getContext().getLog().info("About to return " + candidates.size() + " join candidates to " + this.session);
-        ADBJoinWithShardSession.HandleJoinShardsResults message = new ADBJoinWithShardSession.HandleJoinShardsResults(
-                candidates.stream()
-                          .map(pair -> new ADBPair<>(pair.getKey(), this.data.get(pair.getValue())))
-                          .collect(Collectors.toSet()));
+    private List<ADBPair<Integer, ADBEntityType>> materializeResult(ForeignAttributesCompared result) {
+        boolean isTupleFlipped = this.joinInverseQueryComparator != null
+                        && result.sender.path().equals(this.joinInverseQueryComparator.path());
+        ArrayList<ADBPair<Integer, ADBEntityType>> semiMaterializedResults = new ArrayList<>(data.size());
+        for (ADBPair<Integer, Integer> tuple : result.joinCandidates) {
+            semiMaterializedResults.add(new ADBPair<>(isTupleFlipped, tuple.getKey(), this.data.get(tuple.getValue())));
+        }
+        return semiMaterializedResults;
+    }
+
+    private void submitResults() {
+        this.getContext().getLog().info("About to return " + this.joinCandidates.size() + " join candidates to " + this.session);
+        ADBJoinWithShardSession.HandleJoinShardsResults message =
+                new ADBJoinWithShardSession.HandleJoinShardsResults(this.joinCandidates);
         this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, this.largeMessageSenderWrapping),
                 ADBLargeMessageSenderFactory.senderName(this.getContext().getSelf(), this.session, message.getClass(),
-                        candidates.size() + "-candidates-to-" + this.largeMessageSenderWrapping.hashCode()))
+                        this.joinCandidates.size() + "-candidates-to-" + this.largeMessageSenderWrapping.hashCode()))
             .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.session), message.getClass()));
     }
 
