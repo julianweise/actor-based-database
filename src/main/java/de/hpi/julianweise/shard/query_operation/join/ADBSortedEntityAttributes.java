@@ -3,21 +3,17 @@ package de.hpi.julianweise.shard.query_operation.join;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
-import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import javafx.util.Pair;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
@@ -48,16 +44,8 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     public static Map<String, ADBSortedEntityAttributes> of(ADBJoinQuery joinQuery, List<ADBEntityType> data) {
         Map<String, ADBSortedEntityAttributes> handledAttributeNames = new HashMap<>();
-        for (ADBQueryTerm term : joinQuery.getTerms()) {
-            ADBJoinQueryTerm joinTerm = (ADBJoinQueryTerm) term;
-            if (!handledAttributeNames.containsKey(joinTerm.getSourceAttributeName())) {
-                String field = joinTerm.getSourceAttributeName();
-                handledAttributeNames.put(field, of(field, data));
-            }
-            if (!handledAttributeNames.containsKey(joinTerm.getTargetAttributeName())) {
-                String field = joinTerm.getTargetAttributeName();
-                handledAttributeNames.put(field, of(field, data));
-            }
+        for(String field : joinQuery.getAllFields()) {
+            handledAttributeNames.putIfAbsent(field, ADBSortedEntityAttributes.of(field, data));
         }
         return handledAttributeNames;
     }
@@ -76,17 +64,21 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
                                      List<ADBEntityType> data)  {
         this.data = data;
         this.fieldGetter = fieldGetter;
-        this.indices = this.getFieldValues().stream().map(Pair::getKey).mapToInt(Integer::intValue).toArray();
+        this.indices = this.getIndicesSortedByAttributeValue();
     }
 
     @SneakyThrows
-    private List<Pair<Integer, Comparable<Object>>> getFieldValues() {
+    private int[] getIndicesSortedByAttributeValue() {
         List<Pair<Integer, Comparable<Object>>> fieldJoinAttributes = new ArrayList<>(data.size());
         for (int i = 0; i < data.size(); i++) {
             fieldJoinAttributes.add(new Pair<>(i, this.fieldGetter.apply(data.get(i))));
         }
         fieldJoinAttributes.sort(Comparator.comparing(Pair::getValue));
-        return fieldJoinAttributes;
+        int[] sortedIndices = new int[data.size()];
+        for (int i = 0; i < fieldJoinAttributes.size(); i++) {
+            sortedIndices[i] = fieldJoinAttributes.get(i).getKey();
+        }
+        return sortedIndices;
     }
 
     @Override
@@ -95,7 +87,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
     }
 
     public int size() {
-        return this.data.size();
+        return this.indices.length;
     }
     
     @SneakyThrows
@@ -103,15 +95,19 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
         return fieldGetter.apply(this.data.get(this.indices[index]));
     }
 
-    public int getOriginalIndex(int index) {
-        return this.indices[index];
+    public Comparable<Object> getUsingOriginalIndex(int originalIndex) {
+        return fieldGetter.apply(this.data.get(originalIndex));
     }
 
-    public ADBPair<Comparable<?>, Integer> getWithOriginalIndex(int index) {
-        return new ADBPair<>(this.get(index), this.getOriginalIndex(index));
+    public ADBPair<Comparable<?>, Integer> getWithOriginalIndex(int originalIndex) {
+        return new ADBPair<>(this.getUsingOriginalIndex(originalIndex), originalIndex);
     }
 
     public List<ADBPair<Comparable<?>, Integer>> getAllWithOriginalIndex() {
-        return Arrays.stream(this.indices).mapToObj(this::getWithOriginalIndex).collect(Collectors.toList());
+        ArrayList<ADBPair<Comparable<?>, Integer>> columnWithIndex = new ArrayList<>(this.indices.length);
+        for(int i = 0; i < this.indices.length; i++) {
+            columnWithIndex.add(this.getWithOriginalIndex(i));
+        }
+        return columnWithIndex;
     }
 }

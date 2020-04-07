@@ -54,14 +54,19 @@ public class ADBSortedEntityAttributesTest {
         assertThat(attributes.iterator().hasNext()).isTrue();
         assertThat(attributes.iterator().next()).isEqualTo(1);
 
-        assertThat((attributes.getWithOriginalIndex(0).getKey())).isEqualTo(1);
-        assertThat((attributes.getWithOriginalIndex(0).getValue())).isEqualTo(1);
-        assertThat((attributes.getWithOriginalIndex(1).getKey())).isEqualTo(4);
-        assertThat((attributes.getWithOriginalIndex(1).getValue())).isEqualTo(3);
-        assertThat((attributes.getWithOriginalIndex(2).getKey())).isEqualTo(5);
-        assertThat((attributes.getWithOriginalIndex(2).getValue())).isEqualTo(0);
-        assertThat((attributes.getWithOriginalIndex(3).getKey())).isEqualTo(23);
-        assertThat((attributes.getWithOriginalIndex(3).getValue())).isEqualTo(2);
+        assertThat((attributes.getWithOriginalIndex(1).getKey())).isEqualTo(1);
+        assertThat((attributes.getWithOriginalIndex(1).getValue())).isEqualTo(1);
+        assertThat((attributes.getWithOriginalIndex(3).getKey())).isEqualTo(4);
+        assertThat((attributes.getWithOriginalIndex(3).getValue())).isEqualTo(3);
+        assertThat((attributes.getWithOriginalIndex(0).getKey())).isEqualTo(5);
+        assertThat((attributes.getWithOriginalIndex(0).getValue())).isEqualTo(0);
+        assertThat((attributes.getWithOriginalIndex(2).getKey())).isEqualTo(23);
+        assertThat((attributes.getWithOriginalIndex(2).getValue())).isEqualTo(2);
+
+        assertThat(attributes.getAllWithOriginalIndex().get(0).getKey()).isEqualTo(1);
+        assertThat(attributes.getAllWithOriginalIndex().get(1).getKey()).isEqualTo(4);
+        assertThat(attributes.getAllWithOriginalIndex().get(2).getKey()).isEqualTo(5);
+        assertThat(attributes.getAllWithOriginalIndex().get(3).getKey()).isEqualTo(23);
     }
 
     @Test
@@ -106,13 +111,5 @@ public class ADBSortedEntityAttributesTest {
         assertThat((attributes.get("cFloat").get(1))).isEqualTo(1.0f);
         assertThat((attributes.get("cFloat").get(2))).isEqualTo(3f);
         assertThat((attributes.get("cFloat").get(3))).isEqualTo(20.2f);
-
-        assertThat((attributes.get("aInteger").getOriginalIndex(0))).isEqualTo(1);
-        assertThat((attributes.get("aInteger").getOriginalIndex(1))).isEqualTo(3);
-        assertThat((attributes.get("aInteger").getOriginalIndex(2))).isEqualTo(0);
-        assertThat((attributes.get("aInteger").getOriginalIndex(3))).isEqualTo(2);
     }
-
-
-
 }

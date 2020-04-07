@@ -5,7 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Setter
 @Getter
@@ -17,6 +20,18 @@ public class ADBJoinQuery implements ADBQuery {
 
     public void addTerm(ADBJoinQueryTerm term) {
         this.terms.add(term);
+    }
+
+    public Set<String> getAllFields() {
+        return this.getTerms().stream()
+            .map(term -> {
+                List<String> fields = new ArrayList<>(2);
+                fields.add(term.getLeftHandSideAttribute());
+                fields.add(term.getRightHandSideAttribute());
+                return fields;
+            })
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
     }
 
     @Override
