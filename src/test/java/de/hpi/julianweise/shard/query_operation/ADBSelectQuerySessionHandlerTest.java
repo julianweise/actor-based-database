@@ -72,9 +72,13 @@ public class ADBSelectQuerySessionHandlerTest {
 
         selectHandler.tell(new ADBQuerySessionHandler.WrappedLargeMessageSenderResponse(new ADBLargeMessageSender.TransferCompleted()));
 
-        ADBQuerySession.ConcludeTransaction conclusion = (ADBQuerySession.ConcludeTransaction) responseProbe
-                .receiveMessage();
+        ADBQuerySession.RegisterQuerySessionHandler handlerRegistration =
+                responseProbe.expectMessageClass(ADBQuerySession.RegisterQuerySessionHandler.class);
 
+        ADBQuerySession.ConcludeTransaction conclusion =
+                responseProbe.expectMessageClass(ADBQuerySession.ConcludeTransaction.class);
+
+        assertThat(handlerRegistration.getSessionHandler()).isEqualTo(selectHandler);
         assertThat(conclusion.getTransactionId()).isEqualTo(transactionId);
     }
 
@@ -107,6 +111,11 @@ public class ADBSelectQuerySessionHandlerTest {
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
         selectHandler.tell(new ADBQuerySessionHandler.Execute());
+
+        ADBQuerySession.RegisterQuerySessionHandler handlerRegistration =
+                responseProbe.expectMessageClass(ADBQuerySession.RegisterQuerySessionHandler.class);
+
+        assertThat(handlerRegistration.getSessionHandler()).isEqualTo(selectHandler);
 
         ADBLargeMessageReceiver.InitializeTransfer initializeTransfer =
                 initializeTransferTestProbe.expectMessageClass(ADBLargeMessageReceiver.InitializeTransfer.class);

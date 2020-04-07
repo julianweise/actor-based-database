@@ -13,6 +13,7 @@ import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.ADBQuerySessionFactory;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
+import de.hpi.julianweise.shard.query_operation.join.ADBJoinWithShardSession;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -61,7 +62,7 @@ public class ADBJoinQuerySessionTest {
     }
 
     @Test
-    public void expectSelfIsSentForOnlyOneShard() {
+    public void expectNoShardToJoinWithIsSentForOnlyOneShard() {
 
         TestProbe<ADBShardInquirer.Command> supervisor = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
@@ -79,10 +80,10 @@ public class ADBJoinQuerySessionTest {
 
         joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard.ref(), joinSessionHandler.ref()));
 
-        ADBJoinQuerySessionHandler.JoinWithShard response =
-                joinSessionHandler.expectMessageClass(ADBJoinQuerySessionHandler.JoinWithShard.class);
+        ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith response =
+                joinSessionHandler.expectMessageClass(ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith.class);
 
-        assertThat(response.getCounterpart()).isEqualTo(joinSessionHandler.ref());
+        assertThat(response.getTransactionId()).isEqualTo(1);
     }
 
     @Test
@@ -108,31 +109,18 @@ public class ADBJoinQuerySessionTest {
         joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
         joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
-
         joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard1.ref(), joinSessionHandler1.ref()));
 
         ADBJoinQuerySessionHandler.JoinWithShard response1 = joinSessionHandler1
                 .expectMessageClass(ADBJoinQuerySessionHandler.JoinWithShard.class);
 
-        joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard1.ref(), joinSessionHandler1.ref()));
-
-        ADBJoinQuerySessionHandler.JoinWithShard response2 = joinSessionHandler1
-                .expectMessageClass(ADBJoinQuerySessionHandler.JoinWithShard.class);
-
         joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard2.ref(), joinSessionHandler2.ref()));
 
-        ADBJoinQuerySessionHandler.JoinWithShard response3 = joinSessionHandler2
-                .expectMessageClass(ADBJoinQuerySessionHandler.JoinWithShard.class);
+        ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith response2 = joinSessionHandler2
+                .expectMessageClass(ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith.class);
 
-        joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard2.ref(), joinSessionHandler2.ref()));
-
-        ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith response4 =
-                joinSessionHandler2.expectMessageClass(ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith.class);
-
-        assertThat(response1.getCounterpart()).isEqualTo(joinSessionHandler1.ref());
-        assertThat(response2.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
-        assertThat(response3.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
-        assertThat(response4.getTransactionId()).isEqualTo(1);
+        assertThat(response1.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
+        assertThat(response2.getTransactionId()).isEqualTo(1);
     }
 
     @Test
@@ -198,6 +186,9 @@ public class ADBJoinQuerySessionTest {
                                                              .joinResults(Collections.singletonList(joinResults))
                                                              .globalShardId(1)
                                                              .build());
+
+        // Receive self-join results first to decrease partial result counter
+        joinSession.tell(new ADBJoinQuerySession.JoinQueryResults(Collections.emptyList()));
 
         joinSession.tell(new ADBQuerySession.ConcludeTransaction(shard1.ref(), 1));
         joinSession.tell(new ADBQuerySession.ConcludeTransaction(shard2.ref(), 1));

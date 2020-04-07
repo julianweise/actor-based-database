@@ -67,6 +67,11 @@ public class ADBSortedEntityAttributesTest {
         assertThat(attributes.getAllWithOriginalIndex().get(1).getKey()).isEqualTo(4);
         assertThat(attributes.getAllWithOriginalIndex().get(2).getKey()).isEqualTo(5);
         assertThat(attributes.getAllWithOriginalIndex().get(3).getKey()).isEqualTo(23);
+
+        assertThat(attributes.getAllWithOriginalIndex().get(0).getValue()).isEqualTo(1);
+        assertThat(attributes.getAllWithOriginalIndex().get(1).getValue()).isEqualTo(3);
+        assertThat(attributes.getAllWithOriginalIndex().get(2).getValue()).isEqualTo(0);
+        assertThat(attributes.getAllWithOriginalIndex().get(3).getValue()).isEqualTo(2);
     }
 
     @Test

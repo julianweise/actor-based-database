@@ -70,6 +70,12 @@ public class ADBJoinQuerySessionHandlerTest {
 
         joinHandler.tell(new ADBQuerySessionHandler.Execute());
 
+        ADBQuerySession.RegisterQuerySessionHandler handlerRegistration =
+                querySession.expectMessageClass(ADBQuerySession.RegisterQuerySessionHandler.class);
+
+        assertThat(handlerRegistration.getSessionHandler()).isEqualTo(joinHandler);
+        assertThat(handlerRegistration.getShard()).isEqualTo(shard.ref());
+
         ADBJoinQuerySession.RequestNextShardComparison request =
                 querySession.expectMessageClass(ADBJoinQuerySession.RequestNextShardComparison.class);
 
@@ -174,6 +180,12 @@ public class ADBJoinQuerySessionHandlerTest {
         joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singleton(
                 new ADBPair<>(0, remoteData.get(0)))));
 
+        ADBQuerySession.RegisterQuerySessionHandler handlerRegistration =
+                querySession.expectMessageClass(ADBQuerySession.RegisterQuerySessionHandler.class);
+
+        assertThat(handlerRegistration.getSessionHandler()).isEqualTo(joinHandler);
+        assertThat(handlerRegistration.getShard()).isEqualTo(shard.ref());
+
         ADBJoinQuerySession.RequestNextShardComparison request =
                 querySession.expectMessageClass(ADBJoinQuerySession.RequestNextShardComparison.class);
 
@@ -210,6 +222,12 @@ public class ADBJoinQuerySessionHandlerTest {
                 .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith(TRANSACTION_ID));
+
+        ADBQuerySession.RegisterQuerySessionHandler handlerRegistration =
+                querySession.expectMessageClass(ADBQuerySession.RegisterQuerySessionHandler.class);
+
+        assertThat(handlerRegistration.getSessionHandler()).isEqualTo(joinHandler);
+        assertThat(handlerRegistration.getShard()).isEqualTo(shard.ref());
 
         ADBQuerySession.ConcludeTransaction command =
                 querySession.expectMessageClass(ADBQuerySession.ConcludeTransaction.class);

@@ -105,8 +105,8 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     public List<ADBPair<Comparable<?>, Integer>> getAllWithOriginalIndex() {
         ArrayList<ADBPair<Comparable<?>, Integer>> columnWithIndex = new ArrayList<>(this.indices.length);
-        for(int i = 0; i < this.indices.length; i++) {
-            columnWithIndex.add(this.getWithOriginalIndex(i));
+        for (int index : this.indices) {
+            columnWithIndex.add(this.getWithOriginalIndex(index));
         }
         return columnWithIndex;
     }
