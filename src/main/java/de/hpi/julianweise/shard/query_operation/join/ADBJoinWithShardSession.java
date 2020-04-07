@@ -17,8 +17,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ADBJoinWithShardSession extends ADBLargeMessageActor {
 
@@ -40,7 +40,7 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     @NoArgsConstructor
     @Getter
     public static class HandleJoinShardsResults implements ADBLargeMessageSender.LargeMessage, Command {
-        private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
+        private List<ADBPair<Integer, ADBEntityType>> joinCandidates;
     }
 
 

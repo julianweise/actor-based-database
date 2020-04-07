@@ -177,7 +177,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
                 .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
 
-        joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singleton(
+        joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singletonList(
                 new ADBPair<>(0, remoteData.get(0)))));
 
         ADBQuerySession.RegisterQuerySessionHandler handlerRegistration =

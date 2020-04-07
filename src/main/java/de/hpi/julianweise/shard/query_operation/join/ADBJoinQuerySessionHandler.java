@@ -55,7 +55,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @AllArgsConstructor
     @Getter
     public static class HandleJoinShardResults implements Command {
-        private Set<ADBPair<Integer, ADBEntityType>> joinCandidates;
+        private List<ADBPair<Integer, ADBEntityType>> joinCandidates;
     }
 
     public ADBJoinQuerySessionHandler(ActorContext<Command> context,

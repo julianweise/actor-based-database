@@ -21,9 +21,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
 
@@ -31,7 +31,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     private final List<ADBEntityType> data;
     private final ActorRef<ADBJoinQueryComparator.Command> joinQueryComparator;
     private ActorRef<ADBJoinQueryComparator.Command> joinInverseQueryComparator;
-    private List<ADBKeyPair> joinCandidates = null;
+    private List<ADBPair<Integer, ADBEntityType>> joinCandidates = null;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -82,7 +82,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         }
 
         this.getContext().getLog().info("Create new session handler on  shard #" + localShardId + " (local) to " +
-                "join with shard #" + remoteShardId + " (remote)." );
+                "join with shard #" + remoteShardId + " (remote).");
     }
 
     private ActorRef<ADBJoinQueryComparator.Command> spawnJoinQueryComparator(ADBJoinQuery query,
