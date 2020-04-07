@@ -54,11 +54,11 @@ public abstract class ADBEntityType implements CborSerializable {
             case INEQUALITY:
                 return a.compareTo(b) != 0;
             case LESS:
-                return a.compareTo(b) < 0;
+                return a.compareTo(b) > 0;
             case LESS_OR_EQUAL:
                 return a.compareTo(b) <= 0;
             case GREATER:
-                return a.compareTo(b) > 0;
+                return a.compareTo(b) < 0;
             case GREATER_OR_EQUAL:
                 return a.compareTo(b) >= 0;
             default:

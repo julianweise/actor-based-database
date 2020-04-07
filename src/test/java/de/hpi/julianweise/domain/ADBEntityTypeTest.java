@@ -58,13 +58,13 @@ public class ADBEntityTypeTest {
                 .value(1)
                 .build();
 
-        TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isFalse();
 
-        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity2.matches(term)).isTrue();
     }
 
@@ -77,13 +77,13 @@ public class ADBEntityTypeTest {
                 .value(1)
                 .build();
 
-        TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isFalse();
 
-        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
         assertThat(entity2.matches(term)).isFalse();
     }
 
@@ -168,13 +168,13 @@ public class ADBEntityTypeTest {
                 .value(1.01f)
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isFalse();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 0.01f, true, 12.02, 'w');
         assertThat(entity2.matches(term)).isTrue();
     }
 
@@ -187,13 +187,13 @@ public class ADBEntityTypeTest {
                 .value(1.01f)
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232, 'w');
         assertThat(entity.matches(term)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity1.matches(term)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.02, 'w');
         assertThat(entity2.matches(term)).isFalse();
     }
 
