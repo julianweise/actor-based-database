@@ -60,7 +60,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
 
     public static int getChunkSize(Settings settings) {
         Long maxMessageSize = settings.config().getBytes("akka.remote.artery.advanced.maximum-frame-size");
-        return Math.round(maxMessageSize * 0.9f);
+        return Math.round(maxMessageSize * 0.6f);
     }
 
     public ADBLargeMessageSender(ActorContext<Command> context, LargeMessage serializableMessage,
