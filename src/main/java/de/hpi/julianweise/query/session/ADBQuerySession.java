@@ -36,6 +36,7 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferWrapper;
     protected final Set<ActorRef<ADBJoinQuerySessionHandler.Command>> completedSessions = new HashSet<>();
     protected final AtomicInteger expectedPartialResults = new AtomicInteger();
+    protected final long startTime;
 
 
     public interface Command {
@@ -75,6 +76,7 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     public ADBQuerySession(ActorContext<Command> context, List<ActorRef<ADBShard.Command>> shards,
                            int transactionId, ActorRef<ADBShardInquirer.Command> parent) {
         super(context);
+        this.startTime = System.nanoTime();
         this.shards = shards;
         this.transactionId = transactionId;
         this.parent = parent;
@@ -109,7 +111,12 @@ public abstract class ADBQuerySession extends AbstractBehavior<ADBQuerySession.C
     protected Behavior<ADBQuerySession.Command> concludeSession() {
         this.getContext().getLog().info(String.format("Concluding QuerySession for transaction %d handling %s",
                 this.transactionId, this.getQuerySessionName()));
+        this.getContext().getLog().info(String.format("[PERFORMANCE] Time: %s ms", this.calculateElapsedTime() * 1e-6));
         return Behaviors.stopped();
+    }
+
+    private long calculateElapsedTime() {
+        return System.nanoTime() - this.startTime;
     }
 
     protected Behavior<ADBQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
