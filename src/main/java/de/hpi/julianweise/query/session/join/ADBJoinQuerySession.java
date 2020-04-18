@@ -83,7 +83,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
         ActorRef<ADBShard.Command> nextJoinShard = this.distributionPlan.getNextJoinShardFor(command.requestingShard);
 
         if (nextJoinShard == null) {
-            this.getContext().getLog().info("No sufficient next join partner for shard #"
+            this.getContext().getLog().info("No next join partner for shard #"
                     + this.shards.indexOf(command.requestingShard));
             command.respondTo.tell(new ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith(this.transactionId));
             return Behaviors.same();
