@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class ADBJoinQueryComparatorFactory {
 
-    private final static int COMPARATOR_POOL_SIZE = 4;
+    private final static int COMPARATOR_POOL_SIZE = 8;
 
     public static Behavior<ADBJoinQueryComparator.Command> createDefault(ADBJoinQuery query,
                                                                          Map<String, ADBSortedEntityAttributes> localSortedAttributes,
