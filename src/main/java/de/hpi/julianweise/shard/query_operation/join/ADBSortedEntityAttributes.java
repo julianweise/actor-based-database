@@ -4,7 +4,6 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
-import javafx.util.Pair;
 import lombok.SneakyThrows;
 
 import java.util.ArrayList;
@@ -69,11 +68,11 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     @SneakyThrows
     private int[] getIndicesSortedByAttributeValue() {
-        List<Pair<Integer, Comparable<Object>>> fieldJoinAttributes = new ArrayList<>(data.size());
+        List<ADBPair<Integer, Comparable<Object>>> fieldJoinAttributes = new ArrayList<>(data.size());
         for (int i = 0; i < data.size(); i++) {
-            fieldJoinAttributes.add(new Pair<>(i, this.fieldGetter.apply(data.get(i))));
+            fieldJoinAttributes.add(new ADBPair<>(i, this.fieldGetter.apply(data.get(i))));
         }
-        fieldJoinAttributes.sort(Comparator.comparing(Pair::getValue));
+        fieldJoinAttributes.sort(Comparator.comparing(ADBPair::getValue));
         int[] sortedIndices = new int[data.size()];
         for (int i = 0; i < fieldJoinAttributes.size(); i++) {
             sortedIndices[i] = fieldJoinAttributes.get(i).getKey();
