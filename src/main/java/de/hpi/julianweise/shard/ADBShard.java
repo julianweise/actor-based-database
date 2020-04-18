@@ -96,7 +96,6 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         this.getContext().getLog().info("GlobalID of this shard: " + command.shardId);
         this.getContext().getLog().info("Distribution concluded. Shard owns " + this.data.size() + " elements");
         this.data.trimToSize();
-        System.gc();
         this.data.sort(Comparator.comparing(ADBEntityType::getPrimaryKey));
         return Behaviors.same();
     }

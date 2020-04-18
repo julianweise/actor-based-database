@@ -82,7 +82,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     private Behavior<Command> handlePostStop(Signal postStop) {
         this.sortedAttributes = null;
-        System.gc();
         return Behaviors.same();
     }
 
