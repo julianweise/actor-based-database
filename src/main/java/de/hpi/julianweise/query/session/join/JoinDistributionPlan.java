@@ -2,6 +2,8 @@ package de.hpi.julianweise.query.session.join;
 
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.shard.ADBShard;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.slf4j.Logger;
 
 import java.util.AbstractMap;
@@ -62,8 +64,8 @@ public class JoinDistributionPlan {
     }
 
     private int getShardIndexWithMinimalAccessesForShard(int index) {
-        List<Integer> relevantAccesses = this.dataAccesses
-                .entrySet().stream().filter(eS -> this.notCompared(eS.getKey(), index)).map(eS -> eS.getValue().get()).collect(Collectors.toList());
+        IntList relevantAccesses = this.dataAccesses
+                .entrySet().stream().filter(eS -> this.notCompared(eS.getKey(), index)).map(eS -> eS.getValue().get()).collect(Collectors.toCollection(IntArrayList::new));
         int minDataAccesses = relevantAccesses.size() > 0 ? Collections.min(relevantAccesses) : Integer.MAX_VALUE;
         return this.dataAccesses.entrySet()
                                 .stream()

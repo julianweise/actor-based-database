@@ -134,7 +134,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         boolean isTupleFlipped = this.joinInverseQueryComparator != null
                         && result.sender.path().equals(this.joinInverseQueryComparator.path());
         ArrayList<ADBPair<Integer, ADBEntityType>> semiMaterializedResults = new ArrayList<>(data.size());
-        for (ADBPair<Integer, Integer> tuple : result.joinCandidates) {
+        for (ADBKeyPair tuple : result.joinCandidates) {
             semiMaterializedResults.add(new ADBPair<>(isTupleFlipped, tuple.getKey(), this.data.get(tuple.getValue())));
         }
         return semiMaterializedResults;

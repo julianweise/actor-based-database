@@ -13,6 +13,7 @@ import de.hpi.julianweise.utility.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.agrona.collections.Int2IntHashMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ADBShardInquirer extends AbstractBehavior<ADBShardInquirer.Command> {
 
     private final Set<ActorRef<ADBShard.Command>> shards = new HashSet<>();
-    private final Map<Integer, Integer> transactionRequestMapping = new HashMap<>();
+    private final Int2IntHashMap transactionRequestMapping = new Int2IntHashMap(-1);
     private final Map<Integer, ActorRef<ADBShardInquirer.Response>> requestClientMapping = new HashMap<>();
     private final AtomicInteger transactionCounter = new AtomicInteger();
 
