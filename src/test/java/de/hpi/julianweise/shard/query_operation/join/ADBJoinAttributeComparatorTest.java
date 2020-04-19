@@ -493,6 +493,153 @@ public class ADBJoinAttributeComparatorTest {
     }
 
     @Test
+    public void testCompareMultipleSourceAndTargetTuplesWithExpectedResultGreaterNumericDuplicatesLeft() {
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
+
+        Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
+        ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
+
+        List<ADBPair<Comparable<?>, Integer>> sourceEntities = new ArrayList<>();
+        sourceEntities.add(new ADBPair<>(4, 0));
+        sourceEntities.add(new ADBPair<>(6, 1));
+        sourceEntities.add(new ADBPair<>(6, 2));
+        sourceEntities.add(new ADBPair<>(8, 3));
+
+        List<ADBEntityType> targetEntities = new ArrayList<>();
+        targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
+        targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
+        targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
+
+        ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
+                .builder()
+                .operator(ADBQueryTerm.RelationalOperator.GREATER)
+                .respondTo(respondTo.ref())
+                .leftSideValues(sourceEntities)
+                .rightSideValues(ADBSortedEntityAttributes.of("aInteger", targetEntities).getAllWithOriginalIndex())
+                .build();
+
+        comparator.tell(message);
+
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
+
+        assertThat(results.getJoinPartners().size()).isEqualTo(5);
+
+        assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(1);
+        assertThat(results.getJoinPartners().get(0).getValue()).isEqualTo(0);
+
+        assertThat(results.getJoinPartners().get(1).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(1).getValue()).isEqualTo(0);
+
+        assertThat(results.getJoinPartners().get(2).getKey()).isEqualTo(3);
+        assertThat(results.getJoinPartners().get(2).getValue()).isEqualTo(2);
+
+        assertThat(results.getJoinPartners().get(3).getKey()).isEqualTo(3);
+        assertThat(results.getJoinPartners().get(3).getValue()).isEqualTo(1);
+
+        assertThat(results.getJoinPartners().get(4).getKey()).isEqualTo(3);
+        assertThat(results.getJoinPartners().get(4).getValue()).isEqualTo(0);
+    }
+
+    @Test
+    public void testCompareMultipleSourceAndTargetTuplesWithExpectedResultGreaterNumericDuplicatesRight() {
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
+
+        Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
+        ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
+
+        List<ADBPair<Comparable<?>, Integer>> sourceEntities = new ArrayList<>();
+        sourceEntities.add(new ADBPair<>(4, 0));
+        sourceEntities.add(new ADBPair<>(6, 1));
+        sourceEntities.add(new ADBPair<>(8, 2));
+
+        List<ADBEntityType> targetEntities = new ArrayList<>();
+        targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
+        targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
+        targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
+        targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
+
+        ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
+                .builder()
+                .operator(ADBQueryTerm.RelationalOperator.GREATER)
+                .respondTo(respondTo.ref())
+                .leftSideValues(sourceEntities)
+                .rightSideValues(ADBSortedEntityAttributes.of("aInteger", targetEntities).getAllWithOriginalIndex())
+                .build();
+
+        comparator.tell(message);
+
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
+
+        assertThat(results.getJoinPartners().size()).isEqualTo(5);
+
+        assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(1);
+        assertThat(results.getJoinPartners().get(0).getValue()).isEqualTo(0);
+
+        assertThat(results.getJoinPartners().get(1).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(1).getValue()).isEqualTo(3);
+
+        assertThat(results.getJoinPartners().get(2).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(2).getValue()).isEqualTo(2);
+
+        assertThat(results.getJoinPartners().get(3).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(3).getValue()).isEqualTo(1);
+
+        assertThat(results.getJoinPartners().get(4).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(4).getValue()).isEqualTo(0);
+    }
+
+    @Test
+    public void testCompareMultipleSourceAndTargetTuplesWithExpectedResultGreaterNumericEndOfRange() {
+        TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
+
+        Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
+        ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
+
+        List<ADBPair<Comparable<?>, Integer>> sourceEntities = new ArrayList<>();
+        sourceEntities.add(new ADBPair<>(4, 0));
+        sourceEntities.add(new ADBPair<>(6, 1));
+        sourceEntities.add(new ADBPair<>(8, 2));
+
+        List<ADBEntityType> targetEntities = new ArrayList<>();
+        targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
+        targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
+        targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
+        targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
+
+        ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
+                .builder()
+                .operator(ADBQueryTerm.RelationalOperator.GREATER)
+                .respondTo(respondTo.ref())
+                .leftSideValues(sourceEntities)
+                .rightSideValues(ADBSortedEntityAttributes.of("aInteger", targetEntities).getAllWithOriginalIndex())
+                .build();
+
+        comparator.tell(message);
+
+        ADBJoinTermComparator.CompareAttributesChunkResult results =
+                respondTo.expectMessageClass(ADBJoinTermComparator.CompareAttributesChunkResult.class);
+
+        assertThat(results.getJoinPartners().size()).isEqualTo(5);
+
+        assertThat(results.getJoinPartners().get(0).getKey()).isEqualTo(1);
+        assertThat(results.getJoinPartners().get(0).getValue()).isEqualTo(0);
+
+        assertThat(results.getJoinPartners().get(1).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(1).getValue()).isEqualTo(3);
+
+        assertThat(results.getJoinPartners().get(2).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(2).getValue()).isEqualTo(2);
+
+        assertThat(results.getJoinPartners().get(3).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(3).getValue()).isEqualTo(1);
+
+        assertThat(results.getJoinPartners().get(4).getKey()).isEqualTo(2);
+        assertThat(results.getJoinPartners().get(4).getValue()).isEqualTo(0);
+    }
+
+    @Test
     public void testCompareMultipleSourceAndTargetTuplesWithExpectedResultGreaterOrEqualNumeric() {
         TestProbe<ADBJoinTermComparator.Command> respondTo = testKit.createTestProbe();
 
