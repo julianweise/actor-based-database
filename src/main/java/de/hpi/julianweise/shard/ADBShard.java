@@ -8,7 +8,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
-import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;

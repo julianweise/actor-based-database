@@ -2,7 +2,6 @@ package de.hpi.julianweise.shard.query_operation.join;
 
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
-import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.SneakyThrows;
 

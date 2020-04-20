@@ -4,9 +4,6 @@ import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
-import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
-import de.hpi.julianweise.query.ADBQueryTerm;
 import org.junit.Before;
 import org.junit.Test;
 
