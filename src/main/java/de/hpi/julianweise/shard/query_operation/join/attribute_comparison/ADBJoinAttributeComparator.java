@@ -1,4 +1,4 @@
-package de.hpi.julianweise.shard.query_operation.join;
+package de.hpi.julianweise.shard.query_operation.join.attribute_comparison;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -7,6 +7,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.query.ADBQueryTerm;
+import de.hpi.julianweise.shard.query_operation.join.ADBJoinTermComparator;
 import de.hpi.julianweise.utility.ADBOffsetCalculator;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;

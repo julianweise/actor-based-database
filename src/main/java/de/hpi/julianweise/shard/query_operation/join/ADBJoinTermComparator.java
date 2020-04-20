@@ -7,6 +7,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBJoinTermComparator extends AbstractBehavior<ADBJoinTermComparator.Command> {
 
-    public static final int CHUNK_SIZE_COMPARISON = 2000;
+    public static final int CHUNK_SIZE_COMPARISON = Integer.MAX_VALUE;
     public static final float JOIN_RESULT_REDUCTION_FACTOR = 0.3f;
 
     private final ADBJoinQueryTerm term;

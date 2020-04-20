@@ -9,6 +9,8 @@ import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBQueryTerm;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparatorFactory;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;

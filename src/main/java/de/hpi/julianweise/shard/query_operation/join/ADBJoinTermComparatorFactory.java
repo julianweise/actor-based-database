@@ -4,6 +4,7 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 
 public class ADBJoinTermComparatorFactory {
 
