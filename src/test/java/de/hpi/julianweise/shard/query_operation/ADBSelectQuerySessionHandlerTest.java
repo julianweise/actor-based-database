@@ -11,6 +11,7 @@ import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.query_operation.join.ADBSortedEntityAttributes;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import org.junit.After;
@@ -19,7 +20,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,10 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ADBSelectQuerySessionHandlerTest {
 
     private final static int GLOBAL_SHARD_ID = 1;
+    private static Map<String, ADBSortedEntityAttributes> ENTITY_ATTRIBUTES = new HashMap<>();
+
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
-
 
     @After
     public void cleanup() {
@@ -64,7 +68,7 @@ public class ADBSelectQuerySessionHandlerTest {
                 initializeTransferTestProbe.ref(), query);
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), new ArrayList<>(), GLOBAL_SHARD_ID);
+                shardProbe.ref(), new ArrayList<>(), GLOBAL_SHARD_ID, ENTITY_ATTRIBUTES);
 
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
@@ -107,7 +111,7 @@ public class ADBSelectQuerySessionHandlerTest {
         dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), dataset, GLOBAL_SHARD_ID);
+                shardProbe.ref(), dataset, GLOBAL_SHARD_ID, ENTITY_ATTRIBUTES);
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
         selectHandler.tell(new ADBQuerySessionHandler.Execute());

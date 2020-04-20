@@ -82,16 +82,15 @@ public class ADBSortedEntityAttributesTest {
         entities.add(new TestEntity(23, "Test", 20.2f, true, 1.01, 'a'));
         entities.add(new TestEntity(4, "Test0", 3f, true, 1.01, 'a'));
 
-        ADBJoinQuery query = new ADBJoinQuery();
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "bString"));
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "cFloat"));
+        Map<String, ADBSortedEntityAttributes> attributes = ADBSortedEntityAttributes.of(entities);
 
-        Map<String, ADBSortedEntityAttributes> attributes = ADBSortedEntityAttributes.of(query, entities);
-
-        assertThat(attributes.size()).isEqualTo(3);
+        assertThat(attributes.size()).isEqualTo(6);
         assertThat(attributes.containsKey("aInteger"));
         assertThat(attributes.containsKey("bString"));
         assertThat(attributes.containsKey("cFloat"));
+        assertThat(attributes.containsKey("dBoolean"));
+        assertThat(attributes.containsKey("eDouble"));
+        assertThat(attributes.containsKey("fChar"));
 
         assertThat(attributes.get("aInteger").size()).isEqualTo(4);
         assertThat(attributes.get("aInteger").getAllWithOriginalIndex().size()).isEqualTo(4);

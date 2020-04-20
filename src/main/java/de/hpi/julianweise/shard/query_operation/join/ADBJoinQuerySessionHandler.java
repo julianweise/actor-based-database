@@ -2,8 +2,6 @@ package de.hpi.julianweise.shard.query_operation.join;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.PostStop;
-import akka.actor.typed.Signal;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
@@ -25,7 +23,7 @@ import java.util.stream.Collectors;
 
 public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
-    private Map<String, ADBSortedEntityAttributes> sortedAttributes;
+    private final Map<String, ADBSortedEntityAttributes> sortedAttributes;
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -64,14 +62,15 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                                       int transactionId,
                                       ADBJoinQuery query,
                                       final List<ADBEntityType> data,
-                                      int globalShardId) {
+                                      int globalShardId,
+                                      Map<String, ADBSortedEntityAttributes> sortedAttributes) {
         super(context, shard, client, clientLargeMessageReceiver, transactionId, query, data, globalShardId);
+        this.sortedAttributes = sortedAttributes;
     }
 
     @Override
     public Receive<Command> createReceive() {
         return this.createReceiveBuilder()
-                .onSignal(PostStop.class, this::handlePostStop)
                 .onMessage(OpenInterShardJoinSession.class, this::handleOpenInterShardJoinSession)
                 .onMessage(Execute.class, this::handleExecute)
                 .onMessage(JoinWithShard.class, this::handleJoinWithShard)
@@ -80,13 +79,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                 .build();
     }
 
-    private Behavior<Command> handlePostStop(Signal postStop) {
-        this.sortedAttributes = null;
-        return Behaviors.same();
-    }
-
     private Behavior<Command> handleExecute(Execute command) {
-        this.sortedAttributes = ADBSortedEntityAttributes.of((ADBJoinQuery) this.query, this.data);
         this.getContext().getSelf().tell(new JoinWithShard(this.getContext().getSelf(), this.globalShardId));
         return Behaviors.same();
     }

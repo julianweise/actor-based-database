@@ -4,7 +4,9 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQueryTerm;
@@ -17,12 +19,15 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,6 +38,11 @@ public class ADBJoinQuerySessionHandlerTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
+
+    @Before
+    public void setUp() {
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
+    }
 
     @After
     public void cleanup() {
@@ -55,6 +65,8 @@ public class ADBJoinQuerySessionHandlerTest {
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
+        Map<String, ADBSortedEntityAttributes> sortedEntityAttributes = ADBSortedEntityAttributes.of(localData);
+
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
@@ -66,7 +78,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
 
         joinHandler.tell(new ADBQuerySessionHandler.Execute());
 
@@ -94,6 +106,8 @@ public class ADBJoinQuerySessionHandlerTest {
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
+        Map<String, ADBSortedEntityAttributes> sortedEntityAttributes = ADBSortedEntityAttributes.of(localData);
+
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
@@ -105,7 +119,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.JoinWithShard(otherShardJoinHandler.ref(), GLOBAL_SHARD_ID));
 
@@ -127,6 +141,8 @@ public class ADBJoinQuerySessionHandlerTest {
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
+        Map<String, ADBSortedEntityAttributes> sortedEntityAttributes = ADBSortedEntityAttributes.of(localData);
+
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
@@ -138,7 +154,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.OpenInterShardJoinSession(joinWithShardSession.ref(),
                 GLOBAL_SHARD_ID));
@@ -164,6 +180,8 @@ public class ADBJoinQuerySessionHandlerTest {
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
+        Map<String, ADBSortedEntityAttributes> sortedEntityAttributes = ADBSortedEntityAttributes.of(localData);
+
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
@@ -175,7 +193,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singletonList(
                 new ADBPair<>(0, remoteData.get(0)))));
@@ -208,6 +226,8 @@ public class ADBJoinQuerySessionHandlerTest {
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
+        Map<String, ADBSortedEntityAttributes> sortedEntityAttributes = ADBSortedEntityAttributes.of(localData);
+
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
@@ -219,7 +239,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith(TRANSACTION_ID));
 
@@ -247,6 +267,8 @@ public class ADBJoinQuerySessionHandlerTest {
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
+        Map<String, ADBSortedEntityAttributes> sortedEntityAttributes = ADBSortedEntityAttributes.of(localData);
+
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
@@ -258,7 +280,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.Terminate(TRANSACTION_ID));
 

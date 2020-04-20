@@ -8,10 +8,12 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandlerFactory;
+import de.hpi.julianweise.shard.query_operation.join.ADBSortedEntityAttributes;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import lombok.AllArgsConstructor;
@@ -22,6 +24,7 @@ import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class ADBShard extends AbstractBehavior<ADBShard.Command> {
@@ -30,6 +33,8 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
             "-shard");
     private Set<ADBEntityType> transferData = new HashSet<>();
     private ArrayList<ADBEntityType> data = new ArrayList<>();
+    private Map<String, ADBSortedEntityAttributes> sortedAttributes;
+
     private int globalId;
 
     public interface Command extends CborSerializable {
@@ -83,7 +88,8 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     private Behavior<Command> handleQueryEntities(QueryEntities command) {
         this.getContext().getLog().info("New Query [TX #" + command.getTransactionId() + "] to match against local entities.");
         ActorRef<ADBQuerySessionHandler.Command> sessionHandler = this.getContext().spawn(
-                ADBQuerySessionHandlerFactory.create(command, this.getContext().getSelf(), this.data, this.globalId),
+                ADBQuerySessionHandlerFactory.create(command, this.getContext().getSelf(), this.data, this.globalId,
+                        this.sortedAttributes),
                 ADBQuerySessionHandlerFactory.sessionHandlerName(command, this.globalId));
         sessionHandler.tell(new ADBQuerySessionHandler.Execute());
         return Behaviors.same();
@@ -97,6 +103,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         this.getContext().getLog().info("Distribution concluded. Shard owns " + this.data.size() + " elements");
         this.data.trimToSize();
         this.data.sort(Comparator.comparing(ADBEntityType::getPrimaryKey));
+        this.sortedAttributes = ADBSortedEntityAttributes.of(this.data);
         return Behaviors.same();
     }
 }

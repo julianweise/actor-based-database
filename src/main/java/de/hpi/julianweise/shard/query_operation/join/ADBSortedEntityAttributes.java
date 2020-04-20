@@ -6,6 +6,7 @@ import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.SneakyThrows;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -41,10 +42,10 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     }
 
-    public static Map<String, ADBSortedEntityAttributes> of(ADBJoinQuery joinQuery, List<ADBEntityType> data) {
+    public static Map<String, ADBSortedEntityAttributes> of(List<ADBEntityType> data) {
         Map<String, ADBSortedEntityAttributes> handledAttributeNames = new HashMap<>();
-        for(String field : joinQuery.getAllFields()) {
-            handledAttributeNames.putIfAbsent(field, ADBSortedEntityAttributes.of(field, data));
+        for(Field attribute : ADBEntityFactoryProvider.getInstance().getTargetClass().getDeclaredFields()) {
+            handledAttributeNames.putIfAbsent(attribute.getName(), ADBSortedEntityAttributes.of(attribute.getName(), data));
         }
         return handledAttributeNames;
     }
