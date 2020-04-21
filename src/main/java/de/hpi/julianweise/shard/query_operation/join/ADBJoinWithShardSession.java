@@ -6,6 +6,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.utility.CborSerializable;
@@ -49,6 +50,7 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
                                    ActorRef<ADBJoinQuerySessionHandler.Command> supervisor, int localShardId,
                                    int remoteShardId) {
         super(context);
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Join with Shard #" + remoteShardId);
         this.query = query;
         this.supervisor = supervisor;
         this.sortedJoinAttributes = sortedJoinAttributes;
@@ -88,6 +90,8 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
 
     private Behavior<Command> handleJoinShardsResults(HandleJoinShardsResults command) {
         this.supervisor.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(command.getJoinCandidates()));
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(),
+                "Join with Shard #" + this.remoteShardId);
         return Behaviors.stopped();
     }
 

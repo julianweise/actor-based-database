@@ -119,7 +119,6 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                 .globalShardId(this.globalShardId)
                 .joinResults(results)
                 .build(), results.size());
-
         return Behaviors.same();
     }
 

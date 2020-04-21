@@ -9,6 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import com.google.common.hash.PrimitiveSink;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -58,6 +59,7 @@ public class ADBJoinAttributeIntersector extends AbstractBehavior<ADBJoinAttribu
 
     public ADBJoinAttributeIntersector(ActorContext<Command> context, List<ADBKeyPair> initialCandidates) {
         super(context);
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Intersect attributes");
         this.joinCandidates = initialCandidates;
         this.joinCandidates.sort(ADBJoinAttributeIntersector::comparingJoinCandidates);
         this.initializeBloomFilter();
@@ -138,7 +140,8 @@ public class ADBJoinAttributeIntersector extends AbstractBehavior<ADBJoinAttribu
         this.getContext().getLog().info("Intersecting returned " + this.joinCandidates.size() + " remaining " +
             "candidates");
         command.getRespondTo().tell(new Results(this.joinCandidates));
-        return Behaviors.same();
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Intersect attributes");
+        return Behaviors.stopped();
     }
 
 }

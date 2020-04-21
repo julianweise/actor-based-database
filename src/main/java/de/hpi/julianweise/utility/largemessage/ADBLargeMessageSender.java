@@ -10,6 +10,7 @@ import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.KryoSerializable;
 import lombok.AllArgsConstructor;
@@ -81,6 +82,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     }
 
     private Behavior<Command> handleStartTransfer(StartTransfer command) {
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "LargeFileTransfer");
         command.getReceiver().tell(new ADBLargeMessageReceiver.InitializeTransfer(
                         this.getContext().getSelf(), this.payload.length, command.getType()),
                 this.getContext().classicActorContext().self());
@@ -101,6 +103,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     }
 
     private Behavior<Command> killSender() {
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "LargeFileTransfer");
         if (this.supervisor != null) {
             this.supervisor.tell(new TransferCompleted());
         }

@@ -7,6 +7,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
@@ -62,6 +63,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
                                   final List<ADBEntityType> data,
                                   int globalShardId) {
         super(context);
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Query Session");
         this.data = data;
         this.shard = shard;
         this.session = session;
@@ -91,6 +93,8 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     private Behavior<Command> handleTerminate(Terminate command) {
         this.getContext().getLog().info("Going to shut down " + this.getQuerySessionName() + " Session for transaction #"
                 + command.getTransactionId());
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Query Session");
+        ADBQueryPerformanceSampler.concludeSampler(this.globalShardId, this.transactionId);
         return Behaviors.stopped();
     }
 

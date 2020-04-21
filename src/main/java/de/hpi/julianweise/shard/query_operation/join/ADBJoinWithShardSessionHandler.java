@@ -8,6 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
@@ -63,6 +64,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                                           Map<String, ADBSortedEntityAttributes> localSortedAttributes,
                                           List<ADBEntityType> data, int localShardId, int remoteShardId) {
         super(context);
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Join with Shard");
         session.tell(new ADBJoinWithShardSession.RegisterHandler(this.getContext().getSelf()));
 
         ADBJoinQuery joinQuery = (ADBJoinQuery) query;
@@ -153,6 +155,8 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
     @Override
     protected Behavior<Command> handleLargeMessageTransferCompleted(ADBLargeMessageSender.TransferCompleted response) {
         this.getContext().getLog().info("Results have been submitted - Terminating");
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Join with Shard");
+
         return Behaviors.stopped();
     }
 }

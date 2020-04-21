@@ -6,6 +6,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinTermComparator;
 import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.strategies.ADBAttributeComparisonStrategy;
@@ -49,11 +50,13 @@ public class ADBJoinAttributeComparator extends AbstractBehavior<ADBJoinAttribut
     }
 
     private Behavior<Command> handleCompare(Compare command) {
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Compare attributes");
         int resultSize = this.estimateResultSize(command.leftSideValues, command.rightSideValues);
         List<ADBKeyPair> joinTuples = this.strategy.compare(command.operator, command.leftSideValues,
                 command.rightSideValues, resultSize);
 
         command.respondTo.tell(new ADBJoinTermComparator.CompareAttributesChunkResult(joinTuples));
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Compare attributes");
         return Behaviors.same();
     }
 

@@ -9,6 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.KryoSerializable;
 import lombok.AllArgsConstructor;
@@ -67,6 +68,7 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
     }
 
     private Behavior<Command> handleInitializeTransfer(InitializeTransfer command) {
+        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Receive large message");
         if (this.payload != null) {
             this.getContext().getLog().warn(String.format("%s attempted to initialize data " +
                     "transfer for %s again that has already been initialized by %s", command.respondTo, command.type,
@@ -92,6 +94,7 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
         Serializer serializer = serialization.serializerFor(this.messageType);
         Object message = serializer.fromBinary(this.payload, this.messageType);
         this.originalReceiver.tell(this.messageType.cast(message), akka.actor.ActorRef.noSender());
+        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Receive large message");
         return Behaviors.stopped();
     }
 }
