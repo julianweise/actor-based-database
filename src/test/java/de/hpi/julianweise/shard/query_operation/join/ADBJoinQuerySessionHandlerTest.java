@@ -3,6 +3,7 @@ package de.hpi.julianweise.shard.query_operation.join;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
+import akka.testkit.TestKit;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntityType;
@@ -15,6 +16,8 @@ import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandlerFactory;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparatorFactory;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
@@ -58,6 +61,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectRequestForNextShardComparisonAfterExecuteCommand() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        ActorRef<ADBJoinAttributeComparator.Command> comparatorPool = testKit.spawn(ADBJoinAttributeComparatorFactory.createDefault());
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
@@ -77,7 +81,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes, comparatorPool));
 
         joinHandler.tell(new ADBQuerySessionHandler.Execute());
 
@@ -98,6 +102,8 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectOtherShardBeingRequestedToOpenANewShardJoinSession() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
+
         TestProbe<ADBQuerySessionHandler.Command> otherShardJoinHandler = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
@@ -118,7 +124,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes, comparatorPool.ref()));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.JoinWithShard(otherShardJoinHandler.ref(), GLOBAL_SHARD_ID));
 
@@ -133,6 +139,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectToRespondToANewOpenJoinShardSessionRequest() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
         TestProbe<ADBJoinWithShardSession.Command> joinWithShardSession = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
@@ -153,7 +160,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes, comparatorPool.ref()));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.OpenInterShardJoinSession(joinWithShardSession.ref(),
                 GLOBAL_SHARD_ID));
@@ -169,6 +176,8 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectHandlerToRequestNextShardComparisonAndDeliverResults() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
+
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> remoteData = new ArrayList<>();
@@ -192,7 +201,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes, comparatorPool.ref()));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.HandleJoinShardResults(Collections.singletonList(
                 new ADBPair<>(0, remoteData.get(0)))));
@@ -219,6 +228,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectConcludeTransactionForNoMoreShardsToJoinWith() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         List<ADBEntityType> localData = new ArrayList<>();
@@ -238,7 +248,7 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes, comparatorPool.ref()));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith(TRANSACTION_ID));
 
@@ -259,6 +269,7 @@ public class ADBJoinQuerySessionHandlerTest {
     public void expectJoinSessionHandlerToStopOnTerminateCommand() {
         TestProbe<ADBQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
         TestProbe<ADBQuerySessionHandler.Command> joinHandlerProbe = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
@@ -279,7 +290,8 @@ public class ADBJoinQuerySessionHandlerTest {
                                                                     .build();
 
         ActorRef<ADBJoinQuerySessionHandler.Command> joinHandler = testKit.spawn(ADBQuerySessionHandlerFactory
-                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes));
+                .createForJoinQuery(queryCommand, shard.ref(), localData, GLOBAL_SHARD_ID, sortedEntityAttributes,
+                        comparatorPool.ref()));
 
         joinHandler.tell(new ADBJoinQuerySessionHandler.Terminate(TRANSACTION_ID));
 

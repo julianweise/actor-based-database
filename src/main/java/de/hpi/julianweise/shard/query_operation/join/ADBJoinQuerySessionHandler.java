@@ -11,6 +11,7 @@ import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.ADBQuerySessionHandler;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     private final Map<String, ADBSortedEntityAttributes> sortedAttributes;
+    private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -59,13 +61,16 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                                       ActorRef<ADBShard.Command> shard,
                                       ActorRef<ADBQuerySession.Command> client,
                                       ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
+                                      ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                       int transactionId,
                                       ADBJoinQuery query,
                                       final List<ADBEntityType> data,
                                       int globalShardId,
                                       Map<String, ADBSortedEntityAttributes> sortedAttributes) {
-        super(context, shard, client, clientLargeMessageReceiver, transactionId, query, data, globalShardId);
+        super(context, shard, client, clientLargeMessageReceiver, comparatorPool, transactionId, query, data,
+                globalShardId);
         this.sortedAttributes = sortedAttributes;
+        this.comparatorPool = comparatorPool;
     }
 
     @Override
@@ -97,8 +102,8 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
 
     private Behavior<Command> handleOpenInterShardJoinSession(OpenInterShardJoinSession command) {
         this.getContext().spawn(ADBJoinWithShardSessionHandlerFactory
-                        .createDefault(command.getInitiatingSession(), this.query, this.sortedAttributes, this.data,
-                                this.globalShardId, command.getInitiatingShardId()),
+                        .createDefault(command.getInitiatingSession(), this.query, this.sortedAttributes,
+                                this.comparatorPool, this.data, this.globalShardId, command.getInitiatingShardId()),
                 ADBJoinWithShardSessionHandlerFactory.sessionHandlerName(this.transactionId, this.globalShardId,
                         command.initiatingShardId));
         return Behaviors.same();

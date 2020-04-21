@@ -12,6 +12,7 @@ import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBSortedEntityAttributes;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import org.junit.After;
@@ -52,6 +53,7 @@ public class ADBSelectQuerySessionHandlerTest {
         int transactionId = 1;
         TestProbe<ADBQuerySession.Command> responseProbe = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardProbe = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
@@ -68,7 +70,7 @@ public class ADBSelectQuerySessionHandlerTest {
                 initializeTransferTestProbe.ref(), query);
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), new ArrayList<>(), GLOBAL_SHARD_ID, ENTITY_ATTRIBUTES);
+                shardProbe.ref(), new ArrayList<>(), GLOBAL_SHARD_ID, ENTITY_ATTRIBUTES, comparatorPool.ref());
 
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
@@ -91,6 +93,7 @@ public class ADBSelectQuerySessionHandlerTest {
         int transactionId = 1;
         TestProbe<ADBQuerySession.Command> responseProbe = testKit.createTestProbe();
         TestProbe<ADBShard.Command> shardProbe = testKit.createTestProbe();
+        TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
 
@@ -111,7 +114,7 @@ public class ADBSelectQuerySessionHandlerTest {
         dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 
         Behavior<ADBQuerySessionHandler.Command> selectBehavior = ADBQuerySessionHandlerFactory.create(message,
-                shardProbe.ref(), dataset, GLOBAL_SHARD_ID, ENTITY_ATTRIBUTES);
+                shardProbe.ref(), dataset, GLOBAL_SHARD_ID, ENTITY_ATTRIBUTES, comparatorPool.ref());
 
         ActorRef<ADBQuerySessionHandler.Command> selectHandler = testKit.spawn(selectBehavior, "select-handler");
         selectHandler.tell(new ADBQuerySessionHandler.Execute());

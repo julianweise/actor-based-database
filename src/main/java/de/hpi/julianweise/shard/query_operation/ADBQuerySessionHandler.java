@@ -12,6 +12,7 @@ import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
@@ -34,6 +35,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     protected final ActorRef<ADBLargeMessageSender.Response> largeMessageSenderWrapping;
     protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver;
     protected final AtomicInteger openTransferSessions = new AtomicInteger(0);
+    protected final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
 
     public interface Command extends CborSerializable {
     }
@@ -41,7 +43,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
     @AllArgsConstructor
     @Getter
     public static class WrappedLargeMessageSenderResponse implements Command {
-        private ADBLargeMessageSender.Response response;
+        private final ADBLargeMessageSender.Response response;
     }
 
     @NoArgsConstructor
@@ -59,6 +61,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
                                   ActorRef<ADBShard.Command> shard,
                                   ActorRef<ADBQuerySession.Command> session,
                                   ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
+                                  ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                   int transactionId, ADBQuery query,
                                   final List<ADBEntityType> data,
                                   int globalShardId) {
@@ -71,6 +74,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
         this.globalShardId = globalShardId;
         this.query = query;
         this.clientLargeMessageReceiver = clientLargeMessageReceiver;
+        this.comparatorPool = comparatorPool;
 
         this.session.tell(new ADBQuerySession.RegisterQuerySessionHandler(this.shard, this.getContext().getSelf()));
 

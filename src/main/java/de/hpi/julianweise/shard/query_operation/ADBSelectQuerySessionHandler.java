@@ -10,6 +10,8 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
+import de.hpi.julianweise.shard.query_operation.join.ADBJoinQueryComparator;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 
 import java.util.List;
@@ -21,11 +23,13 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
                                         ActorRef<ADBShard.Command> shard,
                                         ActorRef<ADBQuerySession.Command> client,
                                         ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
+                                        ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                         int transactionId,
                                         ADBSelectionQuery query,
                                         final List<ADBEntityType> data,
                                         int globalShardId) {
-        super(context, shard, client, clientLargeMessageReceiver, transactionId, query, data, globalShardId);
+        super(context, shard, client, clientLargeMessageReceiver, comparatorPool, transactionId, query, data,
+                globalShardId);
     }
 
     @Override

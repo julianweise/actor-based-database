@@ -12,6 +12,7 @@ import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
@@ -62,6 +63,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                                           ActorRef<ADBJoinWithShardSession.Command> session,
                                           ADBQuery query,
                                           Map<String, ADBSortedEntityAttributes> localSortedAttributes,
+                                          ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                           List<ADBEntityType> data, int localShardId, int remoteShardId) {
         super(context);
         ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Join with Shard");
@@ -70,9 +72,11 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         ADBJoinQuery joinQuery = (ADBJoinQuery) query;
         this.session = session;
         this.data = data;
-        this.joinQueryComparator = this.spawnJoinQueryComparator(joinQuery, localSortedAttributes, "QueryComparator");
+        this.joinQueryComparator = this.spawnJoinQueryComparator(joinQuery, localSortedAttributes, comparatorPool,
+                "QueryComparator");
         if (!this.isSelfComparison()) {
-            this.joinInverseQueryComparator = this.spawnJoinQueryComparator(joinQuery.getReverse(), localSortedAttributes, "QueryComparatorInverse");
+            this.joinInverseQueryComparator = this.spawnJoinQueryComparator(joinQuery.getReverse(),
+                    localSortedAttributes, comparatorPool, "QueryComparatorInverse");
         }
 
         this.getContext().getLog().info("Create new session handler on  shard #" + localShardId + " (local) to " +
@@ -81,9 +85,10 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
 
     private ActorRef<ADBJoinQueryComparator.Command> spawnJoinQueryComparator(ADBJoinQuery query,
                                                                               Map<String, ADBSortedEntityAttributes> localSortedAttributes,
+                                                                              ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                                                               String name) {
         return this.getContext().spawn(ADBJoinQueryComparatorFactory.createDefault(query, localSortedAttributes,
-                this.getContext().getSelf()), name);
+                this.getContext().getSelf(), comparatorPool), name);
     }
 
     private boolean isSelfComparison() {

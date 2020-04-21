@@ -14,17 +14,11 @@ import java.util.Map;
 
 public class ADBJoinQueryComparatorFactory {
 
-    private final static int COMPARATOR_POOL_SIZE = 8;
-
     public static Behavior<ADBJoinQueryComparator.Command> createDefault(ADBJoinQuery query,
                                                                          Map<String, ADBSortedEntityAttributes> localSortedAttributes,
-                                                                         ActorRef<ADBJoinWithShardSession.Command> supervisor) {
-        return Behaviors.setup(context -> new ADBJoinQueryComparator(context, query, localSortedAttributes,
-                ADBJoinQueryComparatorFactory.getComparatorPool(context), supervisor));
-    }
-
-    public static ActorRef<ADBJoinAttributeComparator.Command> getComparatorPool(ActorContext<?> context) {
-        return context.spawn(Routers.pool(COMPARATOR_POOL_SIZE, Behaviors.supervise(ADBJoinAttributeComparatorFactory
-                .createDefault()).onFailure(SupervisorStrategy.restart())), "join-comparator-pool");
+                                                                         ActorRef<ADBJoinWithShardSession.Command> supervisor,
+                                                                         ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {
+        return Behaviors.setup(context ->
+                new ADBJoinQueryComparator(context, query, localSortedAttributes, comparatorPool, supervisor));
     }
 }

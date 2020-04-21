@@ -5,6 +5,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.domain.ADBEntityType;
 import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 
 import java.util.List;
 import java.util.Map;
@@ -15,9 +16,10 @@ public class ADBJoinWithShardSessionHandlerFactory {
             ActorRef<ADBJoinWithShardSession.Command> session,
             ADBQuery query,
             Map<String, ADBSortedEntityAttributes> sortedJoinAttributes,
+            ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
             List<ADBEntityType> data, int localShardId, int remoteShardId) {
         return Behaviors.setup(actorContext -> new ADBJoinWithShardSessionHandler(actorContext, session, query,
-                sortedJoinAttributes, data, localShardId, remoteShardId));
+                sortedJoinAttributes, comparatorPool, data, localShardId, remoteShardId));
     }
 
     public static String sessionHandlerName(int transactionId, int localShardId, int targetShardId) {

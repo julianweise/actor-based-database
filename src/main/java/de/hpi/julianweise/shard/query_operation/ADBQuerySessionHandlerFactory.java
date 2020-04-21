@@ -9,6 +9,7 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.shard.ADBShard;
 import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
 import de.hpi.julianweise.shard.query_operation.join.ADBSortedEntityAttributes;
+import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 
 import java.util.List;
 import java.util.Map;
@@ -19,11 +20,13 @@ public class ADBQuerySessionHandlerFactory {
                                                                   ActorRef<ADBShard.Command> shard,
                                                                   final List<ADBEntityType> data,
                                                                   int globalShardId,
-                                                                  Map<String, ADBSortedEntityAttributes> sortedAttributes) {
+                                                                  Map<String, ADBSortedEntityAttributes> sortedAttributes,
+                                                                  ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {
         if (command.getQuery() instanceof ADBSelectionQuery) {
-            return ADBQuerySessionHandlerFactory.createForSelectionQuery(command, shard, data, globalShardId);
+            return ADBQuerySessionHandlerFactory.createForSelectionQuery(command, shard, data, globalShardId, comparatorPool);
         } else if (command.getQuery() instanceof ADBJoinQuery) {
-            return ADBQuerySessionHandlerFactory.createForJoinQuery(command, shard, data, globalShardId, sortedAttributes);
+            return ADBQuerySessionHandlerFactory.createForJoinQuery(command, shard, data, globalShardId,
+                    sortedAttributes, comparatorPool);
         }
         return Behaviors.same();
     }
@@ -31,10 +34,11 @@ public class ADBQuerySessionHandlerFactory {
     public static Behavior<ADBQuerySessionHandler.Command> createForSelectionQuery(ADBShard.QueryEntities command,
                                                                                    ActorRef<ADBShard.Command> shard,
                                                                                    final List<ADBEntityType> data,
-                                                                                   int globalShardId) {
+                                                                                   int globalShardId,
+                                                                                   ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {
         return Behaviors.setup(context ->
                 new ADBSelectQuerySessionHandler(context, shard, command.getRespondTo(),
-                        command.getClientLargeMessageReceiver(), command.getTransactionId(),
+                        command.getClientLargeMessageReceiver(), comparatorPool, command.getTransactionId(),
                         (ADBSelectionQuery) command.getQuery(), data, globalShardId));
     }
 
@@ -42,10 +46,11 @@ public class ADBQuerySessionHandlerFactory {
                                                                               ActorRef<ADBShard.Command> shard,
                                                                               final List<ADBEntityType> data,
                                                                               int globalShardId,
-                                                                              Map<String, ADBSortedEntityAttributes> sortedAttributes) {
+                                                                              Map<String, ADBSortedEntityAttributes> sortedAttributes,
+                                                                              ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {
         return Behaviors.setup(context ->
                 new ADBJoinQuerySessionHandler(context, shard, command.getRespondTo(),
-                        command.getClientLargeMessageReceiver(), command.getTransactionId(),
+                        command.getClientLargeMessageReceiver(), comparatorPool, command.getTransactionId(),
                         (ADBJoinQuery) command.getQuery(), data, globalShardId, sortedAttributes));
     }
 
