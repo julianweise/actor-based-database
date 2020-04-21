@@ -224,7 +224,7 @@ public class ADBJoinAttributeIntersectorTest {
 
         assertThat(result.getCandidates().size()).isEqualTo(2);
         assertThat(result.getCandidates().get(0)).isEqualTo(setA.get(0));
-        assertThat(result.getCandidates().get(1)).isEqualTo(setA.get(3));
+        assertThat(result.getCandidates().get(1)).isEqualTo(setA.get(4));
     }
 
     @Test

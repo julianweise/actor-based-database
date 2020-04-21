@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -60,8 +61,9 @@ public class ADBJoinAttributeIntersector extends AbstractBehavior<ADBJoinAttribu
     public ADBJoinAttributeIntersector(ActorContext<Command> context, List<ADBKeyPair> initialCandidates) {
         super(context);
         ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Intersect attributes");
-        this.joinCandidates = initialCandidates;
-        this.joinCandidates.sort(ADBJoinAttributeIntersector::comparingJoinCandidates);
+        ADBKeyPair[] candidates = initialCandidates.toArray(new ADBKeyPair[0]);
+        Arrays.parallelSort(candidates, ADBJoinAttributeIntersector::comparingJoinCandidates);
+        this.joinCandidates = Arrays.asList(candidates);
         this.initializeBloomFilter();
 
         this.getContext().getLog().info("New Intersector has been created containing " + this.joinCandidates.size() + " candidates");
@@ -93,8 +95,9 @@ public class ADBJoinAttributeIntersector extends AbstractBehavior<ADBJoinAttribu
 
     private Behavior<Command> handleIntersect(Intersect command) {
         this.getContext().getLog().info("Intersecting " + this.joinCandidates.size() + " candidates with " + command.getCandidates().size() + " recently received candidates");
-        List<ADBKeyPair> filteredCandidates = this.filterCandidates(command.getCandidates());
-        filteredCandidates.sort(ADBJoinAttributeIntersector::comparingJoinCandidates);
+        ADBKeyPair[] _filteredCandidates = this.filterCandidates(command.getCandidates());
+        Arrays.parallelSort(_filteredCandidates, ADBJoinAttributeIntersector::comparingJoinCandidates);
+        List<ADBKeyPair> filteredCandidates = Arrays.asList(_filteredCandidates);
         // Filtering an array by copying elements into a new list is the cheapest procedure performance-wise
         List<ADBKeyPair> resultSet = new ArrayList<>(Math.min(joinCandidates.size(), filteredCandidates.size()));
 
@@ -115,17 +118,18 @@ public class ADBJoinAttributeIntersector extends AbstractBehavior<ADBJoinAttribu
         return Behaviors.same();
     }
 
-    private List<ADBKeyPair> filterCandidates(List<ADBKeyPair> joinCandidates) {
+    private ADBKeyPair[] filterCandidates(List<ADBKeyPair> newJoinCandidates) {
         if (!USE_BLOOM_FILTER) {
-            return joinCandidates;
+            return newJoinCandidates.toArray(new ADBKeyPair[0]);
         }
-        List<ADBKeyPair> filteredCandidates = new ArrayList<>();
-        for (ADBKeyPair joinCandidate : joinCandidates) {
+        int resultPointer = 0;
+        ADBKeyPair[] filtered = new ADBKeyPair[Math.min(newJoinCandidates.size(), this.joinCandidates.size())];
+        for (ADBKeyPair joinCandidate : newJoinCandidates) {
             if (this.bloomFilter.mightContain(joinCandidate)) {
-                filteredCandidates.add(joinCandidate);
+                filtered[resultPointer++] = joinCandidate;
             }
         }
-        return filteredCandidates;
+        return filtered;
     }
 
     public static int comparingJoinCandidates(ADBKeyPair a, ADBKeyPair b) {
