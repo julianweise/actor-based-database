@@ -1,6 +1,6 @@
 package de.hpi.julianweise.domain.custom;
 
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.domain.key.ADBKey;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class SFEmployeeSalary extends ADBEntityType {
+public class SFEmployeeSalary extends ADBEntity {
 
     private String yearType;
     private int year;

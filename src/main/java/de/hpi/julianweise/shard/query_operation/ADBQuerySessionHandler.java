@@ -8,7 +8,7 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
 import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.shard.ADBShard;
@@ -28,7 +28,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
 
     protected final ActorRef<ADBQuerySession.Command> session;
     protected final ADBQuery query;
-    protected final List<ADBEntityType> data;
+    protected final List<ADBEntity> data;
     protected final ActorRef<ADBShard.Command> shard;
     protected final int globalShardId;
     protected final int transactionId;
@@ -63,7 +63,7 @@ public abstract class ADBQuerySessionHandler extends AbstractBehavior<ADBQuerySe
                                   ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
                                   ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                   int transactionId, ADBQuery query,
-                                  final List<ADBEntityType> data,
+                                  final List<ADBEntity> data,
                                   int globalShardId) {
         super(context);
         ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Query Session");

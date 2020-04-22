@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
@@ -29,10 +29,10 @@ import java.util.Map;
 public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
 
     private final ActorRef<ADBJoinWithShardSession.Command> session;
-    private final List<ADBEntityType> data;
+    private final List<ADBEntity> data;
     private final ActorRef<ADBJoinQueryComparator.Command> joinQueryComparator;
     private ActorRef<ADBJoinQueryComparator.Command> joinInverseQueryComparator;
-    private List<ADBPair<Integer, ADBEntityType>> joinCandidates = null;
+    private List<ADBPair<Integer, ADBEntity>> joinCandidates = null;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -64,7 +64,7 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
                                           ADBQuery query,
                                           Map<String, ADBSortedEntityAttributes> localSortedAttributes,
                                           ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
-                                          List<ADBEntityType> data, int localShardId, int remoteShardId) {
+                                          List<ADBEntity> data, int localShardId, int remoteShardId) {
         super(context);
         ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Join with Shard");
         session.tell(new ADBJoinWithShardSession.RegisterHandler(this.getContext().getSelf()));
@@ -137,10 +137,10 @@ public class ADBJoinWithShardSessionHandler extends ADBLargeMessageActor {
         return Behaviors.same();
     }
 
-    private List<ADBPair<Integer, ADBEntityType>> materializeResult(ForeignAttributesCompared result) {
+    private List<ADBPair<Integer, ADBEntity>> materializeResult(ForeignAttributesCompared result) {
         boolean isTupleFlipped = this.joinInverseQueryComparator != null
                         && result.sender.path().equals(this.joinInverseQueryComparator.path());
-        ArrayList<ADBPair<Integer, ADBEntityType>> semiMaterializedResults = new ArrayList<>(data.size());
+        ArrayList<ADBPair<Integer, ADBEntity>> semiMaterializedResults = new ArrayList<>(data.size());
         for (ADBKeyPair tuple : result.joinCandidates) {
             semiMaterializedResults.add(new ADBPair<>(isTupleFlipped, tuple.getKey(), this.data.get(tuple.getValue())));
         }

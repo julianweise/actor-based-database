@@ -4,7 +4,7 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQueryTerm;
@@ -176,9 +176,9 @@ public class ADBJoinQuerySessionTest {
         joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
         joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
-        ADBEntityType joinPartnerA = new TestEntity(1, "Test", 1f, true, 1.1, 'a');
-        ADBEntityType joinPartnerB = new TestEntity(2, "Test", 1f, true, 1.1, 'a');
-        ADBPair<ADBEntityType, ADBEntityType> joinResults = new ADBPair<>(joinPartnerA, joinPartnerB);
+        ADBEntity joinPartnerA = new TestEntity(1, "Test", 1f, true, 1.1, 'a');
+        ADBEntity joinPartnerB = new TestEntity(2, "Test", 1f, true, 1.1, 'a');
+        ADBPair<ADBEntity, ADBEntity> joinResults = new ADBPair<>(joinPartnerA, joinPartnerB);
 
         joinSession.tell(ADBJoinQuerySession.JoinQueryResults.builder()
                                                              .transactionId(1)

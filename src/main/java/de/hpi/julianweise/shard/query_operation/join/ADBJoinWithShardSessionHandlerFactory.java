@@ -3,7 +3,7 @@ package de.hpi.julianweise.shard.query_operation.join;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
 
@@ -17,7 +17,7 @@ public class ADBJoinWithShardSessionHandlerFactory {
             ADBQuery query,
             Map<String, ADBSortedEntityAttributes> sortedJoinAttributes,
             ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
-            List<ADBEntityType> data, int localShardId, int remoteShardId) {
+            List<ADBEntity> data, int localShardId, int remoteShardId) {
         return Behaviors.setup(actorContext -> new ADBJoinWithShardSessionHandler(actorContext, session, query,
                 sortedJoinAttributes, comparatorPool, data, localShardId, remoteShardId));
     }

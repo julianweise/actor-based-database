@@ -5,7 +5,7 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBShardInquirer;
@@ -146,7 +146,7 @@ public class ADBShardInquirerTest {
         // Ensure shard is present
         ActorRef<ADBShard.Command> shard = testKit.spawn(ADBShardFactory.createDefault());
         testKit.system().receptionist().tell(Receptionist.register(ADBShard.SERVICE_KEY, shard));
-        ADBEntityType testEntity = new TestEntity(1, "Test", 2f, true, 12.02132, 'w');
+        ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132, 'w');
         shard.tell(new ADBShard.PersistEntity(persistProbe.ref(), testEntity));
         shard.tell(new ADBShard.ConcludeTransfer(0));
 

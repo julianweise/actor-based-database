@@ -14,7 +14,7 @@ import com.typesafe.config.ConfigFactory;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.CSVParsingActorFactory;
 import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcessFactory;
@@ -37,7 +37,7 @@ public class ADBApplication {
 
     private Behavior<Void> rootBehavior(ConfigurationBase configuration) {
         return Behaviors.setup(context -> {
-            ADBApplication.setCorrectDeserializerForADBEntityType(context);
+            ADBApplication.setCorrectDeserializerForADBEntity(context);
             if (configuration.role().equals(ConfigurationBase.OperationRole.MASTER)) {
                 MasterConfiguration masterConfiguration = (MasterConfiguration) configuration;
                 Behavior<CSVParsingActor.Command> csvParser =
@@ -53,10 +53,10 @@ public class ADBApplication {
         });
     }
 
-    private static void setCorrectDeserializerForADBEntityType(ActorContext<Void> context) throws NotSerializableException {
+    private static void setCorrectDeserializerForADBEntity(ActorContext<Void> context) throws NotSerializableException {
         // TODO: Discuss better solution to bind custom deserializer
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(ADBEntityType.class, ADBEntityFactoryProvider.getInstance().buildDeserializer());
+        module.addDeserializer(ADBEntity.class, ADBEntityFactoryProvider.getInstance().buildDeserializer());
         module.registerSubtypes(ADBEntityFactoryProvider.getInstance().getTargetClass());
         module.addDeserializer(ADBSelectionQueryTerm.class,
                 new ADBSelectionQueryTermDeserializer(ADBEntityFactoryProvider.getInstance().getTargetClass()));

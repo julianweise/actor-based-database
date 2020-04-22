@@ -15,11 +15,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public abstract class ADBEntityType implements CborSerializable {
+public abstract class ADBEntity implements CborSerializable {
 
-    private final static Map<String, Function<ADBEntityType, Comparable<Object>>> getter = new ConcurrentHashMap<>();
+    private final static Map<String, Function<ADBEntity, Comparable<Object>>> getter = new ConcurrentHashMap<>();
 
-    protected ADBEntityType() {
+    protected ADBEntity() {
     }
 
     public abstract ADBKey getPrimaryKey();
@@ -44,7 +44,7 @@ public abstract class ADBEntityType implements CborSerializable {
     }
 
     public final boolean fieldMatches(String fieldName, Comparable<Object> value, ADBQueryTerm.RelationalOperator opr) {
-        return ADBEntityType.matches(this.getGetterForField(fieldName).apply(this), value, opr);
+        return ADBEntity.matches(this.getGetterForField(fieldName).apply(this), value, opr);
     }
 
     public static boolean matches(Comparable<Object> a, Object b, ADBQueryTerm.RelationalOperator opr) {
@@ -66,17 +66,17 @@ public abstract class ADBEntityType implements CborSerializable {
         }
     }
 
-    public Function<ADBEntityType, Comparable<Object>> getGetterForField(String field) {
-        return ADBEntityType.getGetterForField(field, this.getClass());
+    public Function<ADBEntity, Comparable<Object>> getGetterForField(String field) {
+        return ADBEntity.getGetterForField(field, this.getClass());
     }
 
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public static Function<ADBEntityType, Comparable<Object>> getGetterForField(String field, Class<?> targetClass) {
+    public static Function<ADBEntity, Comparable<Object>> getGetterForField(String field, Class<?> targetClass) {
         String fieldKey = targetClass.getName() + field;
 
-        if (ADBEntityType.getter.containsKey(fieldKey)) {
-            return ADBEntityType.getter.get(fieldKey);
+        if (ADBEntity.getter.containsKey(fieldKey)) {
+            return ADBEntity.getter.get(fieldKey);
         }
 
         MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -93,9 +93,9 @@ public abstract class ADBEntityType implements CborSerializable {
                 lookup.findVirtual(targetClass, getter, MethodType.methodType(returnType)),
                 MethodType.methodType(returnType, targetClass));
 
-        Function<ADBEntityType, Comparable<Object>> fieldGetter =
-                (Function<ADBEntityType, Comparable<Object>>) site.getTarget().invokeExact();
-        ADBEntityType.getter.put(fieldKey, fieldGetter);
+        Function<ADBEntity, Comparable<Object>> fieldGetter =
+                (Function<ADBEntity, Comparable<Object>>) site.getTarget().invokeExact();
+        ADBEntity.getter.put(fieldKey, fieldGetter);
         return fieldGetter;
     }
 }

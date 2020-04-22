@@ -3,7 +3,7 @@ package de.hpi.julianweise.shard.query_operation;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.shard.ADBShard;
@@ -18,7 +18,7 @@ public class ADBQuerySessionHandlerFactory {
 
     public static Behavior<ADBQuerySessionHandler.Command> create(ADBShard.QueryEntities command,
                                                                   ActorRef<ADBShard.Command> shard,
-                                                                  final List<ADBEntityType> data,
+                                                                  final List<ADBEntity> data,
                                                                   int globalShardId,
                                                                   Map<String, ADBSortedEntityAttributes> sortedAttributes,
                                                                   ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {
@@ -33,7 +33,7 @@ public class ADBQuerySessionHandlerFactory {
 
     public static Behavior<ADBQuerySessionHandler.Command> createForSelectionQuery(ADBShard.QueryEntities command,
                                                                                    ActorRef<ADBShard.Command> shard,
-                                                                                   final List<ADBEntityType> data,
+                                                                                   final List<ADBEntity> data,
                                                                                    int globalShardId,
                                                                                    ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {
         return Behaviors.setup(context ->
@@ -44,7 +44,7 @@ public class ADBQuerySessionHandlerFactory {
 
     public static Behavior<ADBQuerySessionHandler.Command> createForJoinQuery(ADBShard.QueryEntities command,
                                                                               ActorRef<ADBShard.Command> shard,
-                                                                              final List<ADBEntityType> data,
+                                                                              final List<ADBEntity> data,
                                                                               int globalShardId,
                                                                               Map<String, ADBSortedEntityAttributes> sortedAttributes,
                                                                               ActorRef<ADBJoinAttributeComparator.Command> comparatorPool) {

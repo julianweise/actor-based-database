@@ -2,7 +2,7 @@ package de.hpi.julianweise.shard.query_operation.join;
 
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class ADBSortedEntityAttributesTest {
 
     @Test
     public void emptySortedEntityAttributesCollection() {
-        List<ADBEntityType> entities = new ArrayList<>();
+        List<ADBEntity> entities = new ArrayList<>();
         ADBSortedEntityAttributes attributes = ADBSortedEntityAttributes.of("aInteger", entities);
 
         assertThat(attributes.size()).isZero();
@@ -32,7 +32,7 @@ public class ADBSortedEntityAttributesTest {
 
     @Test
     public void valuesAreSorted() {
-        List<ADBEntityType> entities = new ArrayList<>();
+        List<ADBEntity> entities = new ArrayList<>();
         entities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         entities.add(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
         entities.add(new TestEntity(23, "Test", 1f, true, 1.01, 'a'));
@@ -73,7 +73,7 @@ public class ADBSortedEntityAttributesTest {
 
     @Test
     public void valuesExtractedFromQueryAreSorted() {
-        List<ADBEntityType> entities = new ArrayList<>();
+        List<ADBEntity> entities = new ArrayList<>();
         entities.add(new TestEntity(5, "Test2", 1.0f, true, 1.01, 'a'));
         entities.add(new TestEntity(1, "Test55", 0.3f, true, 1.01, 'a'));
         entities.add(new TestEntity(23, "Test", 20.2f, true, 1.01, 'a'));

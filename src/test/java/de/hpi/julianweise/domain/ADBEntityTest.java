@@ -14,7 +14,7 @@ import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.LESS_OR_E
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.UNSPECIFIED;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ADBEntityTypeTest {
+public class ADBEntityTest {
 
     // ##### Integer #####
     @Test

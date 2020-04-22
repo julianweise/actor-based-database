@@ -6,7 +6,7 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.shard.query_operation.join.attribute_comparison.ADBJoinAttributeComparator;
@@ -52,7 +52,7 @@ public class ADBJoinAttributeComparatorTest {
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
 
-        List<ADBEntityType> localEntities = Collections
+        List<ADBEntity> localEntities = Collections
                 .singletonList(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
 
         ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
@@ -83,7 +83,7 @@ public class ADBJoinAttributeComparatorTest {
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
 
-        List<ADBEntityType> targetEntities = Collections.singletonList(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
+        List<ADBEntity> targetEntities = Collections.singletonList(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
 
         ADBJoinAttributeComparator.Compare message = ADBJoinAttributeComparator.Compare
                 .builder()
@@ -109,7 +109,7 @@ public class ADBJoinAttributeComparatorTest {
         Behavior<ADBJoinAttributeComparator.Command> behavior = ADBJoinAttributeComparatorFactory.createDefault();
         ActorRef<ADBJoinAttributeComparator.Command> comparator = testKit.spawn(behavior);
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(1, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(2, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(3, "Test", 3f, true, 3.01, 'c'));
@@ -151,7 +151,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>("Test", 1));
         sourceEntities.add(new ADBPair<>("Test2", 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -196,7 +196,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(8, 1));
         sourceEntities.add(new ADBPair<>(9, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(5, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(9, "Test3", 3f, true, 3.01, 'c'));
@@ -239,7 +239,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(5, 1));
         sourceEntities.add(new ADBPair<>(6, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -291,7 +291,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(5, 2));
         sourceEntities.add(new ADBPair<>(6, 3));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(4, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -346,7 +346,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 2));
         sourceEntities.add(new ADBPair<>(7, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(6, "Test2", 2f, true, 2.01, 'b'));
@@ -404,7 +404,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(5, 1));
         sourceEntities.add(new ADBPair<>(6, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -461,7 +461,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 1));
         sourceEntities.add(new ADBPair<>(8, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -507,7 +507,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 2));
         sourceEntities.add(new ADBPair<>(8, 3));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -555,7 +555,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 1));
         sourceEntities.add(new ADBPair<>(8, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
@@ -604,7 +604,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 1));
         sourceEntities.add(new ADBPair<>(8, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
@@ -653,7 +653,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 1));
         sourceEntities.add(new ADBPair<>(8, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -702,7 +702,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 2));
         sourceEntities.add(new ADBPair<>(9, 3));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 3f, true, 3.01, 'c'));
@@ -756,7 +756,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(6, 1));
         sourceEntities.add(new ADBPair<>(9, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 2f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(6, "Test2", 2f, true, 2.01, 'b'));
@@ -812,7 +812,7 @@ public class ADBJoinAttributeComparatorTest {
         sourceEntities.add(new ADBPair<>(1.011f, 1));
         sourceEntities.add(new ADBPair<>(1.02f, 2));
 
-        List<ADBEntityType> targetEntities = new ArrayList<>();
+        List<ADBEntity> targetEntities = new ArrayList<>();
         targetEntities.add(new TestEntity(5, "Test", 1.001f, true, 1.01, 'a'));
         targetEntities.add(new TestEntity(6, "Test", 1.0111f, true, 2.01, 'b'));
         targetEntities.add(new TestEntity(7, "Test3", 1.03f, true, 3.01, 'c'));

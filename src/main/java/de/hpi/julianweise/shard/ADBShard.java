@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.javadsl.Routers;
 import akka.actor.typed.receptionist.ServiceKey;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.settings.Settings;
@@ -36,8 +36,8 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
 
     public final static ServiceKey<ADBShard.Command> SERVICE_KEY = ServiceKey.create(ADBShard.Command.class, "data" +
             "-shard");
-    private Set<ADBEntityType> transferData = new HashSet<>();
-    private ArrayList<ADBEntityType> data = new ArrayList<>();
+    private Set<ADBEntity> transferData = new HashSet<>();
+    private ArrayList<ADBEntity> data = new ArrayList<>();
     private Map<String, ADBSortedEntityAttributes> sortedAttributes;
     private final ActorRef<ADBJoinAttributeComparator.Command> comparatorPool;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
@@ -51,7 +51,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
     @AllArgsConstructor
     public static class PersistEntity implements Command {
         private final ActorRef<ADBShardDistributor.Command> respondTo;
-        private final ADBEntityType entity;
+        private final ADBEntity entity;
 
     }
     @Getter
@@ -116,7 +116,7 @@ public class ADBShard extends AbstractBehavior<ADBShard.Command> {
         this.getContext().getLog().info("GlobalID of this shard: " + command.shardId);
         this.getContext().getLog().info("Distribution concluded. Shard owns " + this.data.size() + " elements");
         this.data.trimToSize();
-        this.data.sort(Comparator.comparing(ADBEntityType::getPrimaryKey));
+        this.data.sort(Comparator.comparing(ADBEntity::getPrimaryKey));
         this.sortedAttributes = ADBSortedEntityAttributes.of(this.data);
         return Behaviors.same();
     }

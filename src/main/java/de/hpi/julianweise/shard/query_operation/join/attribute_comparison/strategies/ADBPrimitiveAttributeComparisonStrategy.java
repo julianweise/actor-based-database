@@ -1,6 +1,6 @@
 package de.hpi.julianweise.shard.query_operation.join.attribute_comparison.strategies;
 
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
@@ -20,7 +20,7 @@ public class ADBPrimitiveAttributeComparisonStrategy implements ADBAttributeComp
 
         for (ADBPair<Comparable<?>, Integer> leftValue : left) {
             for (ADBPair<Comparable<?>, Integer> rightValue : right) {
-                if (ADBEntityType.matches((Comparable<Object>) leftValue.getKey(), rightValue.getKey(), operator)) {
+                if (ADBEntity.matches((Comparable<Object>) leftValue.getKey(), rightValue.getKey(), operator)) {
                     joinCandidates.add(new ADBKeyPair(leftValue.getValue(), rightValue.getValue()));
                 }
             }

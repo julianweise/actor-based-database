@@ -5,7 +5,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.join.ADBJoinQuerySession;
@@ -54,7 +54,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     @AllArgsConstructor
     @Getter
     public static class HandleJoinShardResults implements Command {
-        private List<ADBPair<Integer, ADBEntityType>> joinCandidates;
+        private List<ADBPair<Integer, ADBEntity>> joinCandidates;
     }
 
     public ADBJoinQuerySessionHandler(ActorContext<Command> context,
@@ -64,7 +64,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
                                       ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                       int transactionId,
                                       ADBJoinQuery query,
-                                      final List<ADBEntityType> data,
+                                      final List<ADBEntity> data,
                                       int globalShardId,
                                       Map<String, ADBSortedEntityAttributes> sortedAttributes) {
         super(context, shard, client, clientLargeMessageReceiver, comparatorPool, transactionId, query, data,
@@ -112,7 +112,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
     private Behavior<Command> handleJoinWithShardResults(HandleJoinShardResults command) {
         this.session.tell(new ADBJoinQuerySession.RequestNextShardComparison(this.shard, this.getContext().getSelf()));
         this.getContext().getLog().info("Sending " + command.getJoinCandidates().size() + " candidates to master.");
-        List<ADBPair<ADBEntityType, ADBEntityType>> results = command
+        List<ADBPair<ADBEntity, ADBEntity>> results = command
                 .getJoinCandidates()
                 .stream()
                 .map(this::materializeResultTuple)
@@ -127,7 +127,7 @@ public class ADBJoinQuerySessionHandler extends ADBQuerySessionHandler {
         return Behaviors.same();
     }
 
-    private ADBPair<ADBEntityType, ADBEntityType> materializeResultTuple(ADBPair<Integer, ADBEntityType> resultTuple) {
+    private ADBPair<ADBEntity, ADBEntity> materializeResultTuple(ADBPair<Integer, ADBEntity> resultTuple) {
         if (resultTuple.isFlipped()) {
             return new ADBPair<>(resultTuple.getValue(), this.data.get(resultTuple.getKey()));
         }

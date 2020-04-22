@@ -6,7 +6,7 @@ import akka.actor.typed.ActorRef;
 import akka.testkit.TestKit;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
@@ -64,7 +64,7 @@ public class ADBJoinQuerySessionHandlerTest {
         ActorRef<ADBJoinAttributeComparator.Command> comparatorPool = testKit.spawn(ADBJoinAttributeComparatorFactory.createDefault());
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
-        List<ADBEntityType> localData = new ArrayList<>();
+        List<ADBEntity> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
@@ -107,7 +107,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBQuerySessionHandler.Command> otherShardJoinHandler = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
-        List<ADBEntityType> localData = new ArrayList<>();
+        List<ADBEntity> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
@@ -143,7 +143,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBJoinWithShardSession.Command> joinWithShardSession = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
-        List<ADBEntityType> localData = new ArrayList<>();
+        List<ADBEntity> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
@@ -180,11 +180,11 @@ public class ADBJoinQuerySessionHandlerTest {
 
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
-        List<ADBEntityType> remoteData = new ArrayList<>();
+        List<ADBEntity> remoteData = new ArrayList<>();
         remoteData.add(new TestEntity(3, "Test", 1f, true, 1.1, 'a'));
         remoteData.add(new TestEntity(4, "Test", 1f, true, 1.1, 'a'));
 
-        List<ADBEntityType> localData = new ArrayList<>();
+        List<ADBEntity> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
@@ -231,7 +231,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBJoinAttributeComparator.Command> comparatorPool = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
-        List<ADBEntityType> localData = new ArrayList<>();
+        List<ADBEntity> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 
@@ -273,7 +273,7 @@ public class ADBJoinQuerySessionHandlerTest {
         TestProbe<ADBQuerySessionHandler.Command> joinHandlerProbe = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
-        List<ADBEntityType> localData = new ArrayList<>();
+        List<ADBEntity> localData = new ArrayList<>();
         localData.add(new TestEntity(1, "Test", 1f, true, 1.1, 'a'));
         localData.add(new TestEntity(2, "Test", 1f, true, 1.1, 'a'));
 

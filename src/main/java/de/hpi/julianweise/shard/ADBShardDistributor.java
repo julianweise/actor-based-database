@@ -11,7 +11,7 @@ import akka.routing.ConsistentHash;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBDoubleKey;
 import de.hpi.julianweise.domain.key.ADBFloatKey;
 import de.hpi.julianweise.domain.key.ADBIntegerKey;
@@ -54,14 +54,14 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
     @AllArgsConstructor
     @Getter
     public static class Distribute implements Command, ADBShard.Command {
-        private ADBEntityType entity;
+        private ADBEntity entity;
 
     }
     @AllArgsConstructor
     @Getter
     public static class DistributeBatch implements Command {
         private final ActorRef<Response> client;
-        private final List<ADBEntityType> entities;
+        private final List<ADBEntity> entities;
 
     }
     @AllArgsConstructor
@@ -150,7 +150,7 @@ public class ADBShardDistributor extends AbstractBehavior<ADBShardDistributor.Co
             return Behaviors.same();
         }
         this.client = command.getClient();
-        for (ADBEntityType entity : command.getEntities()) {
+        for (ADBEntity entity : command.getEntities()) {
             this.getContext().getSelf().tell(new Distribute(entity));
         }
         return Behaviors.same();

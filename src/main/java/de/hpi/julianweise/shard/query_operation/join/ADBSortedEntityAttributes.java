@@ -1,6 +1,6 @@
 package de.hpi.julianweise.shard.query_operation.join;
 
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.SneakyThrows;
@@ -17,8 +17,8 @@ import java.util.function.Function;
 public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     private final int[] indices;
-    private final List<ADBEntityType> data;
-    private final Function<ADBEntityType, Comparable<Object>> fieldGetter;
+    private final List<ADBEntity> data;
+    private final Function<ADBEntity, Comparable<Object>> fieldGetter;
 
     public static class CustomIterator implements Iterator<Comparable<?>> {
 
@@ -41,7 +41,7 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
 
     }
 
-    public static Map<String, ADBSortedEntityAttributes> of(List<ADBEntityType> data) {
+    public static Map<String, ADBSortedEntityAttributes> of(List<ADBEntity> data) {
         Map<String, ADBSortedEntityAttributes> handledAttributeNames = new HashMap<>();
         for(Field attribute : ADBEntityFactoryProvider.getInstance().getTargetClass().getDeclaredFields()) {
             handledAttributeNames.putIfAbsent(attribute.getName(), ADBSortedEntityAttributes.of(attribute.getName(), data));
@@ -50,17 +50,17 @@ public class ADBSortedEntityAttributes implements Iterable<Comparable<?>> {
     }
 
     @SneakyThrows
-    public static ADBSortedEntityAttributes of(String fieldName, List<ADBEntityType> data) {
+    public static ADBSortedEntityAttributes of(String fieldName, List<ADBEntity> data) {
         if (data.size() > 0) {
             return new ADBSortedEntityAttributes(data.get(0).getGetterForField(fieldName), data);
         }
         System.out.println("[ERROR] Creating SortedEntityAttributes for an empty list of data!");
-        return new ADBSortedEntityAttributes(ADBEntityType.getGetterForField(fieldName,
+        return new ADBSortedEntityAttributes(ADBEntity.getGetterForField(fieldName,
                 ADBEntityFactoryProvider.getInstance().getTargetClass()), data);
     }
 
-    public ADBSortedEntityAttributes(Function<ADBEntityType, Comparable<Object>> fieldGetter,
-                                     List<ADBEntityType> data)  {
+    public ADBSortedEntityAttributes(Function<ADBEntity, Comparable<Object>> fieldGetter,
+                                     List<ADBEntity> data)  {
         this.data = data;
         this.fieldGetter = fieldGetter;
         this.indices = this.getIndicesSortedByAttributeValue();

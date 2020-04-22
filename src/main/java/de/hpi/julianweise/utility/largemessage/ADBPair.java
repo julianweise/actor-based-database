@@ -2,7 +2,7 @@ package de.hpi.julianweise.utility.largemessage;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ public class ADBPair<A, B> {
                           @JsonSubTypes.Type(value = Double.class, name = "Double"),
                           @JsonSubTypes.Type(value = Character.class, name = "Character"),
                           @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
-                          @JsonSubTypes.Type(value = ADBEntityType.class, name = "ADBEntityType"),
+                          @JsonSubTypes.Type(value = ADBEntity.class, name = "ADBEntity"),
                   })
     private A key;
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
@@ -30,7 +30,7 @@ public class ADBPair<A, B> {
                           @JsonSubTypes.Type(value = Float.class, name = "Float"),
                           @JsonSubTypes.Type(value = Double.class, name = "Double"),
                           @JsonSubTypes.Type(value = Character.class, name = "Character"),
-                          @JsonSubTypes.Type(value = ADBEntityType.class, name = "ADBEntityType"),
+                          @JsonSubTypes.Type(value = ADBEntity.class, name = "ADBEntity"),
                   })
     private B value;
 

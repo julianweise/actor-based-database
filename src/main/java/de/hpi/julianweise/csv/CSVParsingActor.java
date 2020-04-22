@@ -6,7 +6,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
@@ -47,7 +47,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     @Getter
     @AllArgsConstructor
     public static class DomainDataChunk implements Response {
-        private final List<ADBEntityType> chunk;
+        private final List<ADBEntity> chunk;
 
     }
     @Getter
@@ -87,7 +87,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
             return Behaviors.same();
         }
         final AtomicInteger counter = new AtomicInteger();
-        List<ADBEntityType> chunk = new ArrayList<>();
+        List<ADBEntity> chunk = new ArrayList<>();
 
         while (csvIterator.hasNext() && counter.getAndIncrement() < this.settings.CSV_CHUNK_SIZE) {
             chunk.add(ADBEntityFactoryProvider.getInstance().build(this.csvIterator.next()));

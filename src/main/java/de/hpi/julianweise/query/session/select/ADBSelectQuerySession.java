@@ -5,7 +5,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
@@ -21,14 +21,14 @@ import java.util.List;
 
 public class ADBSelectQuerySession extends ADBQuerySession {
 
-    private final List<ADBEntityType> queryResults = new ArrayList<>();
+    private final List<ADBEntity> queryResults = new ArrayList<>();
 
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
     @SuperBuilder
     public static class SelectQueryResults extends ADBQuerySession.QueryResults {
-        private List<ADBEntityType> results;
+        private List<ADBEntity> results;
 
     }
 

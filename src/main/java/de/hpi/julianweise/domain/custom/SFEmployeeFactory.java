@@ -1,18 +1,18 @@
 package de.hpi.julianweise.domain.custom;
 
 import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import org.apache.commons.csv.CSVRecord;
 
 public class SFEmployeeFactory implements ADBEntityFactory {
 
     @Override
-    public Class<? extends ADBEntityType> getTargetClass() {
+    public Class<? extends ADBEntity> getTargetClass() {
         return SFEmployeeSalary.class;
     }
 
     @Override
-    public ADBEntityType build(CSVRecord record) {
+    public ADBEntity build(CSVRecord record) {
         return SFEmployeeSalary.builder()
                                .yearType(record.get(0))
                                .year(Integer.parseInt(record.get(1)))

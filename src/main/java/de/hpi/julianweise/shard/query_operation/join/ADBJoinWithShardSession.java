@@ -7,7 +7,7 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.utility.CborSerializable;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
@@ -41,7 +41,7 @@ public class ADBJoinWithShardSession extends ADBLargeMessageActor {
     @NoArgsConstructor
     @Getter
     public static class HandleJoinShardsResults implements ADBLargeMessageSender.LargeMessage, Command {
-        private List<ADBPair<Integer, ADBEntityType>> joinCandidates;
+        private List<ADBPair<Integer, ADBEntity>> joinCandidates;
     }
 
 

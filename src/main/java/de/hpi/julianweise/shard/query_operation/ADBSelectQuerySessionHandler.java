@@ -5,7 +5,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.session.ADBQuerySession;
 import de.hpi.julianweise.query.session.select.ADBSelectQuerySession;
@@ -25,7 +25,7 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
                                         ActorRef<ADBJoinAttributeComparator.Command> comparatorPool,
                                         int transactionId,
                                         ADBSelectionQuery query,
-                                        final List<ADBEntityType> data,
+                                        final List<ADBEntity> data,
                                         int globalShardId) {
         super(context, shard, client, clientLargeMessageReceiver, comparatorPool, transactionId, query, data,
                 globalShardId);
@@ -39,7 +39,7 @@ public class ADBSelectQuerySessionHandler extends ADBQuerySessionHandler {
     }
 
     private Behavior<ADBQuerySessionHandler.Command> handleExecute(Execute command) {
-        List<ADBEntityType> results = this.data
+        List<ADBEntity> results = this.data
                 .stream()
                 .filter(entity -> entity.matches((ADBSelectionQuery) this.query))
                 .collect(Collectors.toList());

@@ -5,7 +5,7 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
@@ -109,7 +109,7 @@ public class ADBSelectQuerySessionHandlerTest {
         ADBShard.QueryEntities message = new ADBShard.QueryEntities(transactionId, responseProbe.ref(),
                 initializeTransferTestProbe.ref(), query);
 
-        List<ADBEntityType> dataset = new ArrayList<>();
+        List<ADBEntity> dataset = new ArrayList<>();
         dataset.add(new TestEntity(1, "Test", 1f, true, 1.01, 'w'));
         dataset.add(new TestEntity(2, "Test", 1f, true, 1.01, 'w'));
 

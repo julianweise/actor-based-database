@@ -1,6 +1,6 @@
 package de.hpi.julianweise.csv;
 
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.domain.key.ADBKey;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class TestEntity extends ADBEntityType {
+public class TestEntity extends ADBEntity {
 
     private int aInteger;
     private String bString;

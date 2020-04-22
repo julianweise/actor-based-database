@@ -5,14 +5,14 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
 @AllArgsConstructor
 public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQueryTerm> {
 
-    private final Class<? extends ADBEntityType> entityClass;
+    private final Class<? extends ADBEntity> entityClass;
 
     @SneakyThrows
     @Override

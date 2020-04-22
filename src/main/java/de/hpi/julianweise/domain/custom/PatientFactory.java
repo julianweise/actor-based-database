@@ -1,7 +1,7 @@
 package de.hpi.julianweise.domain.custom;
 
 import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import org.apache.commons.csv.CSVRecord;
 
 import static java.lang.Integer.parseInt;
@@ -9,12 +9,12 @@ import static java.lang.Integer.parseInt;
 public class PatientFactory implements ADBEntityFactory {
 
     @Override
-    public Class<? extends ADBEntityType> getTargetClass() {
+    public Class<? extends ADBEntity> getTargetClass() {
         return Patient.class;
     }
 
     @Override
-    public ADBEntityType build(CSVRecord record) {
+    public ADBEntity build(CSVRecord record) {
         return Patient.builder()
                       .ausgleichsjahr(parseInt(record.get(1), 10))
                       .berichtsjahr(parseInt(record.get(2), 10))

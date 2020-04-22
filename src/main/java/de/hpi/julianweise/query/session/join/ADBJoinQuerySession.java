@@ -5,7 +5,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBShardInquirer;
 import de.hpi.julianweise.query.session.ADBQuerySession;
@@ -26,7 +26,7 @@ import java.util.List;
 public class ADBJoinQuerySession extends ADBQuerySession {
 
     private final JoinDistributionPlan distributionPlan;
-    private final List<ADBPair<ADBEntityType, ADBEntityType>> queryResults = new ArrayList<>();
+    private final List<ADBPair<ADBEntity, ADBEntity>> queryResults = new ArrayList<>();
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -49,7 +49,7 @@ public class ADBJoinQuerySession extends ADBQuerySession {
     @SuperBuilder
     @Getter
     public static class JoinQueryResults extends ADBQuerySession.QueryResults {
-        private List<ADBPair<ADBEntityType, ADBEntityType>> joinResults;
+        private List<ADBPair<ADBEntity, ADBEntity>> joinResults;
     }
 
     public ADBJoinQuerySession(ActorContext<ADBQuerySession.Command> context,

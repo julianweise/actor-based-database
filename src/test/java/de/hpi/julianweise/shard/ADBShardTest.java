@@ -4,7 +4,7 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.domain.ADBEntityType;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.session.ADBQuerySession;
@@ -37,7 +37,7 @@ public class ADBShardTest {
     @Test
     public void expectEntityIsPersistedCorrectly() {
         ActorRef<ADBShard.Command> shard = testKit.spawn(ADBShardFactory.createDefault(), "shard");
-        ADBEntityType entityToPersist = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        ADBEntity entityToPersist = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
 
         TestProbe<ADBShardDistributor.Command> probe = testKit.createTestProbe();
         shard.tell(new ADBShard.PersistEntity(probe.ref(), entityToPersist));
@@ -53,7 +53,7 @@ public class ADBShardTest {
     public void expectQueryIsHandledCorrectly() {
         int transactionId = 1;
         ActorRef<ADBShard.Command> shard = testKit.spawn(ADBShardFactory.createDefault(), "shard");
-        ADBEntityType entityToPersist = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        ADBEntity entityToPersist = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
 
         TestProbe<ADBShardDistributor.Command> persistProbe = testKit.createTestProbe();
         TestProbe<ADBQuerySession.Command> querySessionProbe = testKit.createTestProbe();
