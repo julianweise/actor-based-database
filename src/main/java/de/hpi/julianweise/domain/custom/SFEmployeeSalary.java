@@ -38,6 +38,16 @@ public class SFEmployeeSalary extends ADBEntity {
     }
 
     @Override
+    public int getSize() {
+        return 5 * Double.BYTES + 3 * Integer.BYTES
+                + this.calculateStringMemoryFootprint(this.yearType.length())
+                + this.calculateStringMemoryFootprint(this.departmentCode.length())
+                + this.calculateStringMemoryFootprint(this.unionCode.length())
+                + this.calculateStringMemoryFootprint(this.jobFamilyCode.length())
+                + this.calculateStringMemoryFootprint(this.jobCode.length());
+    }
+
+    @Override
     public String toString() {
         return "[EmployeesSalary] for  Employee#" + this.employeeIdentifier + " in " + this.year;
     }

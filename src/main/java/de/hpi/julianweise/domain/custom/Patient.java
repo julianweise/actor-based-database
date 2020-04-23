@@ -3,12 +3,16 @@ package de.hpi.julianweise.domain.custom;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.domain.key.ADBStringKey;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @SuppressWarnings("SpellCheckingInspection")
 @Builder
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
 public class Patient extends ADBEntity {
 
     private int ausgleichsjahr;
@@ -25,6 +29,10 @@ public class Patient extends ADBEntity {
     @Override
     public ADBKey getPrimaryKey() {
         return new ADBStringKey(this.psid);
+    }
+
+    @Override public int getSize() {
+        return 6 * Integer.BYTES + Character.BYTES + 2 + this.calculateStringMemoryFootprint(this.psid.length());
     }
 
     @Override

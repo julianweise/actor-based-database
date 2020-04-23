@@ -24,6 +24,12 @@ public abstract class ADBEntity implements CborSerializable {
 
     public abstract ADBKey getPrimaryKey();
 
+    public abstract int getSize();
+
+    protected int calculateStringMemoryFootprint(int numberOfChars) {
+        return ((int) Math.ceil(24 + 12 + numberOfChars + 2 * Character.BYTES) / 8) * 8;
+    }
+
     @Override
     public int hashCode() {
         return this.getPrimaryKey().hashCode() + 13;

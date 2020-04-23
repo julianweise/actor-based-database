@@ -25,4 +25,10 @@ public class TestEntity extends ADBEntity {
     public ADBKey getPrimaryKey() {
         return new ADBIntegerKey(aInteger);
     }
+
+    @Override
+    public int getSize() {
+        return Integer.BYTES + Float.BYTES + 1 + Double.BYTES + Character.BYTES
+                + this.calculateStringMemoryFootprint(this.bString.length());
+    }
 }
