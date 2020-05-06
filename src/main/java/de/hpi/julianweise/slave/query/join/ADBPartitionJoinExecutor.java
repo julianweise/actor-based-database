@@ -11,7 +11,6 @@ import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.attribute_comparison.strategies.ADBOffsetAttributeComparisonStrategy;
-import de.hpi.julianweise.slave.query.join.attribute_comparison.strategies.ADBPrimitiveAttributeComparisonStrategy;
 import de.hpi.julianweise.slave.query.join.column.intersect.ADBJoinCandidateIntersector;
 import de.hpi.julianweise.slave.query.join.column.intersect.ADBJoinCandidateIntersectorFactory;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
