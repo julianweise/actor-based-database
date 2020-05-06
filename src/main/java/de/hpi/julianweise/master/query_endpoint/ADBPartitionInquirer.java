@@ -1,4 +1,4 @@
-package de.hpi.julianweise.query;
+package de.hpi.julianweise.master.query_endpoint;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
@@ -7,17 +7,19 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
+import de.hpi.julianweise.master.io.ADBResultWriter;
 import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
+import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.agrona.collections.Int2IntHashMap;
+import org.agrona.collections.Int2ObjectHashMap;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,49 +27,65 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.Command> {
 
+    @SuppressWarnings("rawtypes")
+    private final Map<Integer, List> results = new Int2ObjectHashMap<>();
     private final Set<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArraySet<>();
-    private final Int2IntHashMap transactionRequestMapping = new Int2IntHashMap(-1);
-    private final Map<Integer, ActorRef<ADBPartitionInquirer.Response>> requestClientMapping = new HashMap<>();
+    private final Map<Integer, QueryShards> transactionToRequest = new Int2ObjectHashMap<>();
     private final AtomicInteger transactionCounter = new AtomicInteger();
+    private final ActorRef<ADBResultWriter.Command> resultWriter;
 
     public interface Command extends CborSerializable {
 
     }
+
     public interface Response extends CborSerializable {
 
     }
+
     @AllArgsConstructor
     @Getter
     public static class WrappedListing implements Command {
         private final Receptionist.Listing listing;
 
     }
+
     @AllArgsConstructor
     @Getter
     @Builder
     public static class QueryShards implements Command {
         private final int requestId;
         private final ADBQuery query;
+        private final boolean async;
         private final ActorRef<Response> respondTo;
 
     }
-    @AllArgsConstructor
-    @Getter
-    public static class TransactionResults implements Command {
-        private final int transactionId;
-        private final Object[] results;
 
-    }
+    @SuppressWarnings("rawtypes")
     @AllArgsConstructor
     @Getter
-    public static class AllQueryResults implements Response {
+    public static class TransactionResultChunk implements Command {
+        private final int transactionId;
+        private final List results;
+        private final boolean isLast;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class SyncQueryResults implements Response {
         private final int requestId;
         private final Object[] results;
+    }
 
+    @AllArgsConstructor
+    @Getter
+    public static class AsyncQueryResults implements Response {
+        private final int requestId;
+        private final int transactionId;
     }
 
     protected ADBPartitionInquirer(ActorContext<Command> context) {
         super(context);
+        this.resultWriter = context.spawn(ADBResultWriter.create(), "ResultWriter");
     }
 
     @Override
@@ -75,7 +93,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
         return newReceiveBuilder()
                 .onMessage(WrappedListing.class, this::handleReceptionistListing)
                 .onMessage(QueryShards.class, this::handleQueryShards)
-                .onMessage(TransactionResults.class, this::handleTransactionResults)
+                .onMessage(TransactionResultChunk.class, this::handleTransactionResultChunk)
                 .build();
     }
 
@@ -86,8 +104,11 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
 
     private Behavior<Command> handleQueryShards(QueryShards command) {
         int transactionID = this.transactionCounter.getAndIncrement();
-        this.transactionRequestMapping.put(transactionID, command.getRequestId());
-        this.requestClientMapping.put(command.getRequestId(), command.respondTo);
+        this.transactionToRequest.put(transactionID, command);
+
+        if (command.async) {
+            command.respondTo.tell(new AsyncQueryResults(command.requestId, transactionID));
+        }
 
         this.createNewQuerySession(transactionID, command.getQuery());
         return Behaviors.same();
@@ -98,13 +119,22 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
                 this.getContext().getSelf()), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
     }
 
-    private Behavior<Command> handleTransactionResults(TransactionResults command) {
-        int requestId = this.transactionRequestMapping.get(command.getTransactionId());
-        ActorRef<Response> client = this.requestClientMapping.get(requestId);
-        client.tell(new AllQueryResults(requestId, command.getResults()));
-
-        this.transactionRequestMapping.remove(command.getTransactionId());
-        this.requestClientMapping.remove(requestId);
+    @SuppressWarnings("unchecked")
+    private Behavior<Command> handleTransactionResultChunk(TransactionResultChunk command) {
+        QueryShards request = this.transactionToRequest.get(command.getTransactionId());
+        if (request.async) {
+            resultWriter.tell(new ADBResultWriter.Persist(command.transactionId, request.requestId, command.results.toArray()));
+        } else {
+            if (this.results.containsKey(command.getTransactionId())) {
+                this.results.get(command.getTransactionId()).addAll(command.results);
+            } else {
+                this.results.putIfAbsent(command.getTransactionId(), command.results);
+            }
+            if (command.isLast) {
+                request.respondTo.tell(new SyncQueryResults(request.requestId, results.get(command.getTransactionId()).toArray()));
+                this.results.remove(command.getTransactionId());
+            }
+        }
         return Behaviors.same();
     }
 }

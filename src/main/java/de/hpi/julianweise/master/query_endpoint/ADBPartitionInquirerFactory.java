@@ -1,4 +1,4 @@
-package de.hpi.julianweise.query;
+package de.hpi.julianweise.master.query_endpoint;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;

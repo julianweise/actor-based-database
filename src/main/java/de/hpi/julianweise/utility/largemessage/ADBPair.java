@@ -41,4 +41,9 @@ public class ADBPair<A, B> {
         }
         return this.key.equals(((ADBPair<A,B>) o).key) && this.value.equals(((ADBPair<A,B>) o).value);
     }
+
+    @Override
+    public String toString() {
+        return this.key.toString() + " : " + this.value.toString();
+    }
 }

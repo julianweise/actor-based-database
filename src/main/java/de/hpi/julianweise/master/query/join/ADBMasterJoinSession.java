@@ -8,8 +8,8 @@ import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.ADBMaster;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
+import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
@@ -24,13 +24,15 @@ import lombok.experimental.SuperBuilder;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     private final JoinDistributionPlan distributionPlan;
-    private final List<ADBPair<ADBEntity, ADBEntity>> queryResults = new ArrayList<>();
+    private final AtomicInteger resultCounter = new AtomicInteger(0);
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -107,7 +109,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
-        this.queryResults.addAll(results.joinResults);
+        this.resultCounter.set(this.resultCounter.get() + results.joinResults.size());
+        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, results.joinResults, false));
         return Behaviors.same();
     }
 
@@ -118,7 +121,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @Override
     protected void submitResults() {
-        this.getContext().getLog().info("[FINAL RESULT]: Submitting " + this.queryResults.size() + " elements.");
-        this.parent.tell(new ADBPartitionInquirer.TransactionResults(this.transactionId, this.queryResults.toArray()));
+        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, Collections.emptyList(), true));
+        this.getContext().getLog().info("[FINAL RESULT]: Submitting " + this.resultCounter.get() + " elements.");
     }
 }

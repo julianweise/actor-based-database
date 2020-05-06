@@ -6,18 +6,20 @@ import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.master.query.select.ADBMasterSelectSession;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
+import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import de.hpi.julianweise.slave.query.ADBSlaveQuerySessionFactory;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class ADBMasterQuerySessionFactory {
 
-    private static final Logger LOG = LogManager.getLogger(ADBMasterQuerySessionFactory.class);
+    private final static Logger LOG = LoggerFactory.getLogger(ADBMasterQuerySessionFactory.class);
 
     public static Behavior<ADBMasterQuerySession.Command> create(List<ActorRef<ADBQueryManager.Command>> queryManagers,
                                                                  ADBQuery query, int transactionId,

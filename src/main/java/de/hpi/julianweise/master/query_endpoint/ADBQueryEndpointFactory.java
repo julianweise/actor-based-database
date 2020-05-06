@@ -3,7 +3,6 @@ package de.hpi.julianweise.master.query_endpoint;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
-    public static final int MAX_SIZE_BYTE = 256000;
+    public static final int MAX_SIZE_BYTE = 512000;
 
     private final List<ADBEntity> data;
     private final Map<String, ADBSortedEntityAttributes2> sortedAttributes;

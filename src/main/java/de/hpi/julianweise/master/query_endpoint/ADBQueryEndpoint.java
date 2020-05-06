@@ -19,12 +19,10 @@ import akka.http.javadsl.server.Route;
 import akka.http.javadsl.server.directives.RouteAdapter;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Flow;
-import de.hpi.julianweise.domain.custom.SFEmployeeSalary;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBQuery;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import scala.concurrent.duration.Duration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,13 +75,27 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     }
 
     private Route createRoute() {
-        return Directives.concat(Directives.path("query",
-                () -> Directives.withoutRequestTimeout(() -> Directives.post(() -> Directives.entity(
-                        Jackson.unmarshaller(ADBQuery.class), this::handleQuery))))
+        return Directives.concat(
+                Directives.path("query",
+                () -> Directives.withoutRequestTimeout(
+                        () -> Directives.post(() -> Directives.entity(
+                        Jackson.unmarshaller(ADBQuery.class), this::handleSyncQuery)))),
+                Directives.path("query-async",
+                        () -> Directives.withRequestTimeout(Duration.fromNanos(2e9),
+                                () -> Directives.post(() -> Directives.entity(
+                                Jackson.unmarshaller(ADBQuery.class), this::handleAsyncQuery))))
         );
     }
 
-    private RouteAdapter handleQuery(ADBQuery query) {
+    private RouteAdapter handleAsyncQuery(ADBQuery query) {
+        return this.handleQuery(query, true);
+    }
+
+    private RouteAdapter handleSyncQuery(ADBQuery query) {
+        return this.handleQuery(query, false);
+    }
+
+    private RouteAdapter handleQuery(ADBQuery query, boolean async) {
         this.getContext().getLog().info("Received new query: " + query);
         CompletableFuture<Object[]> future = new CompletableFuture<>();
         int requestId = this.requestCounter.getAndIncrement();
@@ -91,20 +103,20 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
         this.shardInquirer.tell(ADBPartitionInquirer.QueryShards.builder()
                                                                 .query(query)
                                                                 .requestId(requestId)
+                                                                .async(async)
                                                                 .respondTo(this.shardInquirerResponseWrapper)
                                                                 .build());
         return Directives.onSuccess(future,
-                extracted -> Directives.complete(this.printListOfEmployeeIdentifiers(extracted)));
+                extracted -> Directives.complete(this.visualize(extracted)));
     }
 
-    @SuppressWarnings("unchecked")
-    private String printListOfEmployeeIdentifiers(Object[] extracted) {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (Object o : extracted) {
-            ADBPair<SFEmployeeSalary, SFEmployeeSalary> tuple = (ADBPair<SFEmployeeSalary, SFEmployeeSalary>) o;
-            stringBuilder.append(tuple.getKey().getEmployeeIdentifier()).append(", ").append(tuple.getValue().getEmployeeIdentifier()).append("\n");
+    private String visualize(Object[] results) {
+        StringBuilder builder = new StringBuilder();
+        for(Object element : results) {
+            builder.append(element.toString());
+            builder.append("\n");
         }
-        return stringBuilder.toString();
+        return builder.toString();
     }
 
     private Behavior<Command> handlePostStop(PostStop signal) {
@@ -113,9 +125,13 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     }
 
     private Behavior<Command> handleShardInquirerResponseWrapper(ShardInquirerResponseWrapper wrapper) {
-        if (wrapper.getResponse() instanceof ADBPartitionInquirer.AllQueryResults) {
-            ADBPartitionInquirer.AllQueryResults response = (ADBPartitionInquirer.AllQueryResults) wrapper.getResponse();
-            this.requests.get(response.getRequestId()).complete(response.getResults());
+        if (wrapper.getResponse() instanceof ADBPartitionInquirer.SyncQueryResults) {
+            ADBPartitionInquirer.SyncQueryResults res = (ADBPartitionInquirer.SyncQueryResults) wrapper.getResponse();
+            this.requests.get(res.getRequestId()).complete(res.getResults());
+        } else if (wrapper.getResponse() instanceof ADBPartitionInquirer.AsyncQueryResults) {
+            ADBPartitionInquirer.AsyncQueryResults res = (ADBPartitionInquirer.AsyncQueryResults) wrapper.getResponse();
+            Integer[] transactionId = {res.getTransactionId()};
+            this.requests.get(res.getRequestId()).complete(transactionId);
         }
         return Behaviors.same();
     }

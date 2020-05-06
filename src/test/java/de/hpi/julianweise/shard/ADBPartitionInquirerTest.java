@@ -8,8 +8,8 @@ import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
-import de.hpi.julianweise.query.ADBPartitionInquirerFactory;
+import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
+import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirerFactory;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.slave.ADBSlave;
@@ -158,7 +158,7 @@ public class ADBPartitionInquirerTest {
                                                       .build());
 
         ADBPartitionInquirer.Response results = resultProbe.receiveMessage();
-        ADBPartitionInquirer.AllQueryResults typedResults = (ADBPartitionInquirer.AllQueryResults) results;
+        ADBPartitionInquirer.SyncQueryResults typedResults = (ADBPartitionInquirer.SyncQueryResults) results;
 
         assertThat(typedResults.getResults().length).isZero();
     }
@@ -214,8 +214,8 @@ public class ADBPartitionInquirerTest {
                                                       .respondTo(resultProbe.ref())
                                                       .build());
 
-        ADBPartitionInquirer.AllQueryResults results =
-                resultProbe.expectMessageClass(ADBPartitionInquirer.AllQueryResults.class);
+        ADBPartitionInquirer.SyncQueryResults results =
+                resultProbe.expectMessageClass(ADBPartitionInquirer.SyncQueryResults.class);
 
         assertThat(results.getResults().length).isOne();
         assertThat(((TestEntity) results.getResults()[0]).getPrimaryKey()).isEqualTo(testEntity.getPrimaryKey());

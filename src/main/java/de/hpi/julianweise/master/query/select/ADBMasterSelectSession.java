@@ -7,7 +7,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
+import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
@@ -18,12 +18,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.val;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ADBMasterSelectSession extends ADBMasterQuerySession {
-
-    private final List<ADBEntity> queryResults = new ArrayList<>();
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -63,7 +61,7 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleQueryResults(SelectQueryResults response) {
-        this.queryResults.addAll(response.getResults());
+        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(this.transactionId, response.results, false));
         this.conditionallyConcludeTransaction();
         return Behaviors.same();
     }
@@ -75,6 +73,6 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
 
     @Override
     protected void submitResults() {
-        this.parent.tell(new ADBPartitionInquirer.TransactionResults(this.transactionId, this.queryResults.toArray()));
+        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(this.transactionId, Collections.emptyList(), true));
     }
 }

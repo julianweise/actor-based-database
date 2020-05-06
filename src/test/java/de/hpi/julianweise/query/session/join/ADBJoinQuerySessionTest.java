@@ -10,7 +10,7 @@ import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
-import de.hpi.julianweise.query.ADBPartitionInquirer;
+import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
@@ -196,12 +196,12 @@ public class ADBJoinQuerySessionTest {
         joinSession.tell(new ADBMasterQuerySession.ConcludeTransaction(joinSessionHandler1.ref()));
         joinSession.tell(new ADBMasterQuerySession.ConcludeTransaction(joinSessionHandler2.ref()));
 
-        ADBPartitionInquirer.TransactionResults response3 = supervisor
-                .expectMessageClass(ADBPartitionInquirer.TransactionResults.class);
+        ADBPartitionInquirer.TransactionResultChunk response3 = supervisor
+                .expectMessageClass(ADBPartitionInquirer.TransactionResultChunk.class);
 
         assertThat(response3.getTransactionId()).isEqualTo(1);
-        assertThat(response3.getResults().length).isEqualTo(1);
-        assertThat(response3.getResults()[0]).isEqualTo(joinResults);
+        assertThat(response3.getResults().size()).isEqualTo(1);
+        assertThat(response3.getResults().get(0)).isEqualTo(joinResults);
     }
 
 }

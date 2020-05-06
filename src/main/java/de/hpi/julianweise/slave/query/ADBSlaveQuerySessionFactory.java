@@ -7,12 +7,12 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.slave.query.select.ADBSlaveSelectSession;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ADBSlaveQuerySessionFactory {
 
-    private static final Logger LOG = LogManager.getLogger(ADBSlaveQuerySessionFactory.class);
+    private final static Logger LOG = LoggerFactory.getLogger(ADBSlaveQuerySessionFactory.class);
 
     public static Behavior<ADBSlaveQuerySession.Command> create(ADBQueryManager.QueryEntities command) {
         if (command.getQuery() instanceof ADBSelectionQuery) {
