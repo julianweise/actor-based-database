@@ -13,21 +13,21 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.CSVParsingActorFactory;
-import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
-import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcess;
-import de.hpi.julianweise.master.ADBLoadAndDistributeDataProcessFactory;
-import de.hpi.julianweise.master.ADBMasterSupervisorFactory;
-import de.hpi.julianweise.master.MasterConfiguration;
+import de.hpi.julianweise.master.ADBMasterFactory;
+import de.hpi.julianweise.master.config.MasterConfiguration;
+import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
+import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
+import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
+import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributorFactory;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQueryTermDeserializer;
-import de.hpi.julianweise.shard.ADBShardDistributor;
-import de.hpi.julianweise.shard.ADBShardDistributorFactory;
-import de.hpi.julianweise.slave.ADBSlaveSupervisor;
-import de.hpi.julianweise.slave.SlaveConfiguration;
-import de.hpi.julianweise.utility.CborSerializable;
-import de.hpi.julianweise.utility.ConfigurationBase;
+import de.hpi.julianweise.slave.ADBSlave;
+import de.hpi.julianweise.slave.config.SlaveConfiguration;
+import de.hpi.julianweise.utility.config.ConfigurationBase;
+import de.hpi.julianweise.utility.serialization.CborSerializable;
 
 import java.io.NotSerializableException;
 import java.util.HashMap;
@@ -42,12 +42,12 @@ public class ADBApplication {
                 MasterConfiguration masterConfiguration = (MasterConfiguration) configuration;
                 Behavior<CSVParsingActor.Command> csvParser =
                         CSVParsingActorFactory.createForFile(masterConfiguration.getInputFile().toAbsolutePath().toString());
-                Behavior<ADBShardDistributor.Command> distributor = ADBShardDistributorFactory.createDefault();
+                Behavior<ADBDataDistributor.Command> distributor = ADBDataDistributorFactory.createDefault();
                 Behavior<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcess =
                         ADBLoadAndDistributeDataProcessFactory.createDefault(csvParser, distributor);
-                context.spawn(ADBMasterSupervisorFactory.createDefault(loadAndDistributeProcess), "DBMasterSupervisor");
+                context.spawn(ADBMasterFactory.createDefault(loadAndDistributeProcess), "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
-                context.spawn(ADBSlaveSupervisor.create(), "DBSlaveSupervisor");
+                context.spawn(ADBSlave.create(), "DBSlaveSupervisor");
             }
             return Behaviors.empty();
         });

@@ -1,6 +1,8 @@
 package de.hpi.julianweise.settings;
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.query.ADBQueryManager;
 import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -15,6 +17,9 @@ public class SettingsTest {
 
     @After
     public void after() {
+        ADBPartitionManager.resetSingleton();
+        ADBQueryManager.resetSingleton();
+        ADBQueryManager.resetPool();
         folder.delete();
     }
 

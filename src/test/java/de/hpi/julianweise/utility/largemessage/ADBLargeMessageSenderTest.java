@@ -8,6 +8,8 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.query.ADBQueryManager;
 import lombok.AllArgsConstructor;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -23,11 +25,11 @@ public class ADBLargeMessageSenderTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
-    private static int KRYO_SIZE_OVERHEAD = 89;
+    private static final int KRYO_SIZE_OVERHEAD = 89;
 
     @AllArgsConstructor
     private static class LargeTestMessage implements ADBLargeMessageSender.LargeMessage {
-        private byte[] payload;
+        private final byte[] payload;
 
     }
 
@@ -35,6 +37,9 @@ public class ADBLargeMessageSenderTest {
     public void cleanup() {
         testKit.after();
         testKit = new TestKitJunitResource();
+        ADBPartitionManager.resetSingleton();
+        ADBQueryManager.resetPool();
+        ADBQueryManager.resetSingleton();
     }
 
     @AfterClass

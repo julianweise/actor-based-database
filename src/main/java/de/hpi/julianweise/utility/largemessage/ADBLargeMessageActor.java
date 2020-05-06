@@ -17,7 +17,7 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
     @AllArgsConstructor
     @Getter
     public static class WrappedLargeMessageSenderResponse implements Command {
-        private ADBLargeMessageSender.Response response;
+        private final ADBLargeMessageSender.Response response;
     }
 
     public ADBLargeMessageActor(ActorContext<Command> context) {
@@ -45,7 +45,7 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
             return this.handleLargeMessageTransferCompleted((ADBLargeMessageSender.TransferCompleted) response.getResponse());
         }
         this.getContext().getLog().warn(String.format("[%s] Received LargeMessageSender response of unknown subtype."
-                , this.getClass().getName().split(".")[this.getClass().getName().split(".").length - 1]));
+                , this.getClass().getName().split("\\.")[this.getClass().getName().split("\\.").length - 1]));
         return Behaviors.same();
     }
 

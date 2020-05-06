@@ -4,6 +4,8 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 
+import java.util.UUID;
+
 public class ADBLargeMessageSenderFactory {
 
     public static Behavior<ADBLargeMessageSender.Command> createDefault(ADBLargeMessageSender.LargeMessage message,
@@ -11,11 +13,11 @@ public class ADBLargeMessageSenderFactory {
         return Behaviors.setup(context -> new ADBLargeMessageSender(context, message, respondTo));
     }
 
-    public static String senderName(ActorRef<?> sender,
-                                    ActorRef<?> receiver,
-                                    Class<? extends ADBLargeMessageSender.LargeMessage> payLoadMessage,
-                                    String payload) {
+    public static String name(ActorRef<?> sender,
+                              ActorRef<?> receiver,
+                              Class<? extends ADBLargeMessageSender.LargeMessage> payLoadMessage,
+                              String payload) {
         return "ADBLargeMessageSender@" + sender.path().name() + "-::" + payLoadMessage.getSimpleName() + ":" + payload +
-                "::-" + receiver.path().name();
+                "::-" + receiver.path().name() + "-" + UUID.randomUUID().toString();
     }
 }

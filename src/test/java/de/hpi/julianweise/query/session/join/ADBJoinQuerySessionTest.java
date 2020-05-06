@@ -5,14 +5,16 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.master.query.ADBMasterQuerySession;
+import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
+import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBQueryTerm;
-import de.hpi.julianweise.query.ADBShardInquirer;
-import de.hpi.julianweise.query.session.ADBQuerySession;
-import de.hpi.julianweise.query.session.ADBQuerySessionFactory;
-import de.hpi.julianweise.shard.ADBShard;
-import de.hpi.julianweise.shard.query_operation.join.ADBJoinQuerySessionHandler;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.query.ADBQueryManager;
+import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -33,6 +35,9 @@ public class ADBJoinQuerySessionTest {
     public void cleanup() {
         testKit.after();
         testKit = new TestKitJunitResource();
+        ADBPartitionManager.resetSingleton();
+        ADBQueryManager.resetSingleton();
+        ADBQueryManager.resetPool();
     }
 
     @AfterClass
@@ -43,17 +48,17 @@ public class ADBJoinQuerySessionTest {
     @Test
     public void expectCorrectRegistrationAtStartUp() {
 
-        TestProbe<ADBShardInquirer.Command> supervisor = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.Command> supervisor = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard = testKit.createTestProbe();
 
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
-        ActorRef<ADBJoinQuerySession.Command> joinSession =
-                testKit.spawn(ADBQuerySessionFactory.create(Collections.singletonList(shard.ref()), query, 1,
+        ActorRef<ADBMasterJoinSession.Command> joinSession =
+                testKit.spawn(ADBMasterQuerySessionFactory.create(Collections.singletonList(shard.ref()), query, 1,
                         supervisor.ref()));
 
-        ADBShard.QueryEntities queryEntities = shard.expectMessageClass(ADBShard.QueryEntities.class);
+        ADBQueryManager.QueryEntities queryEntities = shard.expectMessageClass(ADBQueryManager.QueryEntities.class);
 
         assertThat(queryEntities.getQuery()).isEqualTo(query);
         assertThat(queryEntities.getTransactionId()).isEqualTo(1);
@@ -63,24 +68,24 @@ public class ADBJoinQuerySessionTest {
     @Test
     public void expectNoShardToJoinWithIsSentForOnlyOneShard() {
 
-        TestProbe<ADBShardInquirer.Command> supervisor = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.Command> supervisor = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> queryManager = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler = testKit.createTestProbe();
 
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
-        ActorRef<ADBJoinQuerySession.Command> joinSession =
-                testKit.spawn(ADBQuerySessionFactory.create(Collections.singletonList(shard.ref()), query, 1,
+        ActorRef<ADBMasterJoinSession.Command> joinSession =
+                testKit.spawn(ADBMasterQuerySessionFactory.create(Collections.singletonList(queryManager.ref()), query, 1,
                         supervisor.ref()));
 
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard.ref(), joinSessionHandler.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager.ref(), joinSessionHandler.ref()));
 
 
-        joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard.ref(), joinSessionHandler.ref()));
+        joinSession.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(joinSessionHandler.ref()));
 
-        ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith response =
-                joinSessionHandler.expectMessageClass(ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith.class);
+        ADBSlaveJoinSession.NoMoreShardsToJoinWith response =
+                joinSessionHandler.expectMessageClass(ADBSlaveJoinSession.NoMoreShardsToJoinWith.class);
 
         assertThat(response.getTransactionId()).isEqualTo(1);
     }
@@ -88,35 +93,35 @@ public class ADBJoinQuerySessionTest {
     @Test
     public void expectCorrectNextJoinSuggestionForEachShard() {
 
-        TestProbe<ADBShardInquirer.Command> supervisor = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard1 = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard2 = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler1 = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler2 = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.Command> supervisor = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard1 = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard2 = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler1 = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler2 = testKit.createTestProbe();
 
-        ArrayList<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        ArrayList<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
         shards.add(shard1.ref());
         shards.add(shard2.ref());
 
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
-        ActorRef<ADBJoinQuerySession.Command> joinSession =
-                testKit.spawn(ADBQuerySessionFactory.create(shards, query, 1, supervisor.ref()));
+        ActorRef<ADBMasterJoinSession.Command> joinSession =
+                testKit.spawn(ADBMasterQuerySessionFactory.create(shards, query, 1, supervisor.ref()));
 
 
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
-        joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard1.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(joinSessionHandler1.ref()));
 
-        ADBJoinQuerySessionHandler.JoinWithShard response1 = joinSessionHandler1
-                .expectMessageClass(ADBJoinQuerySessionHandler.JoinWithShard.class);
+        ADBSlaveJoinSession.JoinWithShard response1 = joinSessionHandler1
+                .expectMessageClass(ADBSlaveJoinSession.JoinWithShard.class);
 
-        joinSession.tell(new ADBJoinQuerySession.RequestNextShardComparison(shard2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(joinSessionHandler2.ref()));
 
-        ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith response2 = joinSessionHandler2
-                .expectMessageClass(ADBJoinQuerySessionHandler.NoMoreShardsToJoinWith.class);
+        ADBSlaveJoinSession.NoMoreShardsToJoinWith response2 = joinSessionHandler2
+                .expectMessageClass(ADBSlaveJoinSession.NoMoreShardsToJoinWith.class);
 
         assertThat(response1.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
         assertThat(response2.getTransactionId()).isEqualTo(1);
@@ -125,30 +130,29 @@ public class ADBJoinQuerySessionTest {
     @Test
     public void expectCorrectNextJoinSuggestionForEachShardEvenAfterDelayedHandlerMapping() {
 
-        TestProbe<ADBShardInquirer.Command> supervisor = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard1 = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard2 = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler1 = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler2 = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.Command> supervisor = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard1 = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard2 = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler1 = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler2 = testKit.createTestProbe();
 
-        ArrayList<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        ArrayList<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
         shards.add(shard1.ref());
         shards.add(shard2.ref());
 
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
-        ActorRef<ADBJoinQuerySession.Command> joinSession =
-                testKit.spawn(ADBQuerySessionFactory.create(shards, query, 1, supervisor.ref()));
+        ActorRef<ADBMasterJoinSession.Command> joinSession =
+                testKit.spawn(ADBMasterQuerySessionFactory.create(shards, query, 1, supervisor.ref()));
 
-        joinSession.tell(new ADBJoinQuerySession.TriggerShardComparison(shard1.ref(), shard2.ref(),
-                joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterJoinSession.TriggerShardComparison(shard2.ref(), joinSessionHandler1.ref()));
 
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
-        ADBJoinQuerySessionHandler.JoinWithShard response1 = joinSessionHandler1
-                .expectMessageClass(ADBJoinQuerySessionHandler.JoinWithShard.class);
+        ADBSlaveJoinSession.JoinWithShard response1 = joinSessionHandler1
+                .expectMessageClass(ADBSlaveJoinSession.JoinWithShard.class);
 
         assertThat(response1.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
     }
@@ -156,53 +160,44 @@ public class ADBJoinQuerySessionTest {
     @Test
     public void expectJoinQueryResultsDeliveryAfterTransactionConclusion() {
 
-        TestProbe<ADBShardInquirer.Command> supervisor = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard1 = testKit.createTestProbe();
-        TestProbe<ADBShard.Command> shard2 = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler1 = testKit.createTestProbe();
-        TestProbe<ADBJoinQuerySessionHandler.Command> joinSessionHandler2 = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.Command> supervisor = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard1 = testKit.createTestProbe();
+        TestProbe<ADBQueryManager.Command> shard2 = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler1 = testKit.createTestProbe();
+        TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler2 = testKit.createTestProbe();
 
-        ArrayList<ActorRef<ADBShard.Command>> shards = new ArrayList<>();
+        ArrayList<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
         shards.add(shard1.ref());
         shards.add(shard2.ref());
 
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
-        ActorRef<ADBJoinQuerySession.Command> joinSession =
-                testKit.spawn(ADBQuerySessionFactory.create(shards, query, 1, supervisor.ref()));
+        ActorRef<ADBMasterJoinSession.Command> joinSession =
+                testKit.spawn(ADBMasterQuerySessionFactory.create(shards, query, 1, supervisor.ref()));
 
 
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
-        joinSession.tell(new ADBQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
         ADBEntity joinPartnerA = new TestEntity(1, "Test", 1f, true, 1.1, 'a');
         ADBEntity joinPartnerB = new TestEntity(2, "Test", 1f, true, 1.1, 'a');
         ADBPair<ADBEntity, ADBEntity> joinResults = new ADBPair<>(joinPartnerA, joinPartnerB);
 
-        joinSession.tell(ADBJoinQuerySession.JoinQueryResults.builder()
-                                                             .transactionId(1)
-                                                             .joinResults(Collections.singletonList(joinResults))
-                                                             .globalShardId(1)
-                                                             .build());
+        joinSession.tell(ADBMasterJoinSession.JoinQueryResults.builder()
+                                                              .transactionId(1)
+                                                              .joinResults(Collections.singletonList(joinResults))
+                                                              .nodeId(1)
+                                                              .build());
 
         // Receive self-join results first to decrease partial result counter
-        joinSession.tell(new ADBJoinQuerySession.JoinQueryResults(Collections.emptyList()));
+        joinSession.tell(new ADBMasterJoinSession.JoinQueryResults(Collections.emptyList()));
 
-        joinSession.tell(new ADBQuerySession.ConcludeTransaction(shard1.ref(), 1));
-        joinSession.tell(new ADBQuerySession.ConcludeTransaction(shard2.ref(), 1));
+        joinSession.tell(new ADBMasterQuerySession.ConcludeTransaction(joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession.ConcludeTransaction(joinSessionHandler2.ref()));
 
-        ADBJoinQuerySessionHandler.Terminate response1 = joinSessionHandler1
-                .expectMessageClass(ADBJoinQuerySessionHandler.Terminate.class);
-
-        ADBJoinQuerySessionHandler.Terminate response2 = joinSessionHandler2
-                .expectMessageClass(ADBJoinQuerySessionHandler.Terminate.class);
-
-        assertThat(response1.getTransactionId()).isEqualTo(1);
-        assertThat(response2.getTransactionId()).isEqualTo(1);
-
-        ADBShardInquirer.TransactionResults response3 = supervisor
-                .expectMessageClass(ADBShardInquirer.TransactionResults.class);
+        ADBPartitionInquirer.TransactionResults response3 = supervisor
+                .expectMessageClass(ADBPartitionInquirer.TransactionResults.class);
 
         assertThat(response3.getTransactionId()).isEqualTo(1);
         assertThat(response3.getResults().length).isEqualTo(1);

@@ -1,11 +1,12 @@
 package de.hpi.julianweise.domain.custom;
 
-import de.hpi.julianweise.domain.ADBEntityFactory;
 import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.domain.ADBEntityFactory;
 import org.apache.commons.csv.CSVRecord;
 
 import static java.lang.Integer.parseInt;
 
+@SuppressWarnings("unused")
 public class PatientFactory implements ADBEntityFactory {
 
     @Override

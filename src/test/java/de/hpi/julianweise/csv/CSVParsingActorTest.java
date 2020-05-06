@@ -5,6 +5,8 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.query.ADBQueryManager;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -29,6 +31,9 @@ public class CSVParsingActorTest {
     public static void cleanup() {
         testKit.after();
         folder.delete();
+        ADBPartitionManager.resetSingleton();
+        ADBQueryManager.resetPool();
+        ADBQueryManager.resetSingleton();
     }
 
     @Test

@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class ADBPair<A, B> {
-    private boolean flipped;
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     @JsonSubTypes({
                           @JsonSubTypes.Type(value = String.class, name = "String"),
@@ -33,12 +32,6 @@ public class ADBPair<A, B> {
                           @JsonSubTypes.Type(value = ADBEntity.class, name = "ADBEntity"),
                   })
     private B value;
-
-    public ADBPair(A key, B value) {
-        this.key = key;
-        this.value = value;
-        this.flipped = false;
-    }
 
     @Override
     @SuppressWarnings("unchecked")

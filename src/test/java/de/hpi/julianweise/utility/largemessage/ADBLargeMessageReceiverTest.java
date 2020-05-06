@@ -8,6 +8,8 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.query.ADBQueryManager;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.junit.After;
@@ -37,6 +39,9 @@ public class ADBLargeMessageReceiverTest {
     public void cleanup() {
         testKit.after();
         testKit = new TestKitJunitResource();
+        ADBPartitionManager.resetSingleton();
+        ADBQueryManager.resetPool();
+        ADBQueryManager.resetSingleton();
     }
 
     @AfterClass

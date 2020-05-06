@@ -4,7 +4,7 @@ import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
-import de.hpi.julianweise.utility.CborSerializable;
+import de.hpi.julianweise.utility.serialization.CborSerializable;
 import lombok.SneakyThrows;
 
 import java.lang.invoke.CallSite;

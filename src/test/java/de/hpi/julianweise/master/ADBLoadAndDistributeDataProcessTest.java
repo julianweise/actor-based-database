@@ -7,7 +7,11 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.shard.ADBShardDistributor;
+import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
+import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
+import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.query.ADBQueryManager;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -24,23 +28,26 @@ public class ADBLoadAndDistributeDataProcessTest {
     @AfterClass
     public static void cleanUp() {
         testKit.after();
+        ADBPartitionManager.resetSingleton();
+        ADBQueryManager.resetSingleton();
+        ADBQueryManager.resetPool();
     }
 
     @Test
     public void testParserIsActivatedOnStar() {
-        TestProbe<ADBMasterSupervisor.Command> respondToProbe = testKit.createTestProbe();
+        TestProbe<ADBMaster.Command> respondToProbe = testKit.createTestProbe();
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
-        TestProbe<ADBShardDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
         Behavior<CSVParsingActor.Command> mockedParser =
                 Behaviors.monitor(CSVParsingActor.Command.class, parserTestProbe.ref(), mockedParserBehavior);
 
-        Behavior<ADBShardDistributor.Command> mockedDistributorBehavior =
+        Behavior<ADBDataDistributor.Command> mockedDistributorBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
-        Behavior<ADBShardDistributor.Command> mockedDistributor =
-                Behaviors.monitor(ADBShardDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
+        Behavior<ADBDataDistributor.Command> mockedDistributor =
+                Behaviors.monitor(ADBDataDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
 
         ActorRef<ADBLoadAndDistributeDataProcess.Command> processUnderTest =
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
@@ -55,17 +62,17 @@ public class ADBLoadAndDistributeDataProcessTest {
     @Test
     public void testProcessForwardsNewCSVDataChunkToDistributor() {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
-        TestProbe<ADBShardDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
         Behavior<CSVParsingActor.Command> mockedParser =
                 Behaviors.monitor(CSVParsingActor.Command.class, parserTestProbe.ref(), mockedParserBehavior);
 
-        Behavior<ADBShardDistributor.Command> mockedDistributorBehavior =
+        Behavior<ADBDataDistributor.Command> mockedDistributorBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
-        Behavior<ADBShardDistributor.Command> mockedDistributor =
-                Behaviors.monitor(ADBShardDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
+        Behavior<ADBDataDistributor.Command> mockedDistributor =
+                Behaviors.monitor(ADBDataDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
 
         ActorRef<ADBLoadAndDistributeDataProcess.Command> processUnderTest =
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
@@ -75,10 +82,10 @@ public class ADBLoadAndDistributeDataProcessTest {
                         12.03234, 'w')));
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedCSVParserResponse(chunk));
 
-        ADBShardDistributor.Command distCommand = distributorTestProbe.receiveMessage();
+        ADBDataDistributor.Command distCommand = distributorTestProbe.receiveMessage();
 
-        assertThat(distCommand.getClass()).isEqualTo(ADBShardDistributor.DistributeBatch.class);
-        ADBShardDistributor.DistributeBatch distBatchCommand = (ADBShardDistributor.DistributeBatch) distCommand;
+        assertThat(distCommand.getClass()).isEqualTo(ADBDataDistributor.DistributeBatch.class);
+        ADBDataDistributor.DistributeBatch distBatchCommand = (ADBDataDistributor.DistributeBatch) distCommand;
         assertThat(distBatchCommand.getEntities().size()).isOne();
         assertThat(distBatchCommand.getEntities().get(0)).isEqualTo(chunk.getChunk().get(0));
     }
@@ -86,17 +93,17 @@ public class ADBLoadAndDistributeDataProcessTest {
     @Test
     public void testProcessConcludesDistributionAfterFinalizingCSVParsing() {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
-        TestProbe<ADBShardDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
         Behavior<CSVParsingActor.Command> mockedParser =
                 Behaviors.monitor(CSVParsingActor.Command.class, parserTestProbe.ref(), mockedParserBehavior);
 
-        Behavior<ADBShardDistributor.Command> mockedDistributorBehavior =
+        Behavior<ADBDataDistributor.Command> mockedDistributorBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
-        Behavior<ADBShardDistributor.Command> mockedDistributor =
-                Behaviors.monitor(ADBShardDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
+        Behavior<ADBDataDistributor.Command> mockedDistributor =
+                Behaviors.monitor(ADBDataDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
 
         ActorRef<ADBLoadAndDistributeDataProcess.Command> processUnderTest =
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
@@ -104,30 +111,30 @@ public class ADBLoadAndDistributeDataProcessTest {
         CSVParsingActor.CSVFullyParsed parserNote = new CSVParsingActor.CSVFullyParsed();
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedCSVParserResponse(parserNote));
 
-        ADBShardDistributor.Command distCommand = distributorTestProbe.receiveMessage();
+        ADBDataDistributor.Command distCommand = distributorTestProbe.receiveMessage();
 
-        assertThat(distCommand.getClass()).isEqualTo(ADBShardDistributor.ConcludeDistribution.class);
+        assertThat(distCommand.getClass()).isEqualTo(ADBDataDistributor.ConcludeDistribution.class);
     }
 
     @Test
     public void testParserIsRequestedToParseNextChunkAfterBatchHasBeenDistributed() {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
-        TestProbe<ADBShardDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
         Behavior<CSVParsingActor.Command> mockedParser =
                 Behaviors.monitor(CSVParsingActor.Command.class, parserTestProbe.ref(), mockedParserBehavior);
 
-        Behavior<ADBShardDistributor.Command> mockedDistributorBehavior =
+        Behavior<ADBDataDistributor.Command> mockedDistributorBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
-        Behavior<ADBShardDistributor.Command> mockedDistributor =
-                Behaviors.monitor(ADBShardDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
+        Behavior<ADBDataDistributor.Command> mockedDistributor =
+                Behaviors.monitor(ADBDataDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
 
         ActorRef<ADBLoadAndDistributeDataProcess.Command> processUnderTest =
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
 
-        ADBShardDistributor.BatchDistributed distResponse = new ADBShardDistributor.BatchDistributed();
+        ADBDataDistributor.BatchDistributed distResponse = new ADBDataDistributor.BatchDistributed();
 
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
 
@@ -139,7 +146,7 @@ public class ADBLoadAndDistributeDataProcessTest {
     @Test
     public void testDistributorIsStoppedAfterSuccessfulDistribution() {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
-        TestProbe<ADBShardDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
         TestProbe<ADBLoadAndDistributeDataProcess.Command> processUnderTestProbe = testKit.createTestProbe();
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
@@ -147,15 +154,15 @@ public class ADBLoadAndDistributeDataProcessTest {
         Behavior<CSVParsingActor.Command> mockedParser =
                 Behaviors.monitor(CSVParsingActor.Command.class, parserTestProbe.ref(), mockedParserBehavior);
 
-        Behavior<ADBShardDistributor.Command> mockedDistributorBehavior =
+        Behavior<ADBDataDistributor.Command> mockedDistributorBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
-        Behavior<ADBShardDistributor.Command> mockedDistributor =
-                Behaviors.monitor(ADBShardDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
+        Behavior<ADBDataDistributor.Command> mockedDistributor =
+                Behaviors.monitor(ADBDataDistributor.Command.class, distributorTestProbe.ref(), mockedDistributorBehavior);
 
         ActorRef<ADBLoadAndDistributeDataProcess.Command> processUnderTest =
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
 
-        ADBShardDistributor.DataFullyDistributed distResponse = new ADBShardDistributor.DataFullyDistributed();
+        ADBDataDistributor.DataFullyDistributed distResponse = new ADBDataDistributor.DataFullyDistributed();
 
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
 
