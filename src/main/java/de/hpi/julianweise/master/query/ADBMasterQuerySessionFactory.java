@@ -5,13 +5,11 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.master.query.select.ADBMasterSelectSession;
-import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
+import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
-import de.hpi.julianweise.slave.query.ADBSlaveQuerySessionFactory;
-import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

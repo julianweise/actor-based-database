@@ -8,7 +8,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl.NO_INTERSECTION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("unchecked")

@@ -1,7 +1,6 @@
 package de.hpi.julianweise.slave.query.join.cost.calculators;
 
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
-import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 
