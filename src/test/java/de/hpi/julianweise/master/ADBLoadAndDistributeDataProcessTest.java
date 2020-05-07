@@ -120,6 +120,8 @@ public class ADBLoadAndDistributeDataProcessTest {
     public void testParserIsRequestedToParseNextChunkAfterBatchHasBeenDistributed() {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
         TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
+        TestProbe<ADBMaster.Command> respondToProbe = testKit.createTestProbe();
+
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
@@ -136,6 +138,8 @@ public class ADBLoadAndDistributeDataProcessTest {
 
         ADBDataDistributor.BatchDistributed distResponse = new ADBDataDistributor.BatchDistributed();
 
+        processUnderTest.tell(new ADBLoadAndDistributeDataProcess.Start(respondToProbe.ref()));
+
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
 
         CSVParsingActor.Command csvCommand = parserTestProbe.receiveMessage();
@@ -148,6 +152,8 @@ public class ADBLoadAndDistributeDataProcessTest {
         TestProbe<CSVParsingActor.Command> parserTestProbe = testKit.createTestProbe();
         TestProbe<ADBDataDistributor.Command> distributorTestProbe = testKit.createTestProbe();
         TestProbe<ADBLoadAndDistributeDataProcess.Command> processUnderTestProbe = testKit.createTestProbe();
+        TestProbe<ADBMaster.Command> respondToProbe = testKit.createTestProbe();
+
 
         Behavior<CSVParsingActor.Command> mockedParserBehavior =
                 Behaviors.receiveMessage(message -> Behaviors.same());
@@ -163,6 +169,9 @@ public class ADBLoadAndDistributeDataProcessTest {
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
 
         ADBDataDistributor.DataFullyDistributed distResponse = new ADBDataDistributor.DataFullyDistributed();
+
+        processUnderTest.tell(new ADBLoadAndDistributeDataProcess.Start(respondToProbe.ref()));
+
 
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
 

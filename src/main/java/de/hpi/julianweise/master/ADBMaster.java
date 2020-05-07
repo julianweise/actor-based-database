@@ -9,6 +9,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
+import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirerFactory;
 import de.hpi.julianweise.master.query_endpoint.ADBQueryEndpointFactory;
@@ -17,12 +18,15 @@ import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
 
+    private final static Logger LOG = LoggerFactory.getLogger(ADBMaster.class);
     private static final Map<RootActorPath, Integer> GLOBAL_IDS = new Object2IntLinkedOpenHashMap<>();
     private final Map<ActorRef<ADBSlave.Command>, Boolean> activeSlaveNodes = new HashMap<>();
 
@@ -38,7 +42,7 @@ public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
 
     public static int getGlobalIdFor(ActorRef<?> target) {
         if (!GLOBAL_IDS.containsKey(target.path().root())) {
-            System.out.println("[WARN] Unable to find global node ID for " + target);
+            LOG.error("Unable to find global node ID for " + target);
             return -1;
         }
         return GLOBAL_IDS.get(target.path().root());

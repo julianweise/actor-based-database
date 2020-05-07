@@ -112,7 +112,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         this.client.tell(new ADBMaster.StartOperationalService());
         this.getContext().stop(this.shardDistributor);
         System.gc();
-        return Behaviors.same();
+        return Behaviors.stopped();
     }
 
 }
