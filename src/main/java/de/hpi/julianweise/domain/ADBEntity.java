@@ -5,6 +5,8 @@ import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 
 import java.lang.invoke.CallSite;
@@ -18,6 +20,9 @@ import java.util.function.Function;
 public abstract class ADBEntity implements CborSerializable {
 
     private final static Map<String, Function<ADBEntity, Comparable<Object>>> getter = new ConcurrentHashMap<>();
+    @Setter
+    @Getter
+    private int internalID;
 
     protected ADBEntity() {
     }

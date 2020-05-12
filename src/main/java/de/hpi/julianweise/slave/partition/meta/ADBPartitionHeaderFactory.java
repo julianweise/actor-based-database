@@ -11,15 +11,15 @@ import java.util.function.Function;
 
 public class ADBPartitionHeaderFactory {
 
-    public static ADBPartitionHeader createDefault(List<ADBEntity> data) {
+    public static ADBPartitionHeader createDefault(List<ADBEntity> data, int id) {
         if (data.size() < 1) {
-            return new ADBPartitionHeader(Object2ObjectMaps.emptyMap(), Object2ObjectMaps.emptyMap(), data);
+            return new ADBPartitionHeader(Object2ObjectMaps.emptyMap(), Object2ObjectMaps.emptyMap(), data, id);
         }
         Map<String, Comparable<Object>> minValues = new Object2ObjectHashMap<>();
         Map<String, Comparable<Object>> maxValues = new Object2ObjectHashMap<>();
         ADBPartitionHeaderFactory.getMinValuesPerField(data, minValues);
         ADBPartitionHeaderFactory.getMaxValuesPerField(data, maxValues);
-        return new ADBPartitionHeader(minValues, maxValues, data);
+        return new ADBPartitionHeader(minValues, maxValues, data, id);
     }
 
     private static void getMinValuesPerField(List<ADBEntity> data, Map<String, Comparable<Object>> minValues) {

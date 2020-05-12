@@ -12,10 +12,15 @@ import java.util.Comparator;
 import java.util.List;
 
 @Getter
-@NoArgsConstructor
 public class ADBEntityBuffer {
+
     private final PriorityQueue<ADBEntity> dataPartitionBuffer = new ObjectHeapPriorityQueue<>(Comparator.comparing(ADBEntity::getPrimaryKey));
+    private final int maxPartitionSize;
     private int bufferSize = 0;
+
+    public ADBEntityBuffer(int maxPartitionSize) {
+        this.maxPartitionSize = maxPartitionSize;
+    }
 
     public void add(ADBEntity entity) {
         this.dataPartitionBuffer.enqueue(entity);
@@ -23,13 +28,13 @@ public class ADBEntityBuffer {
     }
 
     public boolean isNewPartitionReady() {
-        return this.bufferSize > ADBPartition.MAX_SIZE_BYTE;
+        return this.bufferSize > this.maxPartitionSize;
     }
 
     public List<ADBEntity> getPayloadForPartition() {
         int partitionSize = 0;
         ArrayList<ADBEntity> partitionPayload = new ArrayList<>();
-        while(!this.dataPartitionBuffer.isEmpty() && partitionSize + this.dataPartitionBuffer.first().getSize() < ADBPartition.MAX_SIZE_BYTE) {
+        while(!this.dataPartitionBuffer.isEmpty() && partitionSize + this.dataPartitionBuffer.first().getSize() < this.maxPartitionSize) {
             partitionSize += this.dataPartitionBuffer.first().getSize();
             partitionPayload.add(this.dataPartitionBuffer.dequeue());
         }

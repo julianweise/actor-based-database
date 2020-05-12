@@ -16,12 +16,10 @@ public class ADBPartitionJoinExecutorFactory {
             ADBJoinQuery query,
             ActorRef<ADBPartition.Command> lPartition,
             Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes,
-            int lPartitionId,
-            int fPartitionId,
             ActorRef<ADBPartitionJoinExecutor.PartitionsJoined> supervisor,
             boolean isReversed) {
-        return Behaviors.setup(ctx -> new ADBPartitionJoinExecutor(ctx, query, lPartition, foreignAttributes,
-                lPartitionId, fPartitionId, supervisor, isReversed));
+        return Behaviors.setup(ctx ->
+                new ADBPartitionJoinExecutor(ctx, query, lPartition, foreignAttributes, supervisor, isReversed));
     }
 
     public static String name(int lPartId, int fPartId, ADBJoinQuery query) {

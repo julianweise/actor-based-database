@@ -8,17 +8,10 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.routing.ConsistentHash;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.domain.ADBEntity;
-import de.hpi.julianweise.domain.key.ADBDoubleKey;
-import de.hpi.julianweise.domain.key.ADBFloatKey;
-import de.hpi.julianweise.domain.key.ADBIntegerKey;
-import de.hpi.julianweise.domain.key.ADBKey;
-import de.hpi.julianweise.domain.key.ADBStringKey;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,30 +34,30 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     private final int minNumberOfShards;
 
 
-    public interface Command extends CborSerializable {}
+    public interface Command {}
 
     public interface Response extends CborSerializable {}
     @AllArgsConstructor
     @Getter
-    public static class WrappedListing implements Command {
+    public static class WrappedListing implements Command, CborSerializable {
         private final Receptionist.Listing listing;
 
     }
     @AllArgsConstructor
     @Getter
-    public static class Distribute implements Command, ADBPartitionManager.Command {
+    public static class Distribute implements Command, ADBPartitionManager.Command, CborSerializable {
         private final ADBEntity entity;
 
     }
     @AllArgsConstructor
     @Getter
-    public static class DistributeBatch implements Command {
+    public static class DistributeBatch implements Command, CborSerializable {
         private final ActorRef<Response> client;
         private final List<ADBEntity> entities;
 
     }
     @AllArgsConstructor
-    public static class ConcludeDistribution implements Command {
+    public static class ConcludeDistribution implements Command, KryoSerializable {
 
     }
     @AllArgsConstructor
@@ -75,21 +68,9 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     public static class DataFullyDistributed implements Response {
 
     }
-    @AllArgsConstructor
     @Getter
     @NoArgsConstructor
-    public static class ConfirmEntityPersisted implements Command {
-        @JsonIgnoreProperties(ignoreUnknown = true)
-        @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-        @JsonSubTypes({
-                              @JsonSubTypes.Type(value = ADBStringKey.class, name = "String"),
-                              @JsonSubTypes.Type(value = ADBIntegerKey.class, name = "Integer"),
-                              @JsonSubTypes.Type(value = ADBFloatKey.class, name = "Float"),
-                              @JsonSubTypes.Type(value = ADBDoubleKey.class, name = "Double"),
-                      })
-        private ADBKey entityPrimaryKey;
-
-    }
+    public static class ConfirmEntityPersisted implements Command, KryoSerializable { }
 
     protected ADBDataDistributor(ActorContext<Command> actorContext) {
         super(actorContext);

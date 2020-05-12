@@ -8,7 +8,6 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
@@ -17,17 +16,17 @@ import java.util.Map;
 @NoArgsConstructor
 public class ADBPartitionHeader {
 
-    @Setter
     private int id;
     private Map<String, Comparable<Object>> minValues;
     private Map<String, Comparable<Object>> maxValues;
     private transient List<ADBEntity> data;
 
     public ADBPartitionHeader(Map<String, Comparable<Object>> minValues, Map<String, Comparable<Object>> maxValues,
-                              List<ADBEntity> data) {
+                              List<ADBEntity> data, int id) {
         this.minValues = minValues;
         this.maxValues = maxValues;
         this.data = data;
+        this.id = id;
     }
 
     public boolean isOverlapping(ADBPartitionHeader b, ADBJoinQuery joinQuery) {

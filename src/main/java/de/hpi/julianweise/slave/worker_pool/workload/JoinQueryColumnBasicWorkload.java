@@ -13,7 +13,7 @@ import lombok.val;
 import java.util.List;
 
 @Builder
-public class JoinQueryWorkload extends Workload {
+public class JoinQueryColumnBasicWorkload extends Workload {
 
     public static final float JOIN_RESULT_REDUCTION_FACTOR = 0.3f;
 
@@ -21,12 +21,10 @@ public class JoinQueryWorkload extends Workload {
     private final List<ADBPair<Comparable<Object>, Integer>> leftSideValues;
     private final List<ADBPair<Comparable<Object>, Integer>> rightSideValues;
     private final ADBAttributeComparisonStrategy strategy;
-    private final int foreignPartitionId;
 
     @AllArgsConstructor
     @Getter
     public static class Results implements GenericWorker.Response {
-        private final int foreignPartitionId;
         private final List<ADBKeyPair> results;
     }
 
@@ -35,7 +33,7 @@ public class JoinQueryWorkload extends Workload {
         int resultSize = this.estimateResultSize(this.leftSideValues, this.rightSideValues);
         val joinTuples = this.strategy.compare(this.operator, this.leftSideValues, this.rightSideValues, resultSize);
 
-        message.getRespondTo().tell(new Results(this.foreignPartitionId, joinTuples));
+        message.getRespondTo().tell(new Results(joinTuples));
     }
 
     private int estimateResultSize(List<ADBPair<Comparable<Object>, Integer>> l,

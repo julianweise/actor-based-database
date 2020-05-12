@@ -1,10 +1,12 @@
 package de.hpi.julianweise.utility.largemessage;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class ADBKeyPair {
 
     private int key;

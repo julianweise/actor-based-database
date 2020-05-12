@@ -5,15 +5,13 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.slave.ADBSlave;
-import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 
 public class ADBJoinWithNodeSessionHandlerFactory {
 
     public static Behavior<ADBJoinWithNodeSessionHandler.Command> createDefault(
-            ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query, int remoteShardId,
-            ActorRef<ADBSlaveQuerySession.Command> localJoinSessionHandler) {
+            ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query, int remoteShardId) {
         return Behaviors.setup(actorContext ->
-                new ADBJoinWithNodeSessionHandler(actorContext, session, query, localJoinSessionHandler, remoteShardId));
+                new ADBJoinWithNodeSessionHandler(actorContext, session, query, remoteShardId));
     }
 
     public static String name(int transactionId, int targetShardId) {

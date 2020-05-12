@@ -60,36 +60,34 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectEqualityJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
-        int fPartitionId = 10;
 
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 0));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 1));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 2));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 1, 0));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 1));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 2));
         foreignAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory.createDefault(joinQuery,
-                localPartition.ref(), foreignAttributes, lPartitionId, fPartitionId, supervisor.ref(), false);
+                localPartition.ref(), foreignAttributes, supervisor.ref(), false);
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
         ADBPartition.RequestJoinAttributes requestJoinAttributes =
                 localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
 
-        assertThat(requestJoinAttributes.getPartitionIndex()).isEqualTo(lPartitionId);
         assertThat(requestJoinAttributes.getQuery()).isEqualTo(joinQuery);
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> localAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 0));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 1));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)9, 2));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 0));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 1));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 9, 2));
         localAttributes.put("aInteger", lIntegerAttributes);
 
         executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
@@ -97,8 +95,6 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionJoinExecutor.PartitionsJoined response =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getLocalPartitionId()).isEqualTo(lPartitionId);
-        assertThat(response.getForeignPartitionId()).isEqualTo(fPartitionId);
         assertThat(response.getJoinTuples().size()).isEqualTo(2);
         assertThat(response.getJoinTuples().get(0).getKey()).isEqualTo(1);
         assertThat(response.getJoinTuples().get(0).getValue()).isEqualTo(0);
@@ -110,16 +106,15 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectLessReversedJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
-        int fPartitionId = 10;
 
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 0));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 1));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 2));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 1, 0));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 1));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 2));
         foreignAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
@@ -127,19 +122,16 @@ public class ADBPartitionJoinExecutorTest {
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior =
                 ADBPartitionJoinExecutorFactory.createDefault(joinQuery.getReverse(),
-                localPartition.ref(), foreignAttributes, lPartitionId, fPartitionId, supervisor.ref(), true);
+                        localPartition.ref(), foreignAttributes, supervisor.ref(), true);
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
-        ADBPartition.RequestJoinAttributes requestJoinAttributes =
-                localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
-
-        assertThat(requestJoinAttributes.getPartitionIndex()).isEqualTo(lPartitionId);
+        localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> localAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 0));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 1));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)9, 2));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 0));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 1));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 9, 2));
         localAttributes.put("aInteger", lIntegerAttributes);
 
         executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
@@ -147,8 +139,6 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionJoinExecutor.PartitionsJoined response =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getLocalPartitionId()).isEqualTo(lPartitionId);
-        assertThat(response.getForeignPartitionId()).isEqualTo(fPartitionId);
         assertThat(response.getJoinTuples().size()).isEqualTo(1);
         assertThat(response.getJoinTuples().get(0).getKey()).isEqualTo(2);
         assertThat(response.getJoinTuples().get(0).getValue()).isEqualTo(0);
@@ -158,16 +148,15 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectGreaterReversedJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
-        int fPartitionId = 10;
 
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 0));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 1));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)9, 2));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 0));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 1));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 9, 2));
         foreignAttributes.put("bInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
@@ -175,19 +164,17 @@ public class ADBPartitionJoinExecutorTest {
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior =
                 ADBPartitionJoinExecutorFactory.createDefault(joinQuery.getReverse(),
-                        localPartition.ref(), foreignAttributes, lPartitionId, fPartitionId, supervisor.ref(), true);
+                        localPartition.ref(), foreignAttributes, supervisor.ref(), true);
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
-        ADBPartition.RequestJoinAttributes requestJoinAttributes =
-                localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
+        localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
 
-        assertThat(requestJoinAttributes.getPartitionIndex()).isEqualTo(lPartitionId);
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> localAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 0));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 1));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 2));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 1, 0));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 1));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 2));
         localAttributes.put("aInteger", lIntegerAttributes);
 
         executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
@@ -195,8 +182,6 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionJoinExecutor.PartitionsJoined response =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getLocalPartitionId()).isEqualTo(lPartitionId);
-        assertThat(response.getForeignPartitionId()).isEqualTo(fPartitionId);
         assertThat(response.getJoinTuples().size()).isEqualTo(1);
         assertThat(response.getJoinTuples().get(0).getKey()).isEqualTo(0);
         assertThat(response.getJoinTuples().get(0).getValue()).isEqualTo(2);
@@ -206,16 +191,15 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectJoinWithToTermsToBeExecutedSuccessfully() {
         int lPartitionId = 0;
-        int fPartitionId = 10;
 
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 0));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 1));
-        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)6, 2));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 1, 0));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 1));
+        fIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 6, 2));
         foreignAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
@@ -223,20 +207,19 @@ public class ADBPartitionJoinExecutorTest {
         joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory.createDefault(joinQuery,
-                localPartition.ref(), foreignAttributes, lPartitionId, fPartitionId, supervisor.ref(), false);
+                localPartition.ref(), foreignAttributes, supervisor.ref(), false);
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
         ADBPartition.RequestJoinAttributes requestJoinAttributes =
                 localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
 
-        assertThat(requestJoinAttributes.getPartitionIndex()).isEqualTo(lPartitionId);
         assertThat(requestJoinAttributes.getQuery()).isEqualTo(joinQuery);
 
         Map<String, List<ADBPair<Comparable<Object>, Integer>>> localAttributes = new Object2ObjectHashMap<>();
         List<ADBPair<Comparable<Object>, Integer>> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 0));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)5, 1));
-        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)9, 2));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 3, 0));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 5, 1));
+        lIntegerAttributes.add(new ADBPair<>((Comparable<Object>) (Comparable<?>) 9, 2));
         localAttributes.put("aInteger", lIntegerAttributes);
 
         executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
@@ -244,8 +227,6 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionJoinExecutor.PartitionsJoined response =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getLocalPartitionId()).isEqualTo(lPartitionId);
-        assertThat(response.getForeignPartitionId()).isEqualTo(fPartitionId);
         assertThat(response.getJoinTuples().size()).isEqualTo(1);
         assertThat(response.getJoinTuples().get(0).getKey()).isEqualTo(1);
         assertThat(response.getJoinTuples().get(0).getValue()).isEqualTo(0);

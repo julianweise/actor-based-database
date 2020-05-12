@@ -12,6 +12,8 @@ import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.settings.Settings;
+import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
@@ -30,10 +32,13 @@ import java.util.stream.IntStream;
 public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Command> {
 
     public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "PartitionManager");
+    private static final int MAX_PARTITIONS = 1 << 7;
+
     private static ActorRef<ADBPartitionManager.Command> INSTANCE;
     private final List<ADBPartitionHeader> partitionHeaders = new ObjectArrayList<>();
     private final List<ActorRef<ADBPartition.Command>> partitions = new ObjectArrayList<>();
-    private ADBEntityBuffer entityBuffer = new ADBEntityBuffer();
+    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+    private ADBEntityBuffer entityBuffer = new ADBEntityBuffer(this.settings.MAX_SIZE_PARTITION);
 
     public interface Command {
     }
@@ -134,15 +139,16 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
 
     private Behavior<Command> handlePersistEntity(PersistEntity command) {
         this.entityBuffer.add(command.getEntity());
-        command.respondTo.tell(new ADBDataDistributor.ConfirmEntityPersisted(command.getEntity().getPrimaryKey()));
+        command.respondTo.tell(new ADBDataDistributor.ConfirmEntityPersisted());
         this.conditionallyCreateNewPartition(false);
         return Behaviors.same();
     }
 
     private void conditionallyCreateNewPartition(boolean forceCreation) {
         if (forceCreation && this.entityBuffer.getBufferSize() > 0 || this.entityBuffer.isNewPartitionReady()) {
-            this.getContext().spawn(ADBPartitionFactory.createDefault(this.entityBuffer.getPayloadForPartition()),
-                    "Partition-" + ADBPartitionFactory.getNewPartitionId());
+            int partId = ADBPartitionFactory.getNewPartitionId();
+            this.getContext().spawn(ADBPartitionFactory.createDefault(entityBuffer.getPayloadForPartition(), partId),
+                    "Partition-" + partId);
         }
     }
 
@@ -154,9 +160,9 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
 
     private Behavior<Command> handlePartitionRegistration(Register registration) {
         this.getContext().watchWith(registration.partition, new PartitionFailed(registration.partition));
-        registration.header.setId(this.partitionHeaders.size());
         this.partitions.add(registration.partition);
         this.partitionHeaders.add(registration.header);
+        assert this.partitions.size() < MAX_PARTITIONS;
         return Behaviors.same();
     }
 

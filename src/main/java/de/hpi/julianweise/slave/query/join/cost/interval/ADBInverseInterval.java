@@ -38,6 +38,9 @@ public class ADBInverseInterval implements ADBInterval {
             return false;
         }
         ADBInverseInterval oC = ((ADBInverseInterval) o);
+        if (oC.referenceEnd == -1 && oC.start == -1 && oC.end == -1 && this.start == 0 && this.end == this.referenceEnd) {
+            return true;
+        }
         if (oC.referenceEnd == -1 && this.referenceEnd == -1) {
             return true;
         }

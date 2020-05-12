@@ -8,6 +8,8 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
+import de.hpi.julianweise.settings.Settings;
+import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2;
@@ -26,10 +28,12 @@ import java.util.stream.Collectors;
 
 public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
-    public static final int MAX_SIZE_BYTE = 512000;
+    private static final int MAX_ELEMENTS = 1 << 15;
 
     private final List<ADBEntity> data;
     private final Map<String, ADBSortedEntityAttributes2> sortedAttributes;
+    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+    private final int id;
 
     public interface Command {
     }
@@ -53,14 +57,13 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     public static class RequestJoinAttributes implements Command {
         private final ActorRef<ADBPartition.JoinAttributes> respondTo;
         private final ADBJoinQuery query;
-        private final int partitionIndex;
     }
 
     @AllArgsConstructor
     @Getter
     public static class JoinAttributes implements Response {
         private final Map<String, List<ADBPair<Comparable<Object>, Integer>>> attributes;
-        private final int partitionIndex;
+        private final int partitionId;
     }
 
     @AllArgsConstructor
@@ -92,14 +95,16 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         private final List<ADBPair<ADBEntity, ADBEntity>> results;
     }
 
-    public ADBPartition(ActorContext<Command> context, List<ADBEntity> data) {
+    public ADBPartition(ActorContext<Command> context, int id, List<ADBEntity> data) {
         super(context);
         assert data.size() > 0;
-        assert data.stream().mapToInt(ADBEntity::getSize).sum() < MAX_SIZE_BYTE;
+        assert data.stream().mapToInt(ADBEntity::getSize).sum() < this.settings.MAX_SIZE_PARTITION;
+        assert data.size() < MAX_ELEMENTS : "Maximum 2^16 elements allowed per partition";
 
+        this.id = id;
         this.getContext().getLog().info("Partition maintains " + data.size() + " entities.");
         this.data = data;
-        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data);
+        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id);
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
         this.sortedAttributes = ADBSortedEntityAttributes2Factory.of(data);
@@ -125,7 +130,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
                                       .stream()
                                       .map(this.sortedAttributes::get)
                                       .collect(Collectors.toMap(ADBSortedEntityAttributes2::getField, s -> s.getMaterialized(this.data)));
-        command.respondTo.tell(new JoinAttributes(attributes, command.partitionIndex));
+        command.respondTo.tell(new JoinAttributes(attributes, this.id));
         return Behaviors.same();
     }
 

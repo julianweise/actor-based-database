@@ -9,7 +9,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
-import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirerFactory;
 import de.hpi.julianweise.master.query_endpoint.ADBQueryEndpointFactory;
@@ -26,6 +25,7 @@ import java.util.Map;
 
 public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
 
+    private static final int MAX_SLAVES = 1 << 7;
     private final static Logger LOG = LoggerFactory.getLogger(ADBMaster.class);
     private static final Map<RootActorPath, Integer> GLOBAL_IDS = new Object2IntLinkedOpenHashMap<>();
     private final Map<ActorRef<ADBSlave.Command>, Boolean> activeSlaveNodes = new HashMap<>();
@@ -74,6 +74,8 @@ public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
     }
 
     private Behavior<Command> handleReceptionistListing(WrappedListing wrapper) {
+        assert wrapper.listing.getAllServiceInstances(ADBSlave.SERVICE_KEY).size() < MAX_SLAVES: "Only 2^8 slaves " +
+                "supported";
         activeSlaveNodes.replaceAll((s, v) -> false);
         for(ActorRef<ADBSlave.Command> slaveNode : wrapper.listing.getAllServiceInstances(ADBSlave.SERVICE_KEY)) {
             if (!activeSlaveNodes.containsKey(slaveNode)) {

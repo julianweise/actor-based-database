@@ -3,8 +3,6 @@ package de.hpi.julianweise.query.session.join;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
-import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
@@ -15,7 +13,7 @@ import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
@@ -180,9 +178,7 @@ public class ADBJoinQuerySessionTest {
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
-        ADBEntity joinPartnerA = new TestEntity(1, "Test", 1f, true, 1.1, 'a');
-        ADBEntity joinPartnerB = new TestEntity(2, "Test", 1f, true, 1.1, 'a');
-        ADBPair<ADBEntity, ADBEntity> joinResults = new ADBPair<>(joinPartnerA, joinPartnerB);
+        ADBKeyPair joinResults = new ADBKeyPair(1, 2);
 
         joinSession.tell(ADBMasterJoinSession.JoinQueryResults.builder()
                                                               .transactionId(1)

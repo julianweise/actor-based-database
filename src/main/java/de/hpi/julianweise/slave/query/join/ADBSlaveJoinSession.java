@@ -5,7 +5,6 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.query.ADBJoinQuery;
@@ -15,8 +14,8 @@ import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSession;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionFactory;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandler;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandlerFactory;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -61,7 +60,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @AllArgsConstructor
     @Getter
     public static class HandleJoinShardResults implements Command, KryoSerializable {
-        private List<ADBPair<ADBEntity, ADBEntity>> joinCandidates;
+        private List<ADBKeyPair> joinCandidates;
     }
 
     @AllArgsConstructor
@@ -76,6 +75,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     public static class InterNodeSessionHandlerTerminated implements Command {
         ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
     }
+
+    @AllArgsConstructor
+    public static class RequestNextPartition implements Command {}
 
     @AllArgsConstructor
     public static class Conclude implements Command {}
@@ -99,6 +101,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
                    .onMessage(FinalizedInterNodeJoin.class, this::handleFinalizedInterNodeJoin)
                    .onMessage(InterNodeSessionTerminated.class, this::handleInterNodeSessionTerminated)
                    .onMessage(InterNodeSessionHandlerTerminated.class, this::handleInterNodeSessionHandlerTerminated)
+                   .onMessage(RequestNextPartition.class, this::handleRequestNextPartition)
                    .onMessage(Conclude.class, this::handleConclude)
                    .build();
     }
@@ -123,7 +126,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     private Behavior<Command> handleOpenInterShardJoinSession(OpenInterShardJoinSession command) {
         String name = ADBJoinWithNodeSessionHandlerFactory.name(this.transactionId, command.initializingPartitionId);
         val behavior = ADBJoinWithNodeSessionHandlerFactory.createDefault(command.getInitiatingSession(),
-                this.query, command.getInitializingPartitionId(), getContext().getSelf());
+                this.query, command.getInitializingPartitionId());
         ActorRef<ADBJoinWithNodeSessionHandler.Command> handler = this.getContext().spawn(behavior, name);
         this.getContext().watchWith(handler, new InterNodeSessionHandlerTerminated(handler));
         this.activeJoinSessionHandlers.add(handler);
@@ -147,9 +150,13 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleFinalizedInterNodeJoin(FinalizedInterNodeJoin command) {
+    private Behavior<Command> handleRequestNextPartition(RequestNextPartition command) {
         this.getContext().getLog().info("Asking master for next node to join with.");
         this.session.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(this.getContext().getSelf()));
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleFinalizedInterNodeJoin(FinalizedInterNodeJoin command) {
         return Behaviors.same();
     }
 

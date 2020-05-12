@@ -24,7 +24,7 @@ public class ADBSortedEntityAttributes2 {
         Function<ADBEntity, Comparable<Object>> getter = data.get(0).getGetterForField(this.field);
         List<ADBPair<Comparable<Object>, Integer>> materialized = new ArrayList<>(this.sortedIndices.length);
         for(int sortedIndex : this.sortedIndices) {
-            materialized.add(new ADBPair<>(getter.apply(data.get(sortedIndex)), sortedIndex));
+            materialized.add(new ADBPair<>(getter.apply(data.get(sortedIndex)), data.get(sortedIndex).getInternalID()));
         }
         return materialized;
     }

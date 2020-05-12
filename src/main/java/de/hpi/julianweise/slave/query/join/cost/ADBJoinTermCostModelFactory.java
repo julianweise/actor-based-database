@@ -31,12 +31,16 @@ public class ADBJoinTermCostModelFactory {
             }};
 
     public static ADBJoinTermCostModel calc(ADBJoinQueryTerm term,
+                                            int termId,
                                             List<ADBPair<Comparable<Object>, Integer>> left,
                                             List<ADBPair<Comparable<Object>, Integer>> right) {
         ADBInterval[] joinCandidates = ADBJoinTermCostModelFactory.strategies.get(term.getOperator()).calc(left, right);
         return ADBJoinTermCostModel.builder()
                                    .term(term)
                                    .joinCandidates(joinCandidates)
+                                   .sizeLeft(left.size())
+                                   .sizeRight(right.size())
+                                   .termId(termId)
                                    .build();
     }
 

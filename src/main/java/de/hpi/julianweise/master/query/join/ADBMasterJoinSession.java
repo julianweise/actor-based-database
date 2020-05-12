@@ -5,7 +5,6 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.ADBMaster;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
@@ -13,8 +12,8 @@ import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import lombok.AllArgsConstructor;
@@ -52,7 +51,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     @SuperBuilder
     @Getter
     public static class JoinQueryResults extends ADBMasterQuerySession.QueryResults {
-        private List<ADBPair<ADBEntity, ADBEntity>> joinResults;
+        private List<ADBKeyPair> joinResults;
     }
 
     public ADBMasterJoinSession(ActorContext<ADBMasterQuerySession.Command> context,

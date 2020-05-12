@@ -1,16 +1,24 @@
 package de.hpi.julianweise.slave.partition.meta;
 
 import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
+import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.largemessage.ADBPair;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ADBSortedEntityAttributes2Factory {
 
@@ -51,8 +59,28 @@ public class ADBSortedEntityAttributes2Factory {
 
     private static int[] getSortedIndices(final List<ADBEntity> data, Function<ADBEntity, Comparable<Object>> getter) {
         int[] sortedIndices = new int[data.size()];
-        for (int i = 0; i < sortedIndices.length; i++) sortedIndices[i] = i;
+        for (int i = 0; i < sortedIndices.length; i++) {
+            sortedIndices[i] = i;
+        }
         IntArrays.parallelQuickSort(sortedIndices, new AttributeIndexComparator(data, getter));
         return sortedIndices;
+    }
+
+    public static List<Map<String, ADBPair<Comparable<Object>, Integer>>> resortByIndex(
+            Map<String, List<ADBPair<Comparable<Object>, Integer>>> columnAttributes,
+            List<ADBJoinTermCostModel> relevantCostModels) {
+        int numberOfRows = columnAttributes.values().stream().mapToInt(List::size).max().orElse(0);
+        List<Map<String, ADBPair<Comparable<Object>, Integer>>> resultSet = new ArrayList<>(numberOfRows);
+        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectArrayMap<>());
+        Set<String> relevantFields = relevantCostModels
+                .stream()
+                .flatMap(model -> Stream.of(model.getTerm().getLeftHandSideAttribute(), model.getTerm().getRightHandSideAttribute()))
+                .collect(Collectors.toSet());
+        for (String field : relevantFields) {
+            for (ADBPair<Comparable<Object>, Integer> row : columnAttributes.get(field)) {
+                resultSet.get(ADBInternalIDHelper.getEntityId(row.getValue())).put(field, row);
+            }
+        }
+        return resultSet;
     }
 }
