@@ -21,7 +21,7 @@ public class ADBQueryPerformanceSampler {
         private final String purpose;
     }
 
-    public static final boolean ENABLED = true;
+    public static final boolean ENABLED = false;
     private static final String RESULT_DIR = System.getProperty("user.dir") + "/" + "query_performance_sampler_results";
     private static final Queue<LogDate> RESULT_COLLECTION = new ConcurrentLinkedQueue<>();
 
