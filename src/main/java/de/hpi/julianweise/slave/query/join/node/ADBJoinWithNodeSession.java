@@ -164,8 +164,8 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handlePartitionsJoined(PartitionsJoinedWrapper wrapper) {
-        this.remainingResults.decrementAndGet();
         this.supervisor.tell(new ADBSlaveJoinSession.HandleJoinShardResults(wrapper.joinResults.getJoinTuples()));
+        this.remainingResults.decrementAndGet();
         this.getContext().getSelf().tell(new CheckConclude());
         return Behaviors.same();
     }
