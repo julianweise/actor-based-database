@@ -71,10 +71,12 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     @AllArgsConstructor
-    private static class CheckConclude implements Command {}
+    private static class CheckConclude implements Command {
+    }
 
     @AllArgsConstructor
-    private static class RequestForeignJoinAttributes implements Command {}
+    private static class RequestForeignJoinAttributes implements Command {
+    }
 
     public ADBJoinWithNodeSession(ActorContext<Command> context, ADBJoinQuery query,
                                   ActorRef<ADBSlaveQuerySession.Command> supervisor,
@@ -134,9 +136,9 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private Behavior<Command> handleForeignAttributes(ForeignNodeAttributes command) {
         assert this.foreignAttributes == null : "JoinWithNode session already received valid foreign attributes!";
         this.foreignAttributes = command.getJoinAttributes();
-        for(Map.Entry<Integer, List<Integer>> mapping : command.getJoinCandidates().entrySet()) {
+        for (Map.Entry<Integer, List<Integer>> mapping : command.getJoinCandidates().entrySet()) {
             int lPartitionId = mapping.getKey();
-            for(int fPartitionId : mapping.getValue()) {
+            for (int fPartitionId : mapping.getValue()) {
                 this.joinPartitions(lPartitionId, fPartitionId);
             }
         }
