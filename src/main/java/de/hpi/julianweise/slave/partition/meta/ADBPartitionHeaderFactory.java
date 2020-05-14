@@ -1,10 +1,10 @@
 package de.hpi.julianweise.slave.partition.meta;
 
 import de.hpi.julianweise.domain.ADBEntity;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import org.agrona.collections.Object2ObjectHashMap;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -13,35 +13,44 @@ public class ADBPartitionHeaderFactory {
 
     public static ADBPartitionHeader createDefault(List<ADBEntity> data, int id) {
         if (data.size() < 1) {
-            return new ADBPartitionHeader(Object2ObjectMaps.emptyMap(), Object2ObjectMaps.emptyMap(), data, id);
+            return new ADBPartitionHeader(new HashMap<>(), new HashMap<>(), data, id);
         }
-        Map<String, Comparable<Object>> minValues = new Object2ObjectHashMap<>();
-        Map<String, Comparable<Object>> maxValues = new Object2ObjectHashMap<>();
+        int numberOfFields = ADBEntityFactoryProvider.getInstance().getTargetClass().getDeclaredFields().length;
+        Map<String, Comparable<Object>> minValues = new HashMap<>(numberOfFields);
+        Map<String, Comparable<Object>> maxValues = new HashMap<>(numberOfFields);
         ADBPartitionHeaderFactory.getMinValuesPerField(data, minValues);
         ADBPartitionHeaderFactory.getMaxValuesPerField(data, maxValues);
         return new ADBPartitionHeader(minValues, maxValues, data, id);
     }
 
     private static void getMinValuesPerField(List<ADBEntity> data, Map<String, Comparable<Object>> minValues) {
-        ADBPartitionHeaderFactory.getValuesPerField(data, -1, minValues);
-    }
-
-    private static void getMaxValuesPerField(List<ADBEntity> data, Map<String, Comparable<Object>> maxValues) {
-        ADBPartitionHeaderFactory.getValuesPerField(data, +1, maxValues);
-    }
-
-    private static void getValuesPerField(List<ADBEntity> data, int comparisonValue, Map<String, Comparable<Object>> collection) {
         for (Field field : data.get(0).getClass().getDeclaredFields()) {
             Function<ADBEntity, Comparable<Object>> fieldGetter = data.get(0).getGetterForField(field.getName());
             for (ADBEntity datum : data) {
-                if (!collection.containsKey(field.getName())) {
-                    collection.put(field.getName(), fieldGetter.apply(datum));
+                if (!minValues.containsKey(field.getName())) {
+                    minValues.put(field.getName(), fieldGetter.apply(datum));
                     continue;
                 }
-                if (fieldGetter.apply(datum).compareTo(collection.get(field.getName())) == comparisonValue) {
-                    collection.put(field.getName(), fieldGetter.apply(datum));
+                if (fieldGetter.apply(datum).compareTo(minValues.get(field.getName())) < 0) {
+                    minValues.put(field.getName(), fieldGetter.apply(datum));
                 }
             }
         }
     }
+
+    private static void getMaxValuesPerField(List<ADBEntity> data, Map<String, Comparable<Object>> maxValues) {
+        for (Field field : data.get(0).getClass().getDeclaredFields()) {
+            Function<ADBEntity, Comparable<Object>> fieldGetter = data.get(0).getGetterForField(field.getName());
+            for (ADBEntity datum : data) {
+                if (!maxValues.containsKey(field.getName())) {
+                    maxValues.put(field.getName(), fieldGetter.apply(datum));
+                    continue;
+                }
+                if (fieldGetter.apply(datum).compareTo(maxValues.get(field.getName())) > 0) {
+                    maxValues.put(field.getName(), fieldGetter.apply(datum));
+                }
+            }
+        }
+    }
+
 }

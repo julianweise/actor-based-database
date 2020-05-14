@@ -1,12 +1,15 @@
 package de.hpi.julianweise.slave;
 
 import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -16,6 +19,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 public class ADBPartitionHeaderTest {
+
+    @Before
+    public void setUp() {
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
+    }
 
     @Test
     public void expectCorrectCreation() {
@@ -335,6 +343,52 @@ public class ADBPartitionHeaderTest {
         dataRight = new ArrayList<>();
         dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01, 'a'));
         dataRight.add(new TestEntity(31, "Te", 1.0f, false, 1.0, 'b'));
+        dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04, 'c'));
+        dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08, 'd'));
+
+
+        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
+
+        assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
+    }
+
+    @Test
+    public void expectCorrectOverlappingForEqualStrings() {
+        int partitionIdLeft = 0;
+        int partitionIdRight = 1;
+
+        List<ADBEntity> dataLeft = new ArrayList<>();
+        dataLeft.add(new TestEntity(-5, "T", -1.0f, true, -1.01, 'a'));
+        dataLeft.add(new TestEntity(3, "Te", 1.0f, false, 1.0, 'b'));
+        dataLeft.add(new TestEntity(15, "Tes", 1.4f, true, 1.04, 'c'));
+        dataLeft.add(new TestEntity(23, "Test", 1.8f, false, 1.08, 'd'));
+
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft);
+
+        List<ADBEntity> dataRight = new ArrayList<>();
+        dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01, 'a'));
+        dataRight.add(new TestEntity(31, "Te", 1.0f, false, 1.0, 'b'));
+        dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04, 'c'));
+        dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08, 'd'));
+
+        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
+
+        ADBJoinQuery joinQuery = new ADBJoinQuery();
+        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString"));
+
+        assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
+
+        dataLeft = new ArrayList<>();
+        dataLeft.add(new TestEntity(-5, "A", -1.0f, true, -1.01, 'a'));
+        dataLeft.add(new TestEntity(3, "Ce", 1.0f, false, 1.0, 'b'));
+        dataLeft.add(new TestEntity(15, "GRE", 1.4f, true, 1.04, 'c'));
+        dataLeft.add(new TestEntity(22, "GsQS", 1.8f, false, 1.08, 'd'));
+
+        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft);
+
+        dataRight = new ArrayList<>();
+        dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01, 'a'));
+        dataRight.add(new TestEntity(31, "C", 1.0f, false, 1.0, 'b'));
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04, 'c'));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08, 'd'));
 

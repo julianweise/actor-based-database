@@ -39,18 +39,21 @@ public class ADBPartitionHeader {
         Comparable<Object> rightMin = b.minValues.get(joinQueryTerm.getRightHandSideAttribute());
         Comparable<Object> rightMax = b.maxValues.get(joinQueryTerm.getRightHandSideAttribute());
         if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS)) {
-            return leftMin.compareTo(rightMax) < 0;
+            return !(leftMin.compareTo(rightMax) >= 0);
         }
         if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL)) {
-            return leftMin.compareTo(rightMax) <= 0;
+            return !(leftMin.compareTo(rightMax) > 0);
         }
         if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER)) {
-            return leftMax.compareTo(rightMin) > 0;
+            return !(leftMax.compareTo(rightMin) <= 0);
         }
         if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL)) {
-            return leftMax.compareTo(rightMin) >= 0;
+            return !(leftMax.compareTo(rightMin) < 0);
         }
-        return leftMax.compareTo(rightMin) >= 0 || leftMin.compareTo(rightMax) > 0;
+        if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.EQUALITY)) {
+            return leftMax.compareTo(rightMin) >= 0 && leftMin.compareTo(rightMax) <= 0;
+        }
+        return true;
     }
 
     public boolean isRelevant(ADBSelectionQuery selectionQuery) {

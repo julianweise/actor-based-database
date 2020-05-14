@@ -23,8 +23,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.val;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -79,31 +82,36 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
 
     @Getter
     @NoArgsConstructor
-    public static class ConcludeTransfer implements Command, KryoSerializable {}
+    public static class ConcludeTransfer implements Command, KryoSerializable {
+    }
 
     @AllArgsConstructor
     public static class RequestPartitionsForSelectionQuery implements Command {
-        private final ActorRef<ADBPartitionManager.RelevantPartitions> respondTo;
+        private final ActorRef<ADBPartitionManager.RelevantPartitionsSelectionQuery> respondTo;
         private final ADBSelectionQuery query;
     }
 
     @AllArgsConstructor
     @Builder
     public static class RequestPartitionsForJoinQuery implements Command {
-        private final ActorRef<ADBPartitionManager.RelevantPartitions> respondTo;
+        private final ActorRef<ADBPartitionManager.RelevantPartitionsJoinQuery> respondTo;
         private final ADBPartitionHeader externalHeader;
         private final ADBJoinQuery query;
     }
 
     @AllArgsConstructor
     @Getter
-    public static class RelevantPartitions implements Response {
-        public RelevantPartitions(List<ADBPair<Integer, ActorRef<ADBPartition.Command>>> partitions) {
-            this.partitions = partitions;
-            this.externalIndex = 0;
-        }
-        private final List<ADBPair<Integer, ActorRef<ADBPartition.Command>>> partitions;
-        private final int externalIndex;
+    public static class RelevantPartitionsSelectionQuery implements Response {
+        private final List<ActorRef<ADBPartition.Command>> partitions;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class RelevantPartitionsJoinQuery implements Response {
+        private final Set<ActorRef<ADBPartition.Command>> partitions;
+        private final int fPartitionId;
+        private final int[] lPartitionIdsLeft;
+        private final int[] lPartitionIdsRight;
     }
 
     @AllArgsConstructor
@@ -173,12 +181,12 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     }
 
     private Behavior<Command> handleRequestForSelectionQuery(RequestPartitionsForSelectionQuery command) {
-        List<ADBPair<Integer, ActorRef<ADBPartition.Command>>> relevantHeaders =
+        List<ActorRef<ADBPartition.Command>> relevantPartitions =
                 IntStream.range(0, this.partitions.size())
-                .filter(index -> this.partitionHeaders.get(index).isRelevant(command.query))
-                .mapToObj(index -> new ADBPair<>(index, this.partitions.get(index)))
-                .collect(Collectors.toList());
-        command.respondTo.tell(new RelevantPartitions(relevantHeaders));
+                         .filter(index -> this.partitionHeaders.get(index).isRelevant(command.query))
+                         .mapToObj(this.partitions::get)
+                         .collect(Collectors.toList());
+        command.respondTo.tell(new RelevantPartitionsSelectionQuery(relevantPartitions));
         return Behaviors.same();
     }
 
@@ -188,15 +196,25 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     }
 
     private Behavior<Command> handleRequestForJoinQuery(RequestPartitionsForJoinQuery command) {
-        command.respondTo.tell(new RelevantPartitions(IntStream.range(0, this.partitions.size()).parallel()
-                .filter(index -> this.mightProduceJoinCandidates(index, command.externalHeader, command.query))
-                .mapToObj(index -> new ADBPair<>(index, this.partitions.get(index)))
-                .collect(Collectors.toList()), command.externalHeader.getId()));
+        int[] lPartitionIdsLeft = IntStream.range(0, this.partitions.size())
+                                           .filter(id -> this.mightJoin(id, command.externalHeader, command.query))
+                                           .toArray();
+        int[] lPartitionIdsRight = IntStream.range(0, this.partitions.size())
+                                            .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
+                                            .toArray();
+        val relevantPartitions = IntStream.concat(Arrays.stream(lPartitionIdsLeft), Arrays.stream(lPartitionIdsRight))
+                                          .mapToObj(this.partitions::get)
+                                          .collect(Collectors.toSet());
+        command.respondTo.tell(new RelevantPartitionsJoinQuery(relevantPartitions, command.externalHeader.getId(), lPartitionIdsLeft,
+                lPartitionIdsRight));
         return Behaviors.same();
     }
 
-    private boolean mightProduceJoinCandidates(int index, ADBPartitionHeader b, ADBJoinQuery query) {
-        ADBPartitionHeader localHeader = this.partitionHeaders.get(index);
-        return localHeader.isOverlapping(b, query) || b.isOverlapping(localHeader, query);
+    private boolean mightJoin(int index, ADBPartitionHeader b, ADBJoinQuery query) {
+        return this.partitionHeaders.get(index).isOverlapping(b, query);
+    }
+
+    private boolean mightJoin(ADBPartitionHeader b, int index, ADBJoinQuery query) {
+        return b.isOverlapping(this.partitionHeaders.get(index), query);
     }
 }

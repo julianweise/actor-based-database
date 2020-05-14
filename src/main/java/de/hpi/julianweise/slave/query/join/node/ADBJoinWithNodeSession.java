@@ -57,7 +57,8 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     @Getter
     public static class ForeignNodeAttributes implements ADBLargeMessageSender.LargeMessage {
         private Map<Integer, Map<String, List<ADBPair<Comparable<Object>, Integer>>>> joinAttributes;
-        private Map<Integer, List<Integer>> joinCandidates;
+        private Map<Integer, int[]> fPartitionIdLeft;
+        private Map<Integer, int[]> fPartitionIdRight;
     }
 
     @AllArgsConstructor
@@ -71,12 +72,10 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     @AllArgsConstructor
-    private static class CheckConclude implements Command {
-    }
+    private static class CheckConclude implements Command {}
 
     @AllArgsConstructor
-    private static class RequestForeignJoinAttributes implements Command {
-    }
+    private static class RequestForeignJoinAttributes implements Command {}
 
     public ADBJoinWithNodeSession(ActorContext<Command> context, ADBJoinQuery query,
                                   ActorRef<ADBSlaveQuerySession.Command> supervisor,
@@ -136,24 +135,24 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private Behavior<Command> handleForeignAttributes(ForeignNodeAttributes command) {
         assert this.foreignAttributes == null : "JoinWithNode session already received valid foreign attributes!";
         this.foreignAttributes = command.getJoinAttributes();
-        for (Map.Entry<Integer, List<Integer>> mapping : command.getJoinCandidates().entrySet()) {
-            int lPartitionId = mapping.getKey();
+        for (Map.Entry<Integer, int[]> mapping : command.fPartitionIdLeft.entrySet()) {
             for (int fPartitionId : mapping.getValue()) {
-                this.joinPartitions(lPartitionId, fPartitionId);
+                this.remainingResults.incrementAndGet();
+                this.spawnExecutor(mapping.getKey(), fPartitionId, false);
+            }
+        }
+        if (ADBSlave.ID == this.remoteNodeId) {
+            this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartition());
+            return Behaviors.same();
+        }
+        for (Map.Entry<Integer, int[]> mapping : command.fPartitionIdRight.entrySet()) {
+            for (int fPartitionId : mapping.getValue()) {
+                this.remainingResults.incrementAndGet();
+                this.spawnExecutor(mapping.getKey(), fPartitionId, true);
             }
         }
         this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartition());
         return Behaviors.same();
-    }
-
-    private void joinPartitions(int lPartitionId, int fPartitionId) {
-        this.remainingResults.incrementAndGet();
-        this.spawnExecutor(lPartitionId, fPartitionId, false);
-        if (ADBSlave.ID == this.remoteNodeId) {
-            return;
-        }
-        this.remainingResults.incrementAndGet();
-        this.spawnExecutor(lPartitionId, fPartitionId, true);
     }
 
     private void spawnExecutor(int lPartId, int fPartId, boolean isReversed) {

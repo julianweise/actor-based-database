@@ -33,7 +33,7 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
 
     @AllArgsConstructor
     private static class RelevantPartitionsWrapper implements Command {
-        private final ADBPartitionManager.RelevantPartitions response;
+        private final ADBPartitionManager.RelevantPartitionsSelectionQuery response;
     }
 
     @AllArgsConstructor
@@ -69,7 +69,8 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<ADBSlaveQuerySession.Command> handleExecute(Execute command) {
-        val partitionsRef = this.getContext().messageAdapter(ADBPartitionManager.RelevantPartitions.class, RelevantPartitionsWrapper::new);
+        val partitionsRef = this.getContext().messageAdapter(ADBPartitionManager.RelevantPartitionsSelectionQuery.class,
+                RelevantPartitionsWrapper::new);
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.RequestPartitionsForSelectionQuery(
                 partitionsRef, (ADBSelectionQuery) this.query));
@@ -79,8 +80,8 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
     private Behavior<Command> handleRelevantPartitions(RelevantPartitionsWrapper wrapper) {
         val dataRef = this.getContext().messageAdapter(ADBPartition.Data.class, PartitionDataWrapper::new);
         this.partitionResultsPending = new AtomicInteger(wrapper.response.getPartitions().size());
-        for (ADBPair<Integer, ActorRef<ADBPartition.Command>> partition : wrapper.response.getPartitions()) {
-            partition.getValue().tell(new ADBPartition.RequestData(dataRef));
+        for (ActorRef<ADBPartition.Command> partition : wrapper.response.getPartitions()) {
+            partition.tell(new ADBPartition.RequestData(dataRef));
         }
         if (wrapper.response.getPartitions().size() < 1) this.getContext().getSelf().tell(new ConcludeSession());
         return Behaviors.same();

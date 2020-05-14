@@ -36,7 +36,8 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     private final ADBJoinQuery query;
     private final AtomicInteger localPartitionsToProvideAttributesFor = new AtomicInteger(0);
     private Map<Integer, Map<String, List<ADBPair<Comparable<Object>, Integer>>>> attributes;
-    private Map<Integer, List<Integer>> joinCandidates;
+    private Map<Integer, int[]> lPartitionIdsLeft;
+    private Map<Integer, int[]> lPartitionIdsRight;
     private AtomicInteger numberOfExternalPartitionsToCheck;
 
 
@@ -49,7 +50,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
 
     @AllArgsConstructor
     private static class RelevantPartitionsWrapper implements Command {
-        private final ADBPartitionManager.RelevantPartitions response;
+        private final ADBPartitionManager.RelevantPartitionsJoinQuery response;
     }
 
     @AllArgsConstructor
@@ -94,11 +95,13 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
 
     private Behavior<Command> handleRequestJoinAttributes(RequestJoinAttributes command) {
         this.getContext().getLog().debug("Asked to provide join attributes for " + command.headers.size() + " headers");
-        this.joinCandidates = new Int2ObjectLinkedOpenHashMap<>(command.headers.size());
+        this.lPartitionIdsRight = new Int2ObjectLinkedOpenHashMap<>(command.headers.size());
+        this.lPartitionIdsLeft = new Int2ObjectLinkedOpenHashMap<>(command.headers.size());
         this.attributes = new Object2ObjectLinkedOpenHashMap<>(command.headers.size());
         this.numberOfExternalPartitionsToCheck = new AtomicInteger(command.headers.size());
 
-        val respondTo = getContext().messageAdapter(ADBPartitionManager.RelevantPartitions.class, RelevantPartitionsWrapper::new);
+        val respondTo = getContext().messageAdapter(ADBPartitionManager.RelevantPartitionsJoinQuery.class,
+                RelevantPartitionsWrapper::new);
         for (ADBPartitionHeader header : command.headers) {
             assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
             ADBPartitionManager.getInstance().tell(ADBPartitionManager.RequestPartitionsForJoinQuery
@@ -113,12 +116,12 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
 
     private Behavior<Command> handleRelevantPartitions(RelevantPartitionsWrapper wrapper) {
         this.numberOfExternalPartitionsToCheck.decrementAndGet();
-        val lCandidates = wrapper.response.getPartitions().stream().map(ADBPair::getKey).collect(Collectors.toList());
-        this.joinCandidates.put(wrapper.response.getExternalIndex(), lCandidates);
+        this.lPartitionIdsLeft.put(wrapper.response.getFPartitionId(), wrapper.response.getLPartitionIdsLeft());
+        this.lPartitionIdsRight.put(wrapper.response.getFPartitionId(), wrapper.response.getLPartitionIdsRight());
         val respondTo = getContext().messageAdapter(ADBPartition.JoinAttributes.class, JoinAttributesWrapper::new);
-        for(ADBPair<Integer, ActorRef<ADBPartition.Command>> lPartition : wrapper.response.getPartitions()) {
+        for(ActorRef<ADBPartition.Command> lPartition : wrapper.response.getPartitions()) {
             this.localPartitionsToProvideAttributesFor.incrementAndGet();
-            lPartition.getValue().tell(new ADBPartition.RequestJoinAttributes(respondTo, this.query));
+            lPartition.tell(new ADBPartition.RequestJoinAttributes(respondTo, this.query));
         }
         if (this.numberOfExternalPartitionsToCheck.get() < 1 && this.localPartitionsToProvideAttributesFor.get() < 1) {
             this.getContext().getLog().warn("No matching partitions have been found. Returning empty join candidates.");
@@ -138,7 +141,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     }
 
     private void returnJoinCandidates() {
-        val message  = new ADBJoinWithNodeSession.ForeignNodeAttributes(this.attributes, this.joinCandidates);
+        val message  = new ADBJoinWithNodeSession.ForeignNodeAttributes(attributes, lPartitionIdsLeft, lPartitionIdsRight);
         val name = ADBLargeMessageSenderFactory.name(getContext().getSelf(), session, message.getClass(), "attributes");
         this.getContext().spawn(ADBLargeMessageSenderFactory.createDefault(message, largeMessageSenderWrapping), name)
             .tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.session), message.getClass()));
