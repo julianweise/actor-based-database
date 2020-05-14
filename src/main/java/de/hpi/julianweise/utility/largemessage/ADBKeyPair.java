@@ -24,4 +24,9 @@ public class ADBKeyPair {
         }
         return ((ADBKeyPair) o).key == this.key && ((ADBKeyPair) o).value == this.value;
     }
+
+    @Override
+    public String toString() {
+        return "(" + this.key + ", " + this.value + ")";
+    }
 }
