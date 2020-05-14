@@ -1,11 +1,9 @@
 package de.hpi.julianweise.utility.partition;
 
 import de.hpi.julianweise.domain.ADBEntity;
-import de.hpi.julianweise.slave.partition.ADBPartition;
 import it.unimi.dsi.fastutil.PriorityQueue;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Comparator;

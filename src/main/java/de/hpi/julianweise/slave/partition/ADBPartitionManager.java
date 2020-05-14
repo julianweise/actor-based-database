@@ -15,7 +15,6 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;

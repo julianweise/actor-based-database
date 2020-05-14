@@ -18,7 +18,6 @@ import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.SelectionQueryWorkload;
 import de.hpi.julianweise.slave.worker_pool.workload.Workload;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.AllArgsConstructor;
 import lombok.val;
