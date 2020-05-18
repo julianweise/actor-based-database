@@ -9,7 +9,6 @@ import akka.actor.typed.javadsl.Receive;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import com.google.common.hash.PrimitiveSink;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

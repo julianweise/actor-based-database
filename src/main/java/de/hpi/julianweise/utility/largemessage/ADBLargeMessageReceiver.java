@@ -9,7 +9,6 @@ import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;

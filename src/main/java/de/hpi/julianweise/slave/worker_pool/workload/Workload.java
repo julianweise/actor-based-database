@@ -1,6 +1,5 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 
 public abstract class Workload {

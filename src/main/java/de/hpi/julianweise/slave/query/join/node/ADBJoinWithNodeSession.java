@@ -5,7 +5,6 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartition;
