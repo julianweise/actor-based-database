@@ -169,7 +169,8 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         this.getContext().watchWith(registration.partition, new PartitionFailed(registration.partition));
         this.partitions.add(registration.partition);
         this.partitionHeaders.add(registration.header);
-        assert this.partitions.size() < MAX_PARTITIONS;
+        assert this.partitions.size() < MAX_PARTITIONS : "Only " + MAX_PARTITIONS + " are supported per node. " +
+                "Currently: " + this.partitions.size();
         return Behaviors.same();
     }
 
@@ -177,6 +178,8 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         this.conditionallyCreateNewPartition(true);
         this.entityBuffer = null;
         this.getContext().getLog().info("Distribution concluded.");
+        this.getContext().getLog().info("[PARTITIONS MAINTAINED] " + this.partitions.size());
+        System.gc();
         return Behaviors.same();
     }
 

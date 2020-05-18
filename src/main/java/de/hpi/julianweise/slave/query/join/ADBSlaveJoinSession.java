@@ -32,6 +32,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     private final Set<ActorRef<ADBJoinWithNodeSession.Command>> activeJoinSessions = new ObjectOpenHashSet<>();
     private final Set<ActorRef<ADBJoinWithNodeSessionHandler.Command>> activeJoinSessionHandlers = new ObjectOpenHashSet<>();
+    private boolean delayLogged = false;
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -176,15 +177,16 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
             return Behaviors.same();
         }
         this.getContext().scheduleOnce(Duration.ofMillis(50), this.getContext().getSelf(), command);
-        if (this.activeJoinSessions.size() > 0) {
+        if (!this.delayLogged && this.activeJoinSessions.size() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for active inter-node join sessions");
         }
-        if (this.activeJoinSessionHandlers.size() > 0) {
+        if (!this.delayLogged && this.activeJoinSessionHandlers.size() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for active inter-node join session handlers");
         }
-        if (this.openTransferSessions.get() > 0) {
+        if (!this.delayLogged && this.openTransferSessions.get() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for open transfer sessions");
         }
+        this.delayLogged = true;
         return Behaviors.same();
     }
 
