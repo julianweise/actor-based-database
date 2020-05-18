@@ -4,8 +4,8 @@ import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,15 +14,14 @@ import lombok.val;
 
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 @AllArgsConstructor
 @Builder
 public class JoinQueryRowWorkload extends Workload {
 
     private final List<ADBKeyPair> joinCandidates;
-    private final List<Map<String, ADBPair<Comparable<Object>, Integer>>> left;
-    private final List<Map<String, ADBPair<Comparable<Object>, Integer>>> right;
+    private final List<Map<String, ADBComparable2IntPair>> left;
+    private final List<Map<String, ADBComparable2IntPair>> right;
     private final List<ADBJoinTermCostModel> costModels;
 
     @AllArgsConstructor
@@ -33,7 +32,7 @@ public class JoinQueryRowWorkload extends Workload {
 
     @Override
     protected void doExecute(GenericWorker.WorkloadMessage message) {
-        List<ADBKeyPair> results = new ObjectArrayList<>(this.estimateResultSize());
+        List<ADBKeyPair> results = new ObjectArrayList<>();
         for (ADBKeyPair joinCandidate : this.joinCandidates) {
             if (this.rowSatisfyJoinCondition(joinCandidate)) {
                 results.add(new ADBKeyPair(
@@ -58,12 +57,5 @@ public class JoinQueryRowWorkload extends Workload {
             }
         }
         return true;
-    }
-
-    private int estimateResultSize() {
-        return this.costModels.stream()
-                              .mapToInt(ADBJoinTermCostModel::getCost)
-                              .min()
-                              .orElseThrow(NoSuchElementException::new);
     }
 }

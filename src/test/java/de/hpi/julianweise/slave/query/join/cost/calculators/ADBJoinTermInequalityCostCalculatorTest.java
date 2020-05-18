@@ -2,7 +2,7 @@ package de.hpi.julianweise.slave.query.join.cost.calculators;
 
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -17,8 +17,8 @@ public class ADBJoinTermInequalityCostCalculatorTest {
     public void expectEmptyArrayForEmptyLists() {
         ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
 
-        List<ADBPair<Comparable<Object>, Integer>> left = new ArrayList<>();
-        List<ADBPair<Comparable<Object>, Integer>> right = new ArrayList<>();
+        List<ADBComparable2IntPair> left = new ArrayList<>();
+        List<ADBComparable2IntPair> right = new ArrayList<>();
 
         ADBInterval[] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
@@ -28,11 +28,11 @@ public class ADBJoinTermInequalityCostCalculatorTest {
     public void expectEmptyArrayForEmptyLeftLists() {
         ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
 
-        List<ADBPair<Comparable<Object>, Integer>> left = new ArrayList<>();
-        List<ADBPair<Comparable<Object>, Integer>> right = new ArrayList<>();
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 1));
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)2, 2));
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 3));
+        List<ADBComparable2IntPair> left = new ArrayList<>();
+        List<ADBComparable2IntPair> right = new ArrayList<>();
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 3));
 
         ADBInterval[] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
@@ -42,11 +42,11 @@ public class ADBJoinTermInequalityCostCalculatorTest {
     public void expectMoIntersectsForEmptyRightLists() {
         ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
 
-        List<ADBPair<Comparable<Object>, Integer>> left = new ArrayList<>();
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 1));
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)2, 2));
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 3));
-        List<ADBPair<Comparable<Object>, Integer>> right = new ArrayList<>();
+        List<ADBComparable2IntPair> left = new ArrayList<>();
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 3));
+        List<ADBComparable2IntPair> right = new ArrayList<>();
 
         ADBInterval[] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(3);
@@ -59,16 +59,16 @@ public class ADBJoinTermInequalityCostCalculatorTest {
     public void expectValidResultsForBothListsFilled() {
         ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
 
-        List<ADBPair<Comparable<Object>, Integer>> left = new ArrayList<>();
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)0, 0));
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 1));
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)2, 2));
-        left.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 3));
-        List<ADBPair<Comparable<Object>, Integer>> right = new ArrayList<>();
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)1, 1));
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)2, 2));
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)2, 3));
-        right.add(new ADBPair<>((Comparable<Object>)(Comparable<?>)3, 4));
+        List<ADBComparable2IntPair> left = new ArrayList<>();
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)0, 0));
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
+        left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 3));
+        List<ADBComparable2IntPair> right = new ArrayList<>();
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 3));
+        right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 4));
 
         ADBInterval[] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(4);

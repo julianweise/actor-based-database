@@ -14,6 +14,7 @@ import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2Factory;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.largemessage.ADBSemiMaterializedPair;
@@ -62,7 +63,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @AllArgsConstructor
     @Getter
     public static class JoinAttributes implements Response {
-        private final Map<String, List<ADBPair<Comparable<Object>, Integer>>> attributes;
+        private final Map<String, List<ADBComparable2IntPair>> attributes;
         private final int partitionId;
     }
 

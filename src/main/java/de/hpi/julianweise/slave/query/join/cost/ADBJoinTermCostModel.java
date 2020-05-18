@@ -34,10 +34,10 @@ public class ADBJoinTermCostModel {
         return (float) this.getCost() / (this.sizeLeft * this.sizeRight);
     }
 
-    public List<ADBKeyPair> getJoinCandidates(Map<String, List<ADBPair<Comparable<Object>, Integer>>> left,
-                                              Map<String, List<ADBPair<Comparable<Object>, Integer>>> right) {
-        List<ADBPair<Comparable<Object>, Integer>> leftValues = left.get(this.term.getLeftHandSideAttribute());
-        List<ADBPair<Comparable<Object>, Integer>> rightValues = right.get(this.term.getRightHandSideAttribute());
+    public List<ADBKeyPair> getJoinCandidates(Map<String, List<ADBComparable2IntPair>> left,
+                                              Map<String, List<ADBComparable2IntPair>> right) {
+        List<ADBComparable2IntPair> leftValues = left.get(this.term.getLeftHandSideAttribute());
+        List<ADBComparable2IntPair> rightValues = right.get(this.term.getRightHandSideAttribute());
         List<ADBKeyPair> candidates = new ObjectArrayList<>(this.getCost());
         for (int i = 0; i < this.joinCandidates.length; i++) {
             ADBInterval interval = this.joinCandidates[i];
@@ -51,8 +51,8 @@ public class ADBJoinTermCostModel {
     }
 
     public List<ADBKeyPair> getJoinCandidatesForRow(ADBIntervalImpl interval,
-                                                    ADBPair<Comparable<Object>, Integer> left,
-                                                    List<ADBPair<Comparable<Object>, Integer>> right) {
+                                                    ADBComparable2IntPair left,
+                                                    List<ADBComparable2IntPair> right) {
         if (interval.equals(ADBIntervalImpl.NO_INTERSECTION)) {
             return Collections.emptyList();
         }
@@ -64,8 +64,8 @@ public class ADBJoinTermCostModel {
     }
 
     public List<ADBKeyPair> getJoinCandidatesForRow(ADBInverseInterval interval,
-                                                    ADBPair<Comparable<Object>, Integer> left,
-                                                    List<ADBPair<Comparable<Object>, Integer>> right) {
+                                                    ADBComparable2IntPair left,
+                                                    List<ADBComparable2IntPair> right) {
         if (interval.equals(ADBInverseInterval.NO_INTERSECTION)) {
             return Collections.emptyList();
         }

@@ -46,16 +46,16 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
         private final List<ADBKeyPair> results;
     }
 
-    private final Map<String, List<ADBPair<Comparable<Object>, Integer>>> left;
-    private final Map<String, List<ADBPair<Comparable<Object>, Integer>>> right;
+    private final Map<String, List<ADBComparable2IntPair>> left;
+    private final Map<String, List<ADBComparable2IntPair>> right;
     private final List<ADBJoinTermCostModel> costModels;
     private final ActorRef<StepExecuted> respondTo;
     private final AtomicInteger intersectsPerformed = new AtomicInteger(0);
     private SparseBitSet[] resultSet;
 
     public ADBColumnJoinStepExecutor(ActorContext<Command> context,
-                                     Map<String, List<ADBPair<Comparable<Object>, Integer>>> left,
-                                     Map<String, List<ADBPair<Comparable<Object>, Integer>>> right,
+                                     Map<String, List<ADBComparable2IntPair>> left,
+                                     Map<String, List<ADBComparable2IntPair>> right,
                                      List<ADBJoinTermCostModel> costModels,
                                      ActorRef<StepExecuted> respondTo) {
         super(context);

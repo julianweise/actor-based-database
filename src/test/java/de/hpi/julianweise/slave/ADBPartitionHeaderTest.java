@@ -379,16 +379,16 @@ public class ADBPartitionHeaderTest {
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
         dataLeft = new ArrayList<>();
-        dataLeft.add(new TestEntity(-5, "A", -1.0f, true, -1.01, 'a'));
-        dataLeft.add(new TestEntity(3, "Ce", 1.0f, false, 1.0, 'b'));
-        dataLeft.add(new TestEntity(15, "GRE", 1.4f, true, 1.04, 'c'));
-        dataLeft.add(new TestEntity(22, "GsQS", 1.8f, false, 1.08, 'd'));
+        dataLeft.add(new TestEntity(-5, "EAsafsdfdA", -1.0f, true, -1.01, 'a'));
+        dataLeft.add(new TestEntity(3, "CeEASDasASDAS", 1.0f, false, 1.0, 'b'));
+        dataLeft.add(new TestEntity(15, "GRASDASDE", 1.4f, true, 1.04, 'c'));
+        dataLeft.add(new TestEntity(22, "Gs#d23$f3QS", 1.8f, false, 1.08, 'd'));
 
         headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft);
 
         dataRight = new ArrayList<>();
-        dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01, 'a'));
-        dataRight.add(new TestEntity(31, "C", 1.0f, false, 1.0, 'b'));
+        dataRight.add(new TestEntity(23, "T1", -1.0f, true, -1.01, 'a'));
+        dataRight.add(new TestEntity(31, "T2", 1.0f, false, 1.0, 'b'));
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04, 'c'));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08, 'd'));
 

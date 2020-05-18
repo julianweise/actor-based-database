@@ -15,9 +15,9 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutorFactory;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,7 +38,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
     private List<ActorRef<ADBPartition.Command>> localPartitions;
     private List<ADBPartitionHeader> localHeaders;
-    private Map<Integer, Map<String, List<ADBPair<Comparable<Object>, Integer>>>> foreignAttributes;
+    private Map<Integer, Map<String, List<ADBComparable2IntPair>>> foreignAttributes;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -56,7 +56,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     @NoArgsConstructor
     @Getter
     public static class ForeignNodeAttributes implements ADBLargeMessageSender.LargeMessage {
-        private Map<Integer, Map<String, List<ADBPair<Comparable<Object>, Integer>>>> joinAttributes;
+        private Map<Integer, Map<String, List<ADBComparable2IntPair>>> joinAttributes;
         private Map<Integer, int[]> fPartitionIdLeft;
         private Map<Integer, int[]> fPartitionIdRight;
     }

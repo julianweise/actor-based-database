@@ -1,13 +1,13 @@
 package de.hpi.julianweise.utility.query.join;
 
-import de.hpi.julianweise.utility.largemessage.ADBPair;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 
 import java.util.List;
 
 public class ADBOffsetCalculator {
 
-    public static int[] calc(List<ADBPair<Comparable<Object>, Integer>> left,
-                             List<ADBPair<Comparable<Object>, Integer>> right) {
+    public static int[] calc(List<ADBComparable2IntPair> left,
+                             List<ADBComparable2IntPair> right) {
         int[] offset = new int[left.size()];
         int a = 0, b = 0;
         while(a < left.size() && b < right.size()) {

@@ -1,8 +1,8 @@
 package de.hpi.julianweise.slave.query.join.attribute_comparison.strategies;
 
 import de.hpi.julianweise.query.ADBQueryTerm;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.query.join.ADBOffsetCalculator;
 
 import java.util.ArrayList;
@@ -13,16 +13,16 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
 
     @Override
     public List<ADBKeyPair> compare(ADBQueryTerm.RelationalOperator operator,
-                                    List<ADBPair<Comparable<Object>, Integer>> left,
-                                    List<ADBPair<Comparable<Object>, Integer>> right,
+                                    List<ADBComparable2IntPair> left,
+                                    List<ADBComparable2IntPair> right,
                                     int estimatedResultSize) {
         int[] offset = ADBOffsetCalculator.calc(left, right);
         return this.performComparison(operator, left, right, offset, estimatedResultSize);
     }
 
     private ArrayList<ADBKeyPair> performComparison(ADBQueryTerm.RelationalOperator operator,
-                                                    List<ADBPair<Comparable<Object>, Integer>> left,
-                                                    List<ADBPair<Comparable<Object>, Integer>> right,
+                                                    List<ADBComparable2IntPair> left,
+                                                    List<ADBComparable2IntPair> right,
                                                     int[] offset, int resultSize) {
         switch (operator) {
             case GREATER: return this.compareGreater(left, right, offset, resultSize);
@@ -34,8 +34,8 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         }
     }
 
-    private ArrayList<ADBKeyPair> compareGreater(List<ADBPair<Comparable<Object>, Integer>> left,
-                                                 List<ADBPair<Comparable<Object>, Integer>> right,
+    private ArrayList<ADBKeyPair> compareGreater(List<ADBComparable2IntPair> left,
+                                                 List<ADBComparable2IntPair> right,
                                                  int[] offset,
                                                  int estimatedResultSize) {
         ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
@@ -51,8 +51,8 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareGreaterEquals(List<ADBPair<Comparable<Object>, Integer>> left,
-                                                       List<ADBPair<Comparable<Object>, Integer>> right,
+    private ArrayList<ADBKeyPair> compareGreaterEquals(List<ADBComparable2IntPair> left,
+                                                       List<ADBComparable2IntPair> right,
                                                        int[] offset,
                                                        int estimatedResultSize) {
         ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
@@ -65,8 +65,8 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareLess(List<ADBPair<Comparable<Object>, Integer>> left,
-                                              List<ADBPair<Comparable<Object>, Integer>> right,
+    private ArrayList<ADBKeyPair> compareLess(List<ADBComparable2IntPair> left,
+                                              List<ADBComparable2IntPair> right,
                                               int[] offset,
                                               int estimatedResultSize) {
         ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
@@ -79,8 +79,8 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareLessEqual(List<ADBPair<Comparable<Object>, Integer>> left,
-                                                   List<ADBPair<Comparable<Object>, Integer>> right,
+    private ArrayList<ADBKeyPair> compareLessEqual(List<ADBComparable2IntPair> left,
+                                                   List<ADBComparable2IntPair> right,
                                                    int[] offset,
                                                    int estimatedResultSize) {
         ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
@@ -94,8 +94,8 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareEqual(List<ADBPair<Comparable<Object>, Integer>> left,
-                                               List<ADBPair<Comparable<Object>, Integer>> right,
+    private ArrayList<ADBKeyPair> compareEqual(List<ADBComparable2IntPair> left,
+                                               List<ADBComparable2IntPair> right,
                                                int[] offset,
                                                int estimatedResultSize) {
         ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);

@@ -7,7 +7,7 @@ import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,10 +16,8 @@ import java.util.List;
 
 public class JoinQueryColumnWorkload extends Workload {
 
-    public static final float JOIN_RESULT_REDUCTION_FACTOR = 0.3f;
-
-    private final List<ADBPair<Comparable<Object>, Integer>> leftSideValues;
-    private final List<ADBPair<Comparable<Object>, Integer>> rightSideValues;
+    private final List<ADBComparable2IntPair> leftSideValues;
+    private final List<ADBComparable2IntPair> rightSideValues;
     private final ADBJoinTermCostModel costModel;
     private final SparseBitSet[] bitMatrix;
 
@@ -31,8 +29,8 @@ public class JoinQueryColumnWorkload extends Workload {
     }
 
     @Builder
-    public JoinQueryColumnWorkload(List<ADBPair<Comparable<Object>, Integer>> left,
-                                   List<ADBPair<Comparable<Object>, Integer>> right,
+    public JoinQueryColumnWorkload(List<ADBComparable2IntPair> left,
+                                   List<ADBComparable2IntPair> right,
                                    ADBJoinTermCostModel costModel) {
         this.leftSideValues = left;
         this.rightSideValues = right;

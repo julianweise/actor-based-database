@@ -19,8 +19,8 @@ import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutorFactory;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,13 +35,13 @@ import java.util.stream.Collectors;
 public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinExecutor.Command> {
 
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
-    private final Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes;
+    private final Map<String, List<ADBComparable2IntPair>> foreignAttributes;
 
     private final ActorRef<PartitionsJoined> supervisor;
     private final ADBJoinQuery query;
     private final boolean reversed;
 
-    private Map<String, List<ADBPair<Comparable<Object>, Integer>>> localAttributes;
+    private Map<String, List<ADBComparable2IntPair>> localAttributes;
     private List<ADBJoinTermCostModel> costModels;
     private int costModelsProcessed = 0;
 
@@ -78,7 +78,7 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     public ADBPartitionJoinExecutor(ActorContext<Command> context,
                                     ADBJoinQuery query,
                                     ActorRef<ADBPartition.Command> localPartition,
-                                    Map<String, List<ADBPair<Comparable<Object>, Integer>>> foreignAttributes,
+                                    Map<String, List<ADBComparable2IntPair>> foreignAttributes,
                                     ActorRef<PartitionsJoined> supervisor,
                                     boolean reversed) {
         super(context);

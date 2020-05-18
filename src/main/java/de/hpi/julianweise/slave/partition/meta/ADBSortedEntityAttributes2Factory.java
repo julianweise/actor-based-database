@@ -3,13 +3,13 @@ package de.hpi.julianweise.slave.partition.meta;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
+import org.agrona.collections.Object2ObjectHashMap;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -66,18 +66,18 @@ public class ADBSortedEntityAttributes2Factory {
         return sortedIndices;
     }
 
-    public static List<Map<String, ADBPair<Comparable<Object>, Integer>>> resortByIndex(
-            Map<String, List<ADBPair<Comparable<Object>, Integer>>> columnAttributes,
+    public static List<Map<String, ADBComparable2IntPair>> resortByIndex(
+            Map<String, List<ADBComparable2IntPair>> columnAttributes,
             List<ADBJoinTermCostModel> relevantCostModels) {
         int numberOfRows = columnAttributes.values().stream().mapToInt(List::size).max().orElse(0);
-        List<Map<String, ADBPair<Comparable<Object>, Integer>>> resultSet = new ArrayList<>(numberOfRows);
-        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectArrayMap<>());
+        List<Map<String, ADBComparable2IntPair>> resultSet = new ArrayList<>(numberOfRows);
+        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectHashMap<>());
         Set<String> relevantFields = relevantCostModels
                 .stream()
                 .flatMap(model -> Stream.of(model.getTerm().getLeftHandSideAttribute(), model.getTerm().getRightHandSideAttribute()))
                 .collect(Collectors.toSet());
         for (String field : relevantFields) {
-            for (ADBPair<Comparable<Object>, Integer> row : columnAttributes.get(field)) {
+            for (ADBComparable2IntPair row : columnAttributes.get(field)) {
                 resultSet.get(ADBInternalIDHelper.getEntityId(row.getValue())).put(field, row);
             }
         }

@@ -3,8 +3,8 @@ package de.hpi.julianweise.slave.worker_pool.workload;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.query.join.attribute_comparison.strategies.ADBAttributeComparisonStrategy;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,8 +18,8 @@ public class JoinQueryColumnBasicWorkload extends Workload {
     public static final float JOIN_RESULT_REDUCTION_FACTOR = 0.3f;
 
     private final ADBQueryTerm.RelationalOperator operator;
-    private final List<ADBPair<Comparable<Object>, Integer>> leftSideValues;
-    private final List<ADBPair<Comparable<Object>, Integer>> rightSideValues;
+    private final List<ADBComparable2IntPair> leftSideValues;
+    private final List<ADBComparable2IntPair> rightSideValues;
     private final ADBAttributeComparisonStrategy strategy;
 
     @AllArgsConstructor
@@ -36,8 +36,8 @@ public class JoinQueryColumnBasicWorkload extends Workload {
         message.getRespondTo().tell(new Results(joinTuples));
     }
 
-    private int estimateResultSize(List<ADBPair<Comparable<Object>, Integer>> l,
-                                   List<ADBPair<Comparable<Object>, Integer>> r) {
+    private int estimateResultSize(List<ADBComparable2IntPair> l,
+                                   List<ADBComparable2IntPair> r) {
         return Math.round(l.size() * r.size() * JOIN_RESULT_REDUCTION_FACTOR);
     }
 }

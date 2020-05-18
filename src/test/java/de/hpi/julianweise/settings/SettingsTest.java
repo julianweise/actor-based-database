@@ -29,6 +29,10 @@ public class SettingsTest {
                 "actor-db.csv.chunk-size = 5\n" +
                 "actor-db.query-endpoint.hostname = localhost \n" +
                 "actor-db.number-of-threads = 4\n" +
+                "actor-db.join.strategy.lower-bound = 150000\n" +
+                "actor-db.join.strategy.upper-bound = 10000000\n" +
+                "actor-db.join.row.chunk-size = 500\n" +
+                "actor-db.partition.size = 512000\n" +
                 "actor-db.query-endpoint.port = 2020";
         TestKitJunitResource testKit = new TestKitJunitResource(config);
 

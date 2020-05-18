@@ -2,14 +2,14 @@ package de.hpi.julianweise.slave.query.join.cost.calculators;
 
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
+import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 
 import java.util.List;
 
 public class ADBJoinTermGreaterOrEqualCostCalculator implements ADBJoinTermCostCalculator {
 
     @Override
-    public ADBInterval[] calc(List<ADBPair<Comparable<Object>, Integer>> left, List<ADBPair<Comparable<Object>, Integer>> right) {
+    public ADBInterval[] calc(List<ADBComparable2IntPair> left, List<ADBComparable2IntPair> right) {
         ADBInterval[] resultSet = new ADBIntervalImpl[left.size()];
 
         int a = 0, b = 0;
