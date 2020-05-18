@@ -14,6 +14,12 @@ public class ADBJoinTermEqualityCostCalculator implements ADBJoinTermCostCalcula
 
         int a = 0, b = 0;
         while(a < left.size() && b < right.size()) {
+            // TODO: Find a more memory-efficient solution as the following condition may often match
+            if (a > 0 && left.get(a - 1).getKey().equals(left.get(a).getKey())) {
+                resultSet[a] = resultSet[a-1];
+                a++;
+                continue;
+            }
             resultSet[a] = ADBIntervalImpl.NO_INTERSECTION;
             if (left.get(a).getKey().compareTo(right.get(b).getKey()) < 0) {
                 a++;
