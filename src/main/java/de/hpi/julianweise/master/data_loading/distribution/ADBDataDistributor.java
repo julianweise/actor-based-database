@@ -31,7 +31,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     private final AtomicInteger pendingDistributions = new AtomicInteger(0);
     private ConsistentHash<ActorRef<ADBPartitionManager.Command>> consistentHash;
     private ActorRef<Response> client;
-    private final int minNumberOfShards;
+    private final int minNumberOfPartitions;
 
 
     public interface Command {}
@@ -74,7 +74,8 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     protected ADBDataDistributor(ActorContext<Command> actorContext) {
         super(actorContext);
-        this.minNumberOfShards = getContext().getSystem().settings().config().getInt("akka.cluster.min-nr-of-members");
+        this.minNumberOfPartitions = getContext().getSystem().settings().config().getInt("akka.cluster" +
+                ".min-nr-of-members") - 1;
     }
 
     @Override
@@ -123,7 +124,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     }
 
     private Behavior<Command> handleDistributeBatchToShards(DistributeBatch command) {
-        if (this.consistentHash == null || this.consistentHash.isEmpty() || this.partitionManagers.size() < this.minNumberOfShards) {
+        if (this.consistentHash == null || this.consistentHash.isEmpty() || this.partitionManagers.size() < this.minNumberOfPartitions) {
             this.getContext().scheduleOnce(Duration.ofMillis(500), this.getContext().getSelf(), command);
             return Behaviors.same();
         }
