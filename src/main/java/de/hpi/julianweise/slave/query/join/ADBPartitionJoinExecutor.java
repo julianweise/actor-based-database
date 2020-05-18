@@ -134,12 +134,8 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         } else if (this.costModels.get(0).getCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
             this.getContext().getLog().info("[EXECUTION STRATEGY] Cost above lower bound: Column-based comparison");
             this.getContext().getLog().info("[JOIN COST] " + this.costModels.get(0).getCost());
-            List<ADBJoinTermCostModel> columnCostModels = this.costModels
-                    .stream()
-                    .filter(model -> model.getCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND)
-                    .collect(Collectors.toList());
-            this.costModelsProcessed = columnCostModels.size();
-            this.joinColumnBased(columnCostModels);
+            this.costModelsProcessed = this.costModels.size();
+            this.joinColumnBased(this.costModels);
         } else {
             this.getContext().getLog().info("[EXECUTION STRATEGY] Cost above upper bound: Row-based comparison");
             List<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
@@ -161,14 +157,14 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         val respondTo = getContext().messageAdapter(ADBColumnJoinStepExecutor.StepExecuted.class,
                 ADBColumnJoinExecutorWrapper::new);
         this.getContext().spawn(ADBColumnJoinStepExecutorFactory
-                .createDefault(this.foreignAttributes, this.localAttributes, costModels, respondTo), "ColumJoinStep")
+                .createDefault(this.foreignAttributes, this.localAttributes, costModels, respondTo), "ColumnJoinStep")
             .tell(new ADBColumnJoinStepExecutor.Execute());
     }
 
     private Behavior<Command> handleGenericWorkerResponse(GenericWorkerResponseWrapper wrapper) {
         if (wrapper.response instanceof JoinQueryRowWorkload.Results) {
             List<ADBKeyPair> results = ((JoinQueryRowWorkload.Results) wrapper.response).getResults();
-            this.returnResults(results);
+            return this.returnResults(results);
         }
         return Behaviors.same();
     }
