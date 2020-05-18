@@ -5,7 +5,6 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
-import de.hpi.julianweise.master.ADBMaster;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
