@@ -66,7 +66,6 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
                                          ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query,
                                          int remoteShardId) {
         super(context);
-        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Join with Shard");
         session.tell(new ADBJoinWithNodeSession.RegisterHandler(this.getContext().getSelf()));
 
         this.session = session;
@@ -89,7 +88,6 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
 
     @Override
     protected Behavior<Command> handleLargeMessageTransferCompleted(ADBLargeMessageSender.TransferCompleted response) {
-        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Join with Shard");
         return Behaviors.same();
     }
 

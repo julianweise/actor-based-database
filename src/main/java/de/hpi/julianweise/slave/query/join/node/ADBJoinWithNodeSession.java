@@ -81,7 +81,6 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
                                   ActorRef<ADBSlaveQuerySession.Command> supervisor,
                                   int remoteNodeId) {
         super(context);
-        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Join with Shard #" + remoteNodeId);
         this.query = query;
         this.supervisor = supervisor;
         this.remoteNodeId = remoteNodeId;

@@ -51,7 +51,6 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
                                 ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientResultReceiver,
                                 int transactionId, ADBQuery query) {
         super(context);
-        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Query Session");
         this.session = session;
         this.transactionId = transactionId;
         this.query = query;
@@ -78,7 +77,6 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
     protected void concludeTransaction() {
         this.session.tell(new ADBMasterQuerySession.ConcludeTransaction(this.getContext().getSelf()));
         this.getContext().getLog().info("Asking master to conclude session TX#" + transactionId + " handling " + getQuerySessionName());
-        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Query Session");
         ADBQueryPerformanceSampler.concludeSampler(ADBSlave.ID, this.transactionId);
     }
 

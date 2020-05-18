@@ -54,7 +54,6 @@ public class ADBJoinCandidateIntersector extends AbstractBehavior<ADBJoinCandida
 
     public ADBJoinCandidateIntersector(ActorContext<Command> context) {
         super(context);
-        ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Intersect attributes");
         this.initializeBloomFilter();
     }
 
@@ -82,7 +81,6 @@ public class ADBJoinCandidateIntersector extends AbstractBehavior<ADBJoinCandida
     private Behavior<Command> handleIntersect(Intersect command) {
         command.candidates.sort(ADBJoinCandidateIntersector::comparingJoinCandidates);
         if (this.joinCandidates == null) {
-            ADBQueryPerformanceSampler.log(true, this.getClass().getSimpleName(), "Intersect attributes");
             this.joinCandidates = command.candidates;
             return Behaviors.same();
         }
@@ -130,7 +128,6 @@ public class ADBJoinCandidateIntersector extends AbstractBehavior<ADBJoinCandida
 
     private Behavior<Command> handleReturnResults(ReturnResults command) {
         command.respondTo.tell(new Results(this.getContext().getSelf(), this.joinCandidates));
-        ADBQueryPerformanceSampler.log(false, this.getClass().getSimpleName(), "Intersect attributes");
         return Behaviors.stopped();
     }
 }
