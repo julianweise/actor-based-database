@@ -30,7 +30,7 @@ public class ADBDoubleKey implements ADBKey {
 
     @Override
     public int hashCode() {
-        return new Double(value).hashCode();
+        return Double.hashCode(this.value);
     }
 
     @Override

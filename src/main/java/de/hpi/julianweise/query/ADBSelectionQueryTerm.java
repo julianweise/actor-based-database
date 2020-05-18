@@ -18,11 +18,11 @@ public class ADBSelectionQueryTerm implements ADBQueryTerm {
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
     @JsonSubTypes({
                           @JsonSubTypes.Type(value = String.class, name = "String"),
-                          @JsonSubTypes.Type(value = Integer.class, name = "Integer"),
-                          @JsonSubTypes.Type(value = Float.class, name = "Float"),
-                          @JsonSubTypes.Type(value = Double.class, name = "Double"),
-                          @JsonSubTypes.Type(value = Character.class, name = "Character"),
-                          @JsonSubTypes.Type(value = Boolean.class, name = "Boolean"),
+                          @JsonSubTypes.Type(value = int.class, name = "Integer"),
+                          @JsonSubTypes.Type(value = float.class, name = "Float"),
+                          @JsonSubTypes.Type(value = double.class, name = "Double"),
+                          @JsonSubTypes.Type(value = char.class, name = "Character"),
+                          @JsonSubTypes.Type(value = boolean.class, name = "Boolean"),
                   })
     private Comparable<?> value;
     private String fieldName;
