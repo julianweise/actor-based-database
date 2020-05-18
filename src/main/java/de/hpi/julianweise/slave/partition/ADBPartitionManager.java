@@ -34,7 +34,7 @@ import java.util.stream.IntStream;
 public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Command> {
 
     public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "PartitionManager");
-    private static final int MAX_PARTITIONS = 1 << 7;
+    private static final int MAX_PARTITIONS = 0x100;
 
     private static ActorRef<ADBPartitionManager.Command> INSTANCE;
     private final List<ADBPartitionHeader> partitionHeaders = new ObjectArrayList<>();

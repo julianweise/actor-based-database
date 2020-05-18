@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
-    private static final int MAX_ELEMENTS = 1 << 15;
+    private static final int MAX_ELEMENTS = 0x10000;
 
     private final List<ADBEntity> data;
     private final Map<String, ADBSortedEntityAttributes2> sortedAttributes;

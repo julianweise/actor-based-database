@@ -25,7 +25,7 @@ import java.util.Map;
 
 public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
 
-    private static final int MAX_SLAVES = 1 << 7;
+    private static final int MAX_SLAVES = 0x100;
     private final static Logger LOG = LoggerFactory.getLogger(ADBMaster.class);
     private static final Map<RootActorPath, Integer> GLOBAL_IDS = new Object2IntLinkedOpenHashMap<>();
     private final Map<ActorRef<ADBSlave.Command>, Boolean> activeSlaveNodes = new HashMap<>();
