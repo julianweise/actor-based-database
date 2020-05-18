@@ -6,6 +6,7 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import com.google.common.primitives.Floats;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.settings.Settings;
@@ -27,7 +28,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.val;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +86,6 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         this.reversed = reversed;
         this.foreignAttributes = foreignAttributes;
 
-        this.getContext().getLog().debug("Started for " + this.query + " reversed: " + this.reversed);
         val resTo = getContext().messageAdapter(ADBPartition.JoinAttributes.class, PartitionJoinAttributesWrapper::new);
         localPartition.tell(new ADBPartition.RequestJoinAttributes(resTo, this.query));
     }
@@ -114,30 +113,24 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
             val right = this.localAttributes.get(this.query.getTerms().get(i).getRightHandSideAttribute());
             costModels.add(ADBJoinTermCostModelFactory.calc(term, i, left, right));
         }
-        costModels.sort((Comparator.comparingInt(ADBJoinTermCostModel::getCost)));
+        costModels.sort((m1, m2) -> Floats.compare(m1.getRelativeCost(), m2.getRelativeCost()));
         return costModels;
     }
 
     private Behavior<Command> execute() {
         if (this.costModels.size() < 2) {
-            this.getContext().getLog().info("[EXECUTION STRATEGY] JoinQuery with just one predicate");
             List<ADBKeyPair> results = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
             return this.returnResults(results);
         }
-        if (this.costModels.get(0).getCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
-            this.getContext().getLog().info("[EXECUTION STRATEGY] Cost under lower bound: Row-based comparison");
-            this.getContext().getLog().info("[JOIN COST] " + this.costModels.get(0).getCost());
+        if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
             List<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
-        } else if (this.costModels.get(0).getCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
-            this.getContext().getLog().info("[EXECUTION STRATEGY] Cost above lower bound: Column-based comparison");
-            this.getContext().getLog().info("[JOIN COST] " + this.costModels.get(0).getCost());
+        } else if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
             this.costModelsProcessed = this.costModels.size();
             this.joinColumnBased(this.costModels);
         } else {
-            this.getContext().getLog().info("[EXECUTION STRATEGY] Cost above upper bound: Row-based comparison");
             List<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
