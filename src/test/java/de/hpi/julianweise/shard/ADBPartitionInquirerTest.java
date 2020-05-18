@@ -5,7 +5,9 @@ import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
@@ -31,6 +33,7 @@ public class ADBPartitionInquirerTest {
 
     @Before
     public void setUp() {
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
         testKit.spawn(ADBSlave.create());
     }
 
