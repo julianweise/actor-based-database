@@ -18,11 +18,12 @@ import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.largemessage.ADBSemiMaterializedPair;
+import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
 
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -31,9 +32,8 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
     private static final int MAX_ELEMENTS = 0x10000;
 
-    private final List<ADBEntity> data;
+    private final ObjectList<ADBEntity> data;
     private final Map<String, ADBSortedEntityAttributes2> sortedAttributes;
-    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final int id;
 
     public interface Command {
@@ -50,7 +50,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @AllArgsConstructor
     @Getter
     public static class Data implements Response {
-        private final List<ADBEntity> data;
+        private final ObjectList<ADBEntity> data;
     }
 
     @AllArgsConstructor
@@ -63,7 +63,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @AllArgsConstructor
     @Getter
     public static class JoinAttributes implements Response {
-        private final Map<String, List<ADBComparable2IntPair>> attributes;
+        private final Map<String, ObjectList<ADBComparable2IntPair>> attributes;
         private final int partitionId;
     }
 
@@ -71,7 +71,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     public static class SemiMaterializeTuples implements Command {
         private final ActorRef<SemiMaterializedTuples> respondTo;
         private final int foreignPartitionId;
-        private final List<ADBKeyPair> targets;
+        private final ObjectList<ADBKeyPair> targets;
         private final boolean reversed;
     }
 
@@ -79,27 +79,28 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @Getter
     public static class SemiMaterializedTuples implements Response {
         private final int foreignPartitionId;
-        private final List<ADBSemiMaterializedPair> results;
+        private final ObjectList<ADBSemiMaterializedPair> results;
         private final boolean reversed;
     }
 
     @AllArgsConstructor
     public static class MaterializeTuples implements Command {
         private final ActorRef<MaterializedTuples> respondTo;
-        private final List<ADBSemiMaterializedPair> targets;
+        private final ObjectList<ADBSemiMaterializedPair> targets;
         private final boolean reversed;
     }
 
     @AllArgsConstructor
     @Getter
     public static class MaterializedTuples implements Command {
-        private final List<ADBPair<ADBEntity, ADBEntity>> results;
+        private final ObjectList<ADBPair<ADBEntity, ADBEntity>> results;
     }
 
-    public ADBPartition(ActorContext<Command> context, int id, List<ADBEntity> data) {
+    public ADBPartition(ActorContext<Command> context, int id, ObjectList<ADBEntity> data) {
         super(context);
         assert data.size() > 0;
-        assert data.stream().mapToInt(ADBEntity::getSize).sum() < this.settings.MAX_SIZE_PARTITION;
+        SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+        assert data.stream().mapToInt(ADBEntity::getSize).sum() < settings.MAX_SIZE_PARTITION;
         assert data.size() < MAX_ELEMENTS : "Maximum 2^16 elements allowed per partition";
 
         this.id = id;
@@ -139,7 +140,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         command.respondTo.tell(new SemiMaterializedTuples(command.foreignPartitionId, command.targets
                 .parallelStream()
                 .map(tuple -> new ADBSemiMaterializedPair(tuple.getKey(), this.data.get(tuple.getValue())))
-                .collect(Collectors.toList()), command.reversed));
+                .collect(new ObjectArrayListCollector<>()), command.reversed));
         return Behaviors.same();
     }
 
@@ -149,8 +150,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
                 .map(tuple -> {
                     if (command.reversed) return new ADBPair<>(tuple.getValue(), this.data.get(tuple.getKey()));
                     return new ADBPair<>(this.data.get(tuple.getKey()), tuple.getValue());
-                })
-                .collect(Collectors.toList())));
+                }).collect(new ObjectArrayListCollector<>())));
         return Behaviors.same();
     }
 }

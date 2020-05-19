@@ -16,6 +16,7 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.agrona.collections.Object2ObjectHashMap;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -23,7 +24,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,8 +64,8 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
-        Map<String, List<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 1, 0));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 1));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 2));
@@ -83,8 +83,8 @@ public class ADBPartitionJoinExecutorTest {
 
         assertThat(requestJoinAttributes.getQuery()).isEqualTo(joinQuery);
 
-        Map<String, List<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 0));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 1));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 9, 2));
@@ -110,8 +110,8 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
-        Map<String, List<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 1, 0));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 1));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 2));
@@ -127,8 +127,8 @@ public class ADBPartitionJoinExecutorTest {
 
         localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
 
-        Map<String, List<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 0));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 1));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 9, 2));
@@ -152,8 +152,8 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
-        Map<String, List<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 0));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 1));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 9, 2));
@@ -170,8 +170,8 @@ public class ADBPartitionJoinExecutorTest {
         localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
 
 
-        Map<String, List<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 1, 0));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 1));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 2));
@@ -195,8 +195,8 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
         TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
 
-        Map<String, List<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> foreignAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 1, 0));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 1));
         fIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 6, 2));
@@ -215,8 +215,8 @@ public class ADBPartitionJoinExecutorTest {
 
         assertThat(requestJoinAttributes.getQuery()).isEqualTo(joinQuery);
 
-        Map<String, List<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
-        List<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
+        Map<String, ObjectList<ADBComparable2IntPair>> localAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBComparable2IntPair> lIntegerAttributes = new ObjectArrayList<>();
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 3, 0));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 5, 1));
         lIntegerAttributes.add(new ADBComparable2IntPair((Comparable<Object>) (Comparable<?>) 9, 2));

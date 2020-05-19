@@ -7,13 +7,12 @@ import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
@@ -34,11 +33,11 @@ public class ADBJoinTermCostModel {
         return (float) this.getCost() / (this.sizeLeft * this.sizeRight);
     }
 
-    public List<ADBKeyPair> getJoinCandidates(Map<String, List<ADBComparable2IntPair>> left,
-                                              Map<String, List<ADBComparable2IntPair>> right) {
-        List<ADBComparable2IntPair> leftValues = left.get(this.term.getLeftHandSideAttribute());
-        List<ADBComparable2IntPair> rightValues = right.get(this.term.getRightHandSideAttribute());
-        List<ADBKeyPair> candidates = new ObjectArrayList<>(this.getCost());
+    public ObjectList<ADBKeyPair> getJoinCandidates(Map<String, ObjectList<ADBComparable2IntPair>> left,
+                                                    Map<String, ObjectList<ADBComparable2IntPair>> right) {
+        ObjectList<ADBComparable2IntPair> leftValues = left.get(this.term.getLeftHandSideAttribute());
+        ObjectList<ADBComparable2IntPair> rightValues = right.get(this.term.getRightHandSideAttribute());
+        ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(this.getCost());
         for (int i = 0; i < this.joinCandidates.length; i++) {
             ADBInterval interval = this.joinCandidates[i];
             if (interval instanceof ADBIntervalImpl) {
@@ -50,26 +49,26 @@ public class ADBJoinTermCostModel {
         return candidates;
     }
 
-    public List<ADBKeyPair> getJoinCandidatesForRow(ADBIntervalImpl interval,
+    public ObjectList<ADBKeyPair> getJoinCandidatesForRow(ADBIntervalImpl interval,
                                                     ADBComparable2IntPair left,
-                                                    List<ADBComparable2IntPair> right) {
+                                                    ObjectList<ADBComparable2IntPair> right) {
         if (interval.equals(ADBIntervalImpl.NO_INTERSECTION)) {
-            return Collections.emptyList();
+            return new ObjectArrayList<>();
         }
-        List<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
+        ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
         for(int i = interval.getStart(); i <= interval.getEnd(); i++) {
             candidates.add(new ADBKeyPair(left.getValue(), right.get(i).getValue()));
         }
         return candidates;
     }
 
-    public List<ADBKeyPair> getJoinCandidatesForRow(ADBInverseInterval interval,
+    public ObjectList<ADBKeyPair> getJoinCandidatesForRow(ADBInverseInterval interval,
                                                     ADBComparable2IntPair left,
-                                                    List<ADBComparable2IntPair> right) {
+                                                    ObjectList<ADBComparable2IntPair> right) {
         if (interval.equals(ADBInverseInterval.NO_INTERSECTION)) {
-            return Collections.emptyList();
+            return new ObjectArrayList<>();
         }
-        List<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
+        ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
         if (interval.getStart() > 0) {
             for(int i = 0; i < interval.getStart(); i++) {
                 candidates.add(new ADBKeyPair(left.getValue(), right.get(i).getValue()));

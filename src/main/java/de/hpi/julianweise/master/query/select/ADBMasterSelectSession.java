@@ -12,14 +12,13 @@ import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.val;
-
-import java.util.Collections;
-import java.util.List;
 
 public class ADBMasterSelectSession extends ADBMasterQuerySession {
 
@@ -28,11 +27,11 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
     @Getter
     @SuperBuilder
     public static class SelectQueryResults extends ADBMasterQuerySession.QueryResults {
-        private List<ADBEntity> results;
+        private ObjectList<ADBEntity> results;
 
     }
 
-    public ADBMasterSelectSession(ActorContext<Command> context, List<ActorRef<ADBQueryManager.Command>> queryManager,
+    public ADBMasterSelectSession(ActorContext<Command> context, ObjectList<ActorRef<ADBQueryManager.Command>> queryManager,
                                   int transactionId, ActorRef<ADBPartitionInquirer.Command> parent, ADBSelectionQuery query) {
         super(context, queryManager, transactionId, parent);
         // Send initial query
@@ -61,7 +60,7 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleQueryResults(SelectQueryResults response) {
-        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(this.transactionId, response.results, false));
+        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, response.results, false));
         this.conditionallyConcludeTransaction();
         return Behaviors.same();
     }
@@ -73,6 +72,6 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
 
     @Override
     protected void submitResults() {
-        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(this.transactionId, Collections.emptyList(), true));
+        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), true));
     }
 }

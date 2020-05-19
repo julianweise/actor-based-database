@@ -2,8 +2,7 @@ package de.hpi.julianweise.query;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
@@ -15,6 +14,6 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
               })
 public interface ADBQuery {
 
-    List<? extends ADBQueryTerm> getTerms();
+    ObjectList<? extends ADBQueryTerm> getTerms();
 
 }

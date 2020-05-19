@@ -1,8 +1,9 @@
 package de.hpi.julianweise.query;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -12,7 +13,9 @@ public class ADBJoinQueryTest {
     @Test
     public void initializeUsingConstructor() {
         ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
-        ADBJoinQuery joinQuery = new ADBJoinQuery(Collections.singletonList(term));
+        ObjectList<ADBJoinQueryTerm> termList = new ObjectArrayList<>();
+        termList.add(term);
+        ADBJoinQuery joinQuery = new ADBJoinQuery(termList);
 
         assertThat(joinQuery.getTerms().size()).isOne();
         assertThat(joinQuery.getTerms().get(0)).isEqualTo(term);
@@ -32,7 +35,9 @@ public class ADBJoinQueryTest {
     @Test
     public void queryHasInformativeStringRepresentation() {
         ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
-        ADBJoinQuery joinQuery = new ADBJoinQuery(Collections.singletonList(term));
+        ObjectList<ADBJoinQueryTerm> termList = new ObjectArrayList<>();
+        termList.add(term);
+        ADBJoinQuery joinQuery = new ADBJoinQuery(termList);
 
         assertThat(joinQuery.toString()).contains("test", "testTarget", "EQUALITY", "JoinQuery");
     }

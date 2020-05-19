@@ -10,16 +10,15 @@ import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class ADBMasterQuerySessionFactory {
 
     private final static Logger LOG = LoggerFactory.getLogger(ADBMasterQuerySessionFactory.class);
 
-    public static Behavior<ADBMasterQuerySession.Command> create(List<ActorRef<ADBQueryManager.Command>> queryManagers,
+    public static Behavior<ADBMasterQuerySession.Command> create(ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                                                  ADBQuery query, int transactionId,
                                                                  ActorRef<ADBPartitionInquirer.Command> parent) {
         if (query instanceof ADBSelectionQuery) {
@@ -31,14 +30,14 @@ public class ADBMasterQuerySessionFactory {
         return Behaviors.same();
     }
 
-    private static Behavior<ADBMasterQuerySession.Command> createSelectSession(List<ActorRef<ADBQueryManager.Command>> queryManagers,
+    private static Behavior<ADBMasterQuerySession.Command> createSelectSession(ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                                                                int transactionId,
                                                                                ActorRef<ADBPartitionInquirer.Command> parent,
                                                                                ADBSelectionQuery query) {
         return Behaviors.setup(context -> new ADBMasterSelectSession(context, queryManagers, transactionId, parent, query));
     }
 
-    private static Behavior<ADBMasterQuerySession.Command> createJoinSession(List<ActorRef<ADBQueryManager.Command>> queryManagers,
+    private static Behavior<ADBMasterQuerySession.Command> createJoinSession(ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                                                              int transactionId,
                                                                              ActorRef<ADBPartitionInquirer.Command> parent,
                                                                              ADBJoinQuery query) {

@@ -2,12 +2,12 @@ package de.hpi.julianweise.utility.partition;
 
 import de.hpi.julianweise.domain.ADBEntity;
 import it.unimi.dsi.fastutil.PriorityQueue;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectHeapPriorityQueue;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Getter;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
 @Getter
 public class ADBEntityBuffer {
@@ -29,15 +29,15 @@ public class ADBEntityBuffer {
         return this.bufferSize > this.maxPartitionSize;
     }
 
-    public List<ADBEntity> getPayloadForPartition() {
+    public ObjectList<ADBEntity> getPayloadForPartition() {
         int partitionSize = 0;
-        ArrayList<ADBEntity> partitionPayload = new ArrayList<>();
+        ObjectArrayList<ADBEntity> partitionPayload = new ObjectArrayList<>();
         while(!this.dataPartitionBuffer.isEmpty() && partitionSize + this.dataPartitionBuffer.first().getSize() < this.maxPartitionSize) {
             partitionSize += this.dataPartitionBuffer.first().getSize();
             partitionPayload.add(this.dataPartitionBuffer.dequeue());
         }
         this.bufferSize -= partitionSize;
-        partitionPayload.trimToSize();
+        partitionPayload.trim();
         return partitionPayload;
     }
 }

@@ -4,25 +4,24 @@ import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.query.join.ADBOffsetCalculator;
-
-import java.util.ArrayList;
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 @SuppressWarnings("unused")
 public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeComparisonStrategy {
 
     @Override
-    public List<ADBKeyPair> compare(ADBQueryTerm.RelationalOperator operator,
-                                    List<ADBComparable2IntPair> left,
-                                    List<ADBComparable2IntPair> right,
-                                    int estimatedResultSize) {
+    public ObjectList<ADBKeyPair> compare(ADBQueryTerm.RelationalOperator operator,
+                                          ObjectList<ADBComparable2IntPair> left,
+                                          ObjectList<ADBComparable2IntPair> right,
+                                          int estimatedResultSize) {
         int[] offset = ADBOffsetCalculator.calc(left, right);
         return this.performComparison(operator, left, right, offset, estimatedResultSize);
     }
 
-    private ArrayList<ADBKeyPair> performComparison(ADBQueryTerm.RelationalOperator operator,
-                                                    List<ADBComparable2IntPair> left,
-                                                    List<ADBComparable2IntPair> right,
+    private ObjectArrayList<ADBKeyPair> performComparison(ADBQueryTerm.RelationalOperator operator,
+                                                    ObjectList<ADBComparable2IntPair> left,
+                                                    ObjectList<ADBComparable2IntPair> right,
                                                     int[] offset, int resultSize) {
         switch (operator) {
             case GREATER: return this.compareGreater(left, right, offset, resultSize);
@@ -34,11 +33,11 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         }
     }
 
-    private ArrayList<ADBKeyPair> compareGreater(List<ADBComparable2IntPair> left,
-                                                 List<ADBComparable2IntPair> right,
+    private ObjectArrayList<ADBKeyPair> compareGreater(ObjectList<ADBComparable2IntPair> left,
+                                                 ObjectList<ADBComparable2IntPair> right,
                                                  int[] offset,
                                                  int estimatedResultSize) {
-        ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
+        ObjectArrayList<ADBKeyPair> joinTuples = new ObjectArrayList<>(estimatedResultSize);
         for (int a = 0; a < left.size(); a++) {
             int corr = left.get(a).getKey().compareTo(right.get(offset[a]).getKey()) < 0 ? -1 : 0;
             for (int b = offset[a] + corr; b > -1; b--) {
@@ -51,11 +50,11 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareGreaterEquals(List<ADBComparable2IntPair> left,
-                                                       List<ADBComparable2IntPair> right,
+    private ObjectArrayList<ADBKeyPair> compareGreaterEquals(ObjectList<ADBComparable2IntPair> left,
+                                                       ObjectList<ADBComparable2IntPair> right,
                                                        int[] offset,
                                                        int estimatedResultSize) {
-        ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
+        ObjectArrayList<ADBKeyPair> joinTuples = new ObjectArrayList<>(estimatedResultSize);
         for (int a = 0; a < left.size(); a++) {
             int offsetCorrection = left.get(a).getKey().compareTo(right.get(offset[a]).getKey()) < 0 ? -1 : 0;
             for (int b = offset[a] + offsetCorrection; b > -1; b--) {
@@ -65,11 +64,11 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareLess(List<ADBComparable2IntPair> left,
-                                              List<ADBComparable2IntPair> right,
+    private ObjectArrayList<ADBKeyPair> compareLess(ObjectList<ADBComparable2IntPair> left,
+                                              ObjectList<ADBComparable2IntPair> right,
                                               int[] offset,
                                               int estimatedResultSize) {
-        ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
+        ObjectArrayList<ADBKeyPair> joinTuples = new ObjectArrayList<>(estimatedResultSize);
         for (int a = 0; a < left.size(); a++) {
             int offsetCorrection = left.get(a).getKey().compareTo(right.get(offset[a]).getKey()) > -1 ? 1 : 0;
             for (int b = offset[a] + offsetCorrection; b > -1 && b < right.size(); b++) {
@@ -79,11 +78,11 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareLessEqual(List<ADBComparable2IntPair> left,
-                                                   List<ADBComparable2IntPair> right,
+    private ObjectArrayList<ADBKeyPair> compareLessEqual(ObjectList<ADBComparable2IntPair> left,
+                                                   ObjectList<ADBComparable2IntPair> right,
                                                    int[] offset,
                                                    int estimatedResultSize) {
-        ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
+        ObjectArrayList<ADBKeyPair> joinTuples = new ObjectArrayList<>(estimatedResultSize);
         for (int a = 0; a < left.size(); a++) {
             int offsetCorrection = 0;
             while (offset[a] - offsetCorrection - 1 > 0 && left.get(a).getKey().equals(right.get(offset[a] - offsetCorrection - 1).getKey())) offsetCorrection--;
@@ -94,11 +93,11 @@ public class ADBOffsetAttributeComparisonStrategy implements ADBAttributeCompari
         return joinTuples;
     }
 
-    private ArrayList<ADBKeyPair> compareEqual(List<ADBComparable2IntPair> left,
-                                               List<ADBComparable2IntPair> right,
+    private ObjectArrayList<ADBKeyPair> compareEqual(ObjectList<ADBComparable2IntPair> left,
+                                               ObjectList<ADBComparable2IntPair> right,
                                                int[] offset,
                                                int estimatedResultSize) {
-        ArrayList<ADBKeyPair> joinTuples = new ArrayList<>(estimatedResultSize);
+        ObjectArrayList<ADBKeyPair> joinTuples = new ObjectArrayList<>(estimatedResultSize);
         for (int a = 0; a < left.size(); a++) {
             for (int b = offset[a]; b > -1 && left.get(a).getKey().equals(right.get(b).getKey()); b--) {
                 joinTuples.add(new ADBKeyPair(left.get(a).getValue(), right.get(b).getValue()));

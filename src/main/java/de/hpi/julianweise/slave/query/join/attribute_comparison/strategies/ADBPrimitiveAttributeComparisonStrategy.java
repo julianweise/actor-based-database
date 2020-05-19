@@ -4,18 +4,17 @@ import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-
-import java.util.ArrayList;
-import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 public class ADBPrimitiveAttributeComparisonStrategy implements ADBAttributeComparisonStrategy {
 
     @Override
-    public List<ADBKeyPair> compare(ADBQueryTerm.RelationalOperator operator,
-                                    List<ADBComparable2IntPair> left,
-                                    List<ADBComparable2IntPair> right,
-                                    int estimatedResultSize) {
-        ArrayList<ADBKeyPair> joinCandidates = new ArrayList<>(estimatedResultSize);
+    public ObjectList<ADBKeyPair> compare(ADBQueryTerm.RelationalOperator operator,
+                                          ObjectList<ADBComparable2IntPair> left,
+                                          ObjectList<ADBComparable2IntPair> right,
+                                          int estimatedResultSize) {
+        ObjectArrayList<ADBKeyPair> joinCandidates = new ObjectArrayList<>(estimatedResultSize);
 
         for (ADBComparable2IntPair leftValue : left) {
             for (ADBComparable2IntPair rightValue : right) {
@@ -25,7 +24,7 @@ public class ADBPrimitiveAttributeComparisonStrategy implements ADBAttributeComp
             }
         }
 
-        joinCandidates.trimToSize();
+        joinCandidates.trim();
         return joinCandidates;
     }
 

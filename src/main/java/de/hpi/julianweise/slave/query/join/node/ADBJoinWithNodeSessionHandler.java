@@ -18,14 +18,15 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,9 +35,9 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     private final ActorRef<ADBJoinWithNodeSession.Command> session;
     private final ADBJoinQuery query;
     private final AtomicInteger localPartitionsToProvideAttributesFor = new AtomicInteger(0);
-    private Map<Integer, Map<String, List<ADBComparable2IntPair>>> attributes;
-    private Map<Integer, int[]> lPartitionIdsLeft;
-    private Map<Integer, int[]> lPartitionIdsRight;
+    private Int2ObjectMap<Map<String, ObjectList<ADBComparable2IntPair>>> attributes;
+    private Int2ObjectMap<int[]> lPartitionIdsLeft;
+    private Int2ObjectMap<int[]> lPartitionIdsRight;
     private AtomicInteger numberOfExternalPartitionsToCheck;
 
 
@@ -44,7 +45,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     @Getter
     @NoArgsConstructor
     protected static class RequestJoinAttributes implements Command, KryoSerializable {
-        List<ADBPartitionHeader> headers;
+        ObjectList<ADBPartitionHeader> headers;
     }
 
     @AllArgsConstructor
@@ -68,7 +69,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
         session.tell(new ADBJoinWithNodeSession.RegisterHandler(this.getContext().getSelf()));
 
         this.session = session;
-        this.attributes = new Object2ObjectLinkedOpenHashMap<>();
+        this.attributes = new Int2ObjectOpenHashMap<>();
         this.query = (ADBJoinQuery) query;
 
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
@@ -94,7 +95,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
         this.getContext().getLog().debug("Asked to provide join attributes for " + command.headers.size() + " headers");
         this.lPartitionIdsRight = new Int2ObjectLinkedOpenHashMap<>(command.headers.size());
         this.lPartitionIdsLeft = new Int2ObjectLinkedOpenHashMap<>(command.headers.size());
-        this.attributes = new Object2ObjectLinkedOpenHashMap<>(command.headers.size());
+        this.attributes = new Int2ObjectOpenHashMap<>(command.headers.size());
         this.numberOfExternalPartitionsToCheck = new AtomicInteger(command.headers.size());
 
         val respondTo = getContext().messageAdapter(ADBPartitionManager.RelevantPartitionsJoinQuery.class,

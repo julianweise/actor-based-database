@@ -7,16 +7,17 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,9 +78,9 @@ public class ADBLoadAndDistributeDataProcessTest {
         ActorRef<ADBLoadAndDistributeDataProcess.Command> processUnderTest =
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
 
-        CSVParsingActor.DomainDataChunk chunk =
-                new CSVParsingActor.DomainDataChunk(Collections.singletonList(new TestEntity(1, "Test", 1f, true,
-                        12.03234, 'w')));
+        ObjectList<ADBEntity> chunkList = new ObjectArrayList<>();
+        chunkList.add(new TestEntity(1, "Test", 1f, true, 12.03234, 'w'));
+        CSVParsingActor.DomainDataChunk chunk = new CSVParsingActor.DomainDataChunk(chunkList);
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedCSVParserResponse(chunk));
 
         ADBDataDistributor.Command distCommand = distributorTestProbe.receiveMessage();

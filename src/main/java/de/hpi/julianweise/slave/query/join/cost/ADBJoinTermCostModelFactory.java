@@ -11,10 +11,10 @@ import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermLessCostC
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermLessOrEqualCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import org.agrona.collections.Object2ObjectHashMap;
 
-import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
@@ -32,8 +32,8 @@ public class ADBJoinTermCostModelFactory {
 
     public static ADBJoinTermCostModel calc(ADBJoinQueryTerm term,
                                             int termId,
-                                            List<ADBComparable2IntPair> left,
-                                            List<ADBComparable2IntPair> right) {
+                                            ObjectList<ADBComparable2IntPair> left,
+                                            ObjectList<ADBComparable2IntPair> right) {
         ADBInterval[] joinCandidates = ADBJoinTermCostModelFactory.strategies.get(term.getOperator()).calc(left, right);
         return ADBJoinTermCostModel.builder()
                                    .term(term)

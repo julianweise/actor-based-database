@@ -16,6 +16,8 @@ import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,8 +25,6 @@ import lombok.experimental.SuperBuilder;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBMasterJoinSession extends ADBMasterQuerySession {
@@ -51,11 +51,12 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     @SuperBuilder
     @Getter
     public static class JoinQueryResults extends ADBMasterQuerySession.QueryResults {
-        private List<ADBKeyPair> joinResults;
+        private ObjectList<ADBKeyPair> joinResults;
     }
 
     public ADBMasterJoinSession(ActorContext<ADBMasterQuerySession.Command> context,
-                                List<ActorRef<ADBQueryManager.Command>> queryManagers, int transactionId,
+                                ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
+                                int transactionId,
                                 ActorRef<ADBPartitionInquirer.Command> parent,
                                 ADBJoinQuery query) {
         super(context, queryManagers, transactionId, parent);
@@ -119,7 +120,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @Override
     protected void submitResults() {
-        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, Collections.emptyList(), true));
+        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), true));
         this.getContext().getLog().info("[FINAL RESULT]: Submitting " + this.resultCounter.get() + " elements.");
     }
 }

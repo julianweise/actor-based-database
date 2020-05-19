@@ -15,12 +15,12 @@ import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,20 +43,20 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
     @AllArgsConstructor
     @Getter
     public static class StepExecuted implements Response {
-        private final List<ADBKeyPair> results;
+        private final ObjectList<ADBKeyPair> results;
     }
 
-    private final Map<String, List<ADBComparable2IntPair>> left;
-    private final Map<String, List<ADBComparable2IntPair>> right;
-    private final List<ADBJoinTermCostModel> costModels;
+    private final Map<String, ObjectList<ADBComparable2IntPair>> left;
+    private final Map<String, ObjectList<ADBComparable2IntPair>> right;
+    private final ObjectList<ADBJoinTermCostModel> costModels;
     private final ActorRef<StepExecuted> respondTo;
     private final AtomicInteger intersectsPerformed = new AtomicInteger(0);
     private SparseBitSet[] resultSet;
 
     public ADBColumnJoinStepExecutor(ActorContext<Command> context,
-                                     Map<String, List<ADBComparable2IntPair>> left,
-                                     Map<String, List<ADBComparable2IntPair>> right,
-                                     List<ADBJoinTermCostModel> costModels,
+                                     Map<String, ObjectList<ADBComparable2IntPair>> left,
+                                     Map<String, ObjectList<ADBComparable2IntPair>> right,
+                                     ObjectList<ADBJoinTermCostModel> costModels,
                                      ActorRef<StepExecuted> respondTo) {
         super(context);
         this.left = left;
@@ -111,14 +111,14 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
         }
     }
 
-    private List<ADBKeyPair> mapResults() {
+    private ObjectList<ADBKeyPair> mapResults() {
         val leftList = this.left.get(this.costModels.get(0).getTerm().getLeftHandSideAttribute());
         int leftNodeId = ADBInternalIDHelper.getNodeId(leftList.get(0).getValue());
         int leftPartitionId = ADBInternalIDHelper.getPartitionId(leftList.get(0).getValue());
         val rightList = this.right.get(this.costModels.get(0).getTerm().getRightHandSideAttribute());
         int rightNodeId = ADBInternalIDHelper.getNodeId(rightList.get(0).getValue());
         int rightPartitionId = ADBInternalIDHelper.getPartitionId(rightList.get(0).getValue());
-        List<ADBKeyPair> results = new ObjectArrayList<>(Arrays.stream(resultSet).mapToInt(SparseBitSet::cardinality).sum());
+        ObjectList<ADBKeyPair> results = new ObjectArrayList<>(Arrays.stream(resultSet).mapToInt(SparseBitSet::cardinality).sum());
         for(int a = 0; a < this.resultSet.length; a++) {
             for (int b = this.resultSet[a].nextSetBit(0); b >= 0; b = this.resultSet[a].nextSetBit(b+1)) {
                 int leftId = ADBInternalIDHelper.createID(leftNodeId, leftPartitionId, a);

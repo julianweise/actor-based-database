@@ -6,10 +6,10 @@ import de.hpi.julianweise.query.ADBJoinQueryTerm;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -19,10 +19,10 @@ public class ADBPartitionHeader {
     private int id;
     private Map<String, Comparable<Object>> minValues;
     private Map<String, Comparable<Object>> maxValues;
-    private transient List<ADBEntity> data;
+    private transient ObjectList<ADBEntity> data;
 
     public ADBPartitionHeader(Map<String, Comparable<Object>> minValues, Map<String, Comparable<Object>> maxValues,
-                              List<ADBEntity> data, int id) {
+                              ObjectList<ADBEntity> data, int id) {
         this.minValues = minValues;
         this.maxValues = maxValues;
         this.data = data;

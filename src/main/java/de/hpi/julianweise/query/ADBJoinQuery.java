@@ -1,15 +1,16 @@
 package de.hpi.julianweise.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Setter
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 public class ADBJoinQuery implements ADBQuery {
 
     @Getter
-    protected List<ADBJoinQueryTerm> terms = new ArrayList<>();
+    protected ObjectList<ADBJoinQueryTerm> terms = new ObjectArrayList<>();
 
     public void addTerm(ADBJoinQueryTerm term) {
         this.getTerms().add(term);
@@ -28,7 +29,7 @@ public class ADBJoinQuery implements ADBQuery {
     public Set<String> getAllFields() {
         return this.getTerms().stream()
             .map(term -> {
-                List<String> fields = new ArrayList<>(2);
+                ObjectList<String> fields = new ObjectArrayList<>(2);
                 fields.add(term.getLeftHandSideAttribute());
                 fields.add(term.getRightHandSideAttribute());
                 return fields;
@@ -46,6 +47,14 @@ public class ADBJoinQuery implements ADBQuery {
 
     @JsonIgnore
     public ADBJoinQuery getReverse() {
-        return new ADBJoinQuery(this.getTerms().stream().map(ADBJoinQueryTerm::getReverse).collect(Collectors.toList()));
+        return new ADBJoinQuery(this.getTerms().stream().map(ADBJoinQueryTerm::getReverse)
+                                    .collect(Collector.of(
+                                            ObjectArrayList::new,
+                                            ObjectArrayList::add,
+                                            (collection1, collection2) -> {
+                                                collection2.addAll(collection1);
+                                                return collection2;
+                                            }
+                                    )));
     }
 }

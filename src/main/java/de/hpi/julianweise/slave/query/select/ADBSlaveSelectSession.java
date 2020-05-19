@@ -19,16 +19,16 @@ import de.hpi.julianweise.slave.worker_pool.workload.SelectionQueryWorkload;
 import de.hpi.julianweise.slave.worker_pool.workload.Workload;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.val;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
 
-    private final List<ADBEntity> partialResults = new ObjectArrayList<>();
+    private final ObjectList<ADBEntity> partialResults = new ObjectArrayList<>();
     private AtomicInteger partitionResultsPending;
 
     @AllArgsConstructor

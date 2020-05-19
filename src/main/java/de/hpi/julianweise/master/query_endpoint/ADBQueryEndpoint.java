@@ -20,12 +20,12 @@ import akka.http.javadsl.server.directives.RouteAdapter;
 import akka.stream.Materializer;
 import akka.stream.javadsl.Flow;
 import de.hpi.julianweise.query.ADBQuery;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import scala.concurrent.duration.Duration;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,7 +34,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     private final ActorRef<ADBPartitionInquirer.Command> shardInquirer;
     private final ActorRef<ADBPartitionInquirer.Response> shardInquirerResponseWrapper;
-    private final Map<Integer, CompletableFuture<Object[]>> requests = new HashMap<>();
+    private final Int2ObjectMap<CompletableFuture<Object[]>> requests = new Int2ObjectOpenHashMap<>();
     private final AtomicInteger requestCounter = new AtomicInteger();
     private CompletionStage<ServerBinding> binding;
 

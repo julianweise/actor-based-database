@@ -23,25 +23,25 @@ import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.val;
 
-import java.util.List;
 import java.util.Map;
 
 public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinExecutor.Command> {
 
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
-    private final Map<String, List<ADBComparable2IntPair>> foreignAttributes;
+    private final Map<String, ObjectList<ADBComparable2IntPair>> foreignAttributes;
 
     private final ActorRef<PartitionsJoined> supervisor;
     private final ADBJoinQuery query;
     private final boolean reversed;
 
-    private Map<String, List<ADBComparable2IntPair>> localAttributes;
-    private List<ADBJoinTermCostModel> costModels;
+    private Map<String, ObjectList<ADBComparable2IntPair>> localAttributes;
+    private ObjectList<ADBJoinTermCostModel> costModels;
     private int costModelsProcessed = 0;
 
     public interface Command {
@@ -71,13 +71,13 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     @Getter
     public static class PartitionsJoined implements Response {
         private final boolean reversed;
-        private final List<ADBKeyPair> joinTuples;
+        private final ObjectList<ADBKeyPair> joinTuples;
     }
 
     public ADBPartitionJoinExecutor(ActorContext<Command> context,
                                     ADBJoinQuery query,
                                     ActorRef<ADBPartition.Command> localPartition,
-                                    Map<String, List<ADBComparable2IntPair>> foreignAttributes,
+                                    Map<String, ObjectList<ADBComparable2IntPair>> foreignAttributes,
                                     ActorRef<PartitionsJoined> supervisor,
                                     boolean reversed) {
         super(context);
@@ -105,8 +105,8 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         return this.execute();
     }
 
-    private List<ADBJoinTermCostModel> getCostModels() {
-        List<ADBJoinTermCostModel> costModels = new ObjectArrayList<>(this.query.getTerms().size());
+    private ObjectList<ADBJoinTermCostModel> getCostModels() {
+        ObjectList<ADBJoinTermCostModel> costModels = new ObjectArrayList<>(this.query.getTerms().size());
         for (int i = 0; i < this.query.getTerms().size(); i++) {
             ADBJoinQueryTerm term = this.query.getTerms().get(i);
             val left = this.foreignAttributes.get(this.query.getTerms().get(i).getLeftHandSideAttribute());
@@ -119,26 +119,26 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
 
     private Behavior<Command> execute() {
         if (this.costModels.size() < 2) {
-            List<ADBKeyPair> results = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
+            ObjectList<ADBKeyPair> results = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
             return this.returnResults(results);
         }
         if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
-            List<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
+            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
         } else if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
             this.costModelsProcessed = this.costModels.size();
             this.joinColumnBased(this.costModels);
         } else {
-            List<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
+            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
         }
         return Behaviors.same();
     }
 
-    private void joinRowBased(List<ADBKeyPair> joinCandidates, List<ADBJoinTermCostModel> costModels) {
+    private void joinRowBased(ObjectList<ADBKeyPair> joinCandidates, ObjectList<ADBJoinTermCostModel> costModels) {
         val leftAttributes = ADBSortedEntityAttributes2Factory.resortByIndex(this.foreignAttributes, costModels);
         val rightAttributes = ADBSortedEntityAttributes2Factory.resortByIndex(this.localAttributes, costModels);
         val workload = new JoinQueryRowWorkload(joinCandidates, leftAttributes, rightAttributes, costModels);
@@ -146,7 +146,7 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));
     }
 
-    private void joinColumnBased(List<ADBJoinTermCostModel> costModels) {
+    private void joinColumnBased(ObjectList<ADBJoinTermCostModel> costModels) {
         val respondTo = getContext().messageAdapter(ADBColumnJoinStepExecutor.StepExecuted.class,
                 ADBColumnJoinExecutorWrapper::new);
         this.getContext().spawn(ADBColumnJoinStepExecutorFactory
@@ -156,14 +156,14 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
 
     private Behavior<Command> handleGenericWorkerResponse(GenericWorkerResponseWrapper wrapper) {
         if (wrapper.response instanceof JoinQueryRowWorkload.Results) {
-            List<ADBKeyPair> results = ((JoinQueryRowWorkload.Results) wrapper.response).getResults();
+            ObjectList<ADBKeyPair> results = ((JoinQueryRowWorkload.Results) wrapper.response).getResults();
             return this.returnResults(results);
         }
         return Behaviors.same();
     }
 
     private Behavior<Command> handleADBColumnJoinExecutorWrapper(ADBColumnJoinExecutorWrapper wrapper) {
-        List<ADBKeyPair> results = wrapper.response.getResults();
+        ObjectList<ADBKeyPair> results = wrapper.response.getResults();
         if (this.costModelsProcessed == this.costModels.size()) {
             return this.returnResults(results);
         }
@@ -172,7 +172,7 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         return Behaviors.same();
     }
 
-    private Behavior<Command> returnResults(List<ADBKeyPair> results) {
+    private Behavior<Command> returnResults(ObjectList<ADBKeyPair> results) {
         this.supervisor.tell(new PartitionsJoined(this.reversed, results));
         return Behaviors.stopped();
     }

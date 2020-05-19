@@ -15,10 +15,12 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
+import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,7 +28,6 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -37,8 +38,8 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     private static final int MAX_PARTITIONS = 0x100;
 
     private static ActorRef<ADBPartitionManager.Command> INSTANCE;
-    private final List<ADBPartitionHeader> partitionHeaders = new ObjectArrayList<>();
-    private final List<ActorRef<ADBPartition.Command>> partitions = new ObjectArrayList<>();
+    private final ObjectList<ADBPartitionHeader> partitionHeaders = new ObjectArrayList<>();
+    private final ObjectList<ActorRef<ADBPartition.Command>> partitions = new ObjectArrayList<>();
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private ADBEntityBuffer entityBuffer = new ADBEntityBuffer(this.settings.MAX_SIZE_PARTITION);
 
@@ -102,7 +103,7 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     @AllArgsConstructor
     @Getter
     public static class RelevantPartitionsSelectionQuery implements Response {
-        private final List<ActorRef<ADBPartition.Command>> partitions;
+        private final ObjectList<ActorRef<ADBPartition.Command>> partitions;
     }
 
     @AllArgsConstructor
@@ -122,8 +123,8 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     @AllArgsConstructor
     @Getter
     public static class AllPartitionsAndHeaders implements Response {
-        private final List<ActorRef<ADBPartition.Command>> partitions;
-        private final List<ADBPartitionHeader> headers;
+        private final ObjectList<ActorRef<ADBPartition.Command>> partitions;
+        private final ObjectList<ADBPartitionHeader> headers;
     }
 
     public ADBPartitionManager(ActorContext<Command> context) {
@@ -184,11 +185,11 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     }
 
     private Behavior<Command> handleRequestForSelectionQuery(RequestPartitionsForSelectionQuery command) {
-        List<ActorRef<ADBPartition.Command>> relevantPartitions =
+        ObjectList<ActorRef<ADBPartition.Command>> relevantPartitions =
                 IntStream.range(0, this.partitions.size())
                          .filter(index -> this.partitionHeaders.get(index).isRelevant(command.query))
                          .mapToObj(this.partitions::get)
-                         .collect(Collectors.toList());
+                         .collect(new ObjectArrayListCollector<>());
         command.respondTo.tell(new RelevantPartitionsSelectionQuery(relevantPartitions));
         return Behaviors.same();
     }

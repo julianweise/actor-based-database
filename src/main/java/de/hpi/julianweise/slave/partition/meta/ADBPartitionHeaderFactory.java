@@ -2,16 +2,16 @@ package de.hpi.julianweise.slave.partition.meta;
 
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 public class ADBPartitionHeaderFactory {
 
-    public static ADBPartitionHeader createDefault(List<ADBEntity> data, int id) {
+    public static ADBPartitionHeader createDefault(ObjectList<ADBEntity> data, int id) {
         if (data.size() < 1) {
             return new ADBPartitionHeader(new HashMap<>(), new HashMap<>(), data, id);
         }
@@ -23,7 +23,7 @@ public class ADBPartitionHeaderFactory {
         return new ADBPartitionHeader(minValues, maxValues, data, id);
     }
 
-    private static void getMinValuesPerField(List<ADBEntity> data, Map<String, Comparable<Object>> minValues) {
+    private static void getMinValuesPerField(ObjectList<ADBEntity> data, Map<String, Comparable<Object>> minValues) {
         for (Field field : data.get(0).getClass().getDeclaredFields()) {
             Function<ADBEntity, Comparable<Object>> fieldGetter = data.get(0).getGetterForField(field.getName());
             for (ADBEntity datum : data) {
@@ -38,7 +38,7 @@ public class ADBPartitionHeaderFactory {
         }
     }
 
-    private static void getMaxValuesPerField(List<ADBEntity> data, Map<String, Comparable<Object>> maxValues) {
+    private static void getMaxValuesPerField(ObjectList<ADBEntity> data, Map<String, Comparable<Object>> maxValues) {
         for (Field field : data.get(0).getClass().getDeclaredFields()) {
             Function<ADBEntity, Comparable<Object>> fieldGetter = data.get(0).getGetterForField(field.getName());
             for (ADBEntity datum : data) {

@@ -12,15 +12,14 @@ import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.agrona.collections.Int2ObjectHashMap;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,9 +27,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.Command> {
 
     @SuppressWarnings("rawtypes")
-    private final Map<Integer, List> results = new Int2ObjectHashMap<>();
+    private final Int2ObjectHashMap<ObjectList> results = new Int2ObjectHashMap<>();
     private final Set<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArraySet<>();
-    private final Map<Integer, QueryShards> transactionToRequest = new Int2ObjectHashMap<>();
+    private final Int2ObjectHashMap<QueryShards> transactionToRequest = new Int2ObjectHashMap<>();
     private final AtomicInteger transactionCounter = new AtomicInteger();
     private final ActorRef<ADBResultWriter.Command> resultWriter;
 
@@ -65,7 +64,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     @Getter
     public static class TransactionResultChunk implements Command {
         private final int transactionId;
-        private final List results;
+        private final ObjectList results;
         private final boolean isLast;
     }
 
@@ -115,7 +114,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     }
 
     private void createNewQuerySession(int transactionID, ADBQuery query) {
-        this.getContext().spawn(ADBMasterQuerySessionFactory.create(new ArrayList<>(this.queryManagers), query, transactionID,
+        this.getContext().spawn(ADBMasterQuerySessionFactory.create(new ObjectArrayList<>(this.queryManagers), query, transactionID,
                 this.getContext().getSelf()), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
     }
 

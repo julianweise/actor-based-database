@@ -3,10 +3,9 @@ package de.hpi.julianweise.slave.query.join.cost.calculators;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,8 +16,8 @@ public class ADBJoinTermEqualityCostCalculatorTest {
     public void expectEmptyArrayForEmptyLists() {
         ADBJoinTermEqualityCostCalculator calculator = new ADBJoinTermEqualityCostCalculator();
 
-        List<ADBComparable2IntPair> left = new ArrayList<>();
-        List<ADBComparable2IntPair> right = new ArrayList<>();
+        ObjectList<ADBComparable2IntPair> left = new ObjectArrayList<>();
+        ObjectList<ADBComparable2IntPair> right = new ObjectArrayList<>();
 
         ADBInterval[] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
@@ -28,8 +27,8 @@ public class ADBJoinTermEqualityCostCalculatorTest {
     public void expectEmptyArrayForEmptyLeftLists() {
         ADBJoinTermEqualityCostCalculator calculator = new ADBJoinTermEqualityCostCalculator();
 
-        List<ADBComparable2IntPair> left = new ArrayList<>();
-        List<ADBComparable2IntPair> right = new ArrayList<>();
+        ObjectList<ADBComparable2IntPair> left = new ObjectArrayList<>();
+        ObjectList<ADBComparable2IntPair> right = new ObjectArrayList<>();
         right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
         right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
         right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 3));
@@ -42,11 +41,11 @@ public class ADBJoinTermEqualityCostCalculatorTest {
     public void expectMoIntersectsForEmptyRightLists() {
         ADBJoinTermEqualityCostCalculator calculator = new ADBJoinTermEqualityCostCalculator();
 
-        List<ADBComparable2IntPair> left = new ArrayList<>();
+        ObjectList<ADBComparable2IntPair> left = new ObjectArrayList<>();
         left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
         left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
         left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 3));
-        List<ADBComparable2IntPair> right = new ArrayList<>();
+        ObjectList<ADBComparable2IntPair> right = new ObjectArrayList<>();
 
         ADBInterval[] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(3);
@@ -59,11 +58,11 @@ public class ADBJoinTermEqualityCostCalculatorTest {
     public void expectValidResultsForBothListsFilled() {
         ADBJoinTermEqualityCostCalculator calculator = new ADBJoinTermEqualityCostCalculator();
 
-        List<ADBComparable2IntPair> left = new ArrayList<>();
+        ObjectList<ADBComparable2IntPair> left = new ObjectArrayList<>();
         left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
         left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
         left.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)3, 3));
-        List<ADBComparable2IntPair> right = new ArrayList<>();
+        ObjectList<ADBComparable2IntPair> right = new ObjectArrayList<>();
         right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)1, 1));
         right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 2));
         right.add(new ADBComparable2IntPair((Comparable<Object>)(Comparable<?>)2, 3));

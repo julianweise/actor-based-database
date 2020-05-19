@@ -18,6 +18,7 @@ import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,7 +26,6 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Set;
 
 public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
@@ -61,7 +61,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @AllArgsConstructor
     @Getter
     public static class HandleJoinShardResults implements Command, KryoSerializable {
-        private List<ADBKeyPair> joinCandidates;
+        private ObjectList<ADBKeyPair> joinCandidates;
     }
 
     @AllArgsConstructor

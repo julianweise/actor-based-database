@@ -27,7 +27,7 @@ public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
 
     private static final int MAX_SLAVES = 0x100;
     private final static Logger LOG = LoggerFactory.getLogger(ADBMaster.class);
-    private static final Map<RootActorPath, Integer> GLOBAL_IDS = new Object2IntLinkedOpenHashMap<>();
+    private static final Object2IntLinkedOpenHashMap<RootActorPath> GLOBAL_IDS = new Object2IntLinkedOpenHashMap<>();
     private final Map<ActorRef<ADBSlave.Command>, Boolean> activeSlaveNodes = new HashMap<>();
 
     public interface Command {}
@@ -45,7 +45,7 @@ public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
             LOG.error("Unable to find global node ID for " + target);
             return -1;
         }
-        return GLOBAL_IDS.get(target.path().root());
+        return GLOBAL_IDS.getInt(target.path().root());
     }
 
     protected ADBMaster(ActorContext<Command> context,

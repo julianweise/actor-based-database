@@ -14,6 +14,7 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiverFactory;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +22,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.agrona.collections.Object2ObjectHashMap;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,7 +29,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
 
     protected final int transactionId;
     protected final ActorRef<ADBPartitionInquirer.Command> parent;
-    protected final List<ActorRef<ADBQueryManager.Command>> queryManagers;
+    protected final ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers;
     protected final Map<ActorRef<ADBQueryManager.Command>, ActorRef<ADBSlaveQuerySession.Command>> managerToHandlers;
     protected final Map<ActorRef<ADBSlaveQuerySession.Command>, ActorRef<ADBQueryManager.Command>> handlersToManager;
     protected final Set<ActorRef<ADBLargeMessageReceiver.Command>> openReceiverSessions;
@@ -75,7 +75,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
         private ADBLargeMessageReceiver.InitializeTransfer initializeTransfer;
     }
 
-    public ADBMasterQuerySession(ActorContext<Command> context, List<ActorRef<ADBQueryManager.Command>> queryManagers,
+    public ADBMasterQuerySession(ActorContext<Command> context, ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                  int transactionId, ActorRef<ADBPartitionInquirer.Command> parent) {
         super(context);
         this.startTime = System.nanoTime();

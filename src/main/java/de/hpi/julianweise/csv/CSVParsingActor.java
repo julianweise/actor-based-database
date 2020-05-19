@@ -10,6 +10,8 @@ import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -21,9 +23,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
@@ -47,7 +47,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     @Getter
     @AllArgsConstructor
     public static class DomainDataChunk implements Response {
-        private final List<ADBEntity> chunk;
+        private final ObjectList<ADBEntity> chunk;
 
     }
     @Getter
@@ -87,7 +87,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
             return Behaviors.same();
         }
         final AtomicInteger counter = new AtomicInteger();
-        List<ADBEntity> chunk = new ArrayList<>();
+        ObjectList<ADBEntity> chunk = new ObjectArrayList<>();
 
         while (csvIterator.hasNext() && counter.getAndIncrement() < this.settings.CSV_CHUNK_SIZE) {
             chunk.add(ADBEntityFactoryProvider.getInstance().build(this.csvIterator.next()));

@@ -18,13 +18,14 @@ import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,9 +36,9 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private final int remoteNodeId;
     private final AtomicInteger remainingResults = new AtomicInteger(0);
     private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
-    private List<ActorRef<ADBPartition.Command>> localPartitions;
-    private List<ADBPartitionHeader> localHeaders;
-    private Map<Integer, Map<String, List<ADBComparable2IntPair>>> foreignAttributes;
+    private ObjectList<ActorRef<ADBPartition.Command>> localPartitions;
+    private ObjectList<ADBPartitionHeader> localHeaders;
+    private Int2ObjectMap<Map<String, ObjectList<ADBComparable2IntPair>>> foreignAttributes;
 
     @AllArgsConstructor
     @NoArgsConstructor
@@ -55,19 +56,14 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     @NoArgsConstructor
     @Getter
     public static class ForeignNodeAttributes implements ADBLargeMessageSender.LargeMessage {
-        private Map<Integer, Map<String, List<ADBComparable2IntPair>>> joinAttributes;
-        private Map<Integer, int[]> fPartitionIdLeft;
-        private Map<Integer, int[]> fPartitionIdRight;
+        private Int2ObjectMap<Map<String, ObjectList<ADBComparable2IntPair>>> joinAttributes;
+        private Int2ObjectMap<int[]> fPartitionIdLeft;
+        private Int2ObjectMap<int[]> fPartitionIdRight;
     }
 
     @AllArgsConstructor
     public static class PartitionsJoinedWrapper implements Command {
         ADBPartitionJoinExecutor.PartitionsJoined joinResults;
-    }
-
-    @AllArgsConstructor
-    public static class SemiMaterializedTuplesWrapper implements Command {
-        ADBPartition.SemiMaterializedTuples result;
     }
 
     @AllArgsConstructor
@@ -133,20 +129,20 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private Behavior<Command> handleForeignAttributes(ForeignNodeAttributes command) {
         assert this.foreignAttributes == null : "JoinWithNode session already received valid foreign attributes!";
         this.foreignAttributes = command.getJoinAttributes();
-        for (Map.Entry<Integer, int[]> mapping : command.fPartitionIdLeft.entrySet()) {
+        for (Int2ObjectMap.Entry<int[]> mapping : command.fPartitionIdLeft.int2ObjectEntrySet()) {
             for (int fPartitionId : mapping.getValue()) {
                 this.remainingResults.incrementAndGet();
-                this.spawnExecutor(mapping.getKey(), fPartitionId, false);
+                this.spawnExecutor(mapping.getIntKey(), fPartitionId, false);
             }
         }
         if (ADBSlave.ID == this.remoteNodeId) {
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartition());
             return Behaviors.same();
         }
-        for (Map.Entry<Integer, int[]> mapping : command.fPartitionIdRight.entrySet()) {
+        for (Int2ObjectMap.Entry<int[]> mapping : command.fPartitionIdRight.int2ObjectEntrySet()) {
             for (int fPartitionId : mapping.getValue()) {
                 this.remainingResults.incrementAndGet();
-                this.spawnExecutor(mapping.getKey(), fPartitionId, true);
+                this.spawnExecutor(mapping.getIntKey(), fPartitionId, true);
             }
         }
         this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartition());

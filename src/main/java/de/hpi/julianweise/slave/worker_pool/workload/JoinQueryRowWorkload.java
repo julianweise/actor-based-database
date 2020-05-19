@@ -7,32 +7,32 @@ import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.val;
 
-import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
 @Builder
 public class JoinQueryRowWorkload extends Workload {
 
-    private final List<ADBKeyPair> joinCandidates;
-    private final List<Map<String, ADBComparable2IntPair>> left;
-    private final List<Map<String, ADBComparable2IntPair>> right;
-    private final List<ADBJoinTermCostModel> costModels;
+    private final ObjectList<ADBKeyPair> joinCandidates;
+    private final ObjectList<Map<String, ADBComparable2IntPair>> left;
+    private final ObjectList<Map<String, ADBComparable2IntPair>> right;
+    private final ObjectList<ADBJoinTermCostModel> costModels;
 
     @AllArgsConstructor
     @Getter
     public static class Results implements GenericWorker.Response {
-        private final List<ADBKeyPair> results;
+        private final ObjectList<ADBKeyPair> results;
     }
 
     @Override
     protected void doExecute(GenericWorker.WorkloadMessage message) {
-        List<ADBKeyPair> results = new ObjectArrayList<>();
+        ObjectList<ADBKeyPair> results = new ObjectArrayList<>();
         for (ADBKeyPair joinCandidate : this.joinCandidates) {
             if (this.rowSatisfyJoinCondition(joinCandidate)) {
                 results.add(new ADBKeyPair(

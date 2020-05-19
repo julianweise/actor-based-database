@@ -12,13 +12,13 @@ import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.Duration;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -53,7 +53,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     @Getter
     public static class DistributeBatch implements Command, CborSerializable {
         private final ActorRef<Response> client;
-        private final List<ADBEntity> entities;
+        private final ObjectList<ADBEntity> entities;
 
     }
     @AllArgsConstructor

@@ -2,17 +2,17 @@ package de.hpi.julianweise.utility.query.join;
 
 import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import it.unimi.dsi.fastutil.ints.AbstractInt2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.AbstractMap;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -21,13 +21,13 @@ public class JoinDistributionPlan {
 
     private final static Logger LOG = LoggerFactory.getLogger(JoinDistributionPlan.class);
 
-    private final List<ActorRef<ADBQueryManager.Command>> queryManager;
+    private final ObjectList<ActorRef<ADBQueryManager.Command>> queryManager;
     private final BitSet[] distributionMap;
-    private final Map<Integer, AtomicInteger> dataAccesses = new HashMap<>();
-    private final Map<Integer, AtomicInteger> dataRequests = new HashMap<>();
+    private final Int2ObjectMap<AtomicInteger> dataAccesses = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<AtomicInteger> dataRequests = new Int2ObjectOpenHashMap<>();
     private final AtomicInteger finalizedComparisons = new AtomicInteger(0);
 
-    public JoinDistributionPlan(List<ActorRef<ADBQueryManager.Command>> queryManager) {
+    public JoinDistributionPlan(ObjectList<ActorRef<ADBQueryManager.Command>> queryManager) {
         this.queryManager = queryManager;
         this.distributionMap = this.initializeDistributionMap(this.queryManager.size());
         IntStream.range(0, this.queryManager.size()).forEach(index -> this.dataAccesses.put(index, new AtomicInteger()));
@@ -69,15 +69,15 @@ public class JoinDistributionPlan {
 
     private int getShardIndexWithMinimalAccessesForShard(int index) {
         IntList relevantAccesses = this.dataAccesses
-                .entrySet().stream().filter(eS -> this.notCompared(eS.getKey(), index)).map(eS -> eS.getValue().get()).collect(Collectors.toCollection(IntArrayList::new));
+                .int2ObjectEntrySet().stream().filter(eS -> this.notCompared(eS.getIntKey(), index)).map(eS -> eS.getValue().get()).collect(Collectors.toCollection(IntArrayList::new));
         int minDataAccesses = relevantAccesses.size() > 0 ? Collections.min(relevantAccesses) : Integer.MAX_VALUE;
-        return this.dataAccesses.entrySet()
+        return this.dataAccesses.int2ObjectEntrySet()
                                 .stream()
-                                .filter(eS -> this.notCompared(eS.getKey(), index))
+                                .filter(eS -> this.notCompared(eS.getIntKey(), index))
                                 .filter(eS1 -> eS1.getValue().get() <= minDataAccesses)
-                                .min((eS1, eS2) -> this.dataRequests.get(eS2.getKey()).get() - this.dataRequests.get(eS1.getKey()).get())
-                                .orElseGet(() -> new AbstractMap.SimpleEntry<>(-1, new AtomicInteger(-1)))
-                                .getKey();
+                                .min((eS1, eS2) -> this.dataRequests.get(eS2.getIntKey()).get() - this.dataRequests.get(eS1.getIntKey()).get())
+                                .orElseGet(() -> new AbstractInt2ObjectMap.BasicEntry<>(-1, new AtomicInteger(-1)))
+                                .getIntKey();
     }
 
     private boolean notCompared(int indexA, int indexB) {

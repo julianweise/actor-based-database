@@ -8,12 +8,12 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import org.agrona.collections.Object2ObjectHashMap;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,7 +25,7 @@ public class ADBSortedEntityAttributes2Factory {
     @AllArgsConstructor
     private static class AttributeIndexComparator implements IntComparator {
 
-        private final List<ADBEntity> data;
+        private final ObjectList<ADBEntity> data;
         private final Function<ADBEntity, Comparable<Object>> attributeGetter;
 
         @Override
@@ -34,7 +34,7 @@ public class ADBSortedEntityAttributes2Factory {
         }
     }
 
-    public static Object2ObjectMap<String, ADBSortedEntityAttributes2> of(List<ADBEntity> data) {
+    public static Object2ObjectMap<String, ADBSortedEntityAttributes2> of(ObjectList<ADBEntity> data) {
         assert data.size() > 0;
         assert data.stream().map(ADBEntity::getClass).collect(Collectors.toSet()).size() == 1;
         Field[] attributes = data.get(0).getClass().getDeclaredFields();
@@ -47,7 +47,7 @@ public class ADBSortedEntityAttributes2Factory {
     }
 
     // Assuming all entities provided are of the sane type
-    public static ADBSortedEntityAttributes2 of(String fieldName, List<ADBEntity> data) {
+    public static ADBSortedEntityAttributes2 of(String fieldName, ObjectList<ADBEntity> data) {
         assert data.stream().map(ADBEntity::getClass).collect(Collectors.toSet()).size() == 1;
 
         if (data.size() < 1) {
@@ -57,7 +57,8 @@ public class ADBSortedEntityAttributes2Factory {
         return new ADBSortedEntityAttributes2(fieldName, sortedIndices);
     }
 
-    private static int[] getSortedIndices(final List<ADBEntity> data, Function<ADBEntity, Comparable<Object>> getter) {
+    private static int[] getSortedIndices(final ObjectList<ADBEntity> data,
+                                          Function<ADBEntity, Comparable<Object>> getter) {
         int[] sortedIndices = new int[data.size()];
         for (int i = 0; i < sortedIndices.length; i++) {
             sortedIndices[i] = i;
@@ -66,11 +67,11 @@ public class ADBSortedEntityAttributes2Factory {
         return sortedIndices;
     }
 
-    public static List<Map<String, ADBComparable2IntPair>> resortByIndex(
-            Map<String, List<ADBComparable2IntPair>> columnAttributes,
-            List<ADBJoinTermCostModel> relevantCostModels) {
-        int numberOfRows = columnAttributes.values().stream().mapToInt(List::size).max().orElse(0);
-        List<Map<String, ADBComparable2IntPair>> resultSet = new ArrayList<>(numberOfRows);
+    public static ObjectList<Map<String, ADBComparable2IntPair>> resortByIndex(
+            Map<String, ObjectList<ADBComparable2IntPair>> columnAttributes,
+            ObjectList<ADBJoinTermCostModel> relevantCostModels) {
+        int numberOfRows = columnAttributes.values().stream().mapToInt(ObjectList::size).max().orElse(0);
+        ObjectList<Map<String, ADBComparable2IntPair>> resultSet = new ObjectArrayList<>(numberOfRows);
         for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectHashMap<>());
         Set<String> relevantFields = relevantCostModels
                 .stream()

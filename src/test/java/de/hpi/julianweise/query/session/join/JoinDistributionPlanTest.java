@@ -6,13 +6,12 @@ import akka.actor.typed.ActorRef;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,7 +41,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -60,7 +59,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -78,7 +77,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -96,7 +95,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -114,7 +113,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -132,7 +131,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardB = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -151,7 +150,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardD = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());
@@ -174,7 +173,7 @@ public class JoinDistributionPlanTest {
         TestProbe<ADBQueryManager.Command> shardC = testKit.createTestProbe();
         TestProbe<ADBQueryManager.Command> shardD = testKit.createTestProbe();
 
-        List<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shardA.ref());
         shards.add(shardB.ref());
         shards.add(shardC.ref());

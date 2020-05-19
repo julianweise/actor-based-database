@@ -16,14 +16,13 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,8 +59,10 @@ public class ADBJoinQuerySessionTest {
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
+        ObjectList<ActorRef<ADBQueryManager.Command>> shardList = new ObjectArrayList<>();
+        shardList.add(shard.ref());
         ActorRef<ADBMasterJoinSession.Command> joinSession =
-                testKit.spawn(ADBMasterQuerySessionFactory.create(Collections.singletonList(shard.ref()), query, 1,
+                testKit.spawn(ADBMasterQuerySessionFactory.create(shardList, query, 1,
                         supervisor.ref()));
 
         ADBQueryManager.QueryEntities queryEntities = shard.expectMessageClass(ADBQueryManager.QueryEntities.class);
@@ -81,8 +82,10 @@ public class ADBJoinQuerySessionTest {
         ADBJoinQuery query = new ADBJoinQuery();
         query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
+        ObjectList<ActorRef<ADBQueryManager.Command>> shardList = new ObjectArrayList<>();
+        shardList.add(queryManager.ref());
         ActorRef<ADBMasterJoinSession.Command> joinSession =
-                testKit.spawn(ADBMasterQuerySessionFactory.create(Collections.singletonList(queryManager.ref()), query, 1,
+                testKit.spawn(ADBMasterQuerySessionFactory.create(shardList, query, 1,
                         supervisor.ref()));
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager.ref(), joinSessionHandler.ref()));
@@ -105,7 +108,7 @@ public class ADBJoinQuerySessionTest {
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler1 = testKit.createTestProbe();
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler2 = testKit.createTestProbe();
 
-        ArrayList<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shard1.ref());
         shards.add(shard2.ref());
 
@@ -142,7 +145,7 @@ public class ADBJoinQuerySessionTest {
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler1 = testKit.createTestProbe();
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler2 = testKit.createTestProbe();
 
-        ArrayList<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shard1.ref());
         shards.add(shard2.ref());
 
@@ -172,7 +175,7 @@ public class ADBJoinQuerySessionTest {
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler1 = testKit.createTestProbe();
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler2 = testKit.createTestProbe();
 
-        ArrayList<ActorRef<ADBQueryManager.Command>> shards = new ArrayList<>();
+        ObjectList<ActorRef<ADBQueryManager.Command>> shards = new ObjectArrayList<>();
         shards.add(shard1.ref());
         shards.add(shard2.ref());
 
@@ -186,16 +189,17 @@ public class ADBJoinQuerySessionTest {
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard1.ref(), joinSessionHandler1.ref()));
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(shard2.ref(), joinSessionHandler2.ref()));
 
-        ADBKeyPair joinResults = new ADBKeyPair(1, 2);
+        ObjectArrayList<ADBKeyPair> results = new ObjectArrayList<>();
+        results.add(new ADBKeyPair(1, 2));
 
         joinSession.tell(ADBMasterJoinSession.JoinQueryResults.builder()
                                                               .transactionId(1)
-                                                              .joinResults(Collections.singletonList(joinResults))
+                                                              .joinResults(results)
                                                               .nodeId(1)
                                                               .build());
 
         // Receive self-join results first to decrease partial result counter
-        joinSession.tell(new ADBMasterJoinSession.JoinQueryResults(Collections.emptyList()));
+        joinSession.tell(new ADBMasterJoinSession.JoinQueryResults(new ObjectArrayList<>()));
 
         joinSession.tell(new ADBMasterQuerySession.ConcludeTransaction(joinSessionHandler1.ref()));
         joinSession.tell(new ADBMasterQuerySession.ConcludeTransaction(joinSessionHandler2.ref()));
@@ -205,7 +209,7 @@ public class ADBJoinQuerySessionTest {
 
         assertThat(response3.getTransactionId()).isEqualTo(1);
         assertThat(response3.getResults().size()).isEqualTo(1);
-        assertThat(response3.getResults().get(0)).isEqualTo(joinResults);
+        assertThat(response3.getResults().get(0)).isEqualTo(results.get(0));
     }
 
 }

@@ -5,15 +5,15 @@ import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBPartitionFactory {
 
     private static final AtomicInteger partitionIDGenerator = new AtomicInteger(0);
 
-    public static Behavior<ADBPartition.Command> createDefault(List<ADBEntity> data, int partitionId) {
+    public static Behavior<ADBPartition.Command> createDefault(ObjectList<ADBEntity> data, int partitionId) {
         for(int i = 0; i < data.size(); i++) {
             data.get(i).setInternalID(ADBInternalIDHelper.createID(ADBSlave.ID, partitionId, i));
         }
