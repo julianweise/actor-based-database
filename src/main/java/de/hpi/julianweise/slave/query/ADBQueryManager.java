@@ -13,22 +13,17 @@ import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
-import java.util.Set;
-
 public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
 
     public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(ADBQueryManager.Command.class, "QueryManager");
     private static ActorRef<GenericWorker.Command> WORKER_POOL;
     private static ActorRef<ADBQueryManager.Command> INSTANCE;
-
-    private final Set<ActorRef<ADBSlaveQuerySession.Command>> activeQuerySessions = new ObjectArraySet<>();
 
     public interface Command {}
 
@@ -91,13 +86,11 @@ public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
         String handlerName = ADBSlaveQuerySessionFactory.getName(cm);
         val sessionHandler = this.getContext().spawn(ADBSlaveQuerySessionFactory.create(cm), handlerName);
         this.getContext().watchWith(sessionHandler, new SessionHandlerTerminated(sessionHandler));
-        this.activeQuerySessions.add(sessionHandler);
         sessionHandler.tell(new ADBSlaveQuerySession.Execute());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleQuerySessionHandlerTerminated(SessionHandlerTerminated message) {
-        this.activeQuerySessions.remove(message.handler);
         return Behaviors.same();
     }
 }
