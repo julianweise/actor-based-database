@@ -3,6 +3,7 @@ package de.hpi.julianweise.domain.key;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,7 +13,7 @@ public class ADBFloatKey implements ADBKey {
     private float value;
 
     @Override
-    public int compareTo(ADBKey o) {
+    public int compareTo(@NotNull ADBKey o) {
         if (!(o instanceof ADBFloatKey)) {
             return -1;
         }

@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,7 +15,7 @@ public class ADBStringKey implements ADBKey {
     private String value;
 
     @Override
-    public int compareTo(ADBKey o) {
+    public int compareTo(@NotNull ADBKey o) {
         if (!(o instanceof  ADBStringKey)) {
             return -1;
         }
