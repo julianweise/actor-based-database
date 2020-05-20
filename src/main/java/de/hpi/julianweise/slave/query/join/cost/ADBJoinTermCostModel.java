@@ -81,4 +81,9 @@ public class ADBJoinTermCostModel {
         }
         return candidates;
     }
+
+    @Override
+    public String toString() {
+        return "[Predicate Cost Model] for: " + getTerm() + " relCost: " + getRelativeCost() + " abs: " + getCost();
+    }
 }
