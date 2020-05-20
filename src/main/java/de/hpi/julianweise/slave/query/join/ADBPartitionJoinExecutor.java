@@ -118,6 +118,7 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     private Behavior<Command> execute() {
+        this.getContext().getLog().info("[JOIN COST MODEL] Cheapest predicate: " + this.costModels.get(0));
         if (this.costModels.size() < 2) {
             ObjectList<ADBKeyPair> results = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
             this.costModelsProcessed = this.costModels.size();
