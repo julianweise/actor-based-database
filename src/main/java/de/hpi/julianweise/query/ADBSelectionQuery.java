@@ -1,10 +1,11 @@
 package de.hpi.julianweise.query;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -12,7 +13,7 @@ import lombok.Setter;
 public class ADBSelectionQuery implements ADBQuery {
 
     @Getter
-    protected final ObjectList<ADBSelectionQueryTerm> terms = new ObjectArrayList<>();
+    protected final List<ADBSelectionQueryTerm> terms = new ArrayList<>();
 
     public void addTerm(ADBSelectionQueryTerm term) {
         this.terms.add(term);

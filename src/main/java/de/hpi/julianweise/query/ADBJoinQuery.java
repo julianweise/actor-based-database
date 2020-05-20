@@ -8,7 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -20,7 +22,9 @@ import java.util.stream.Collectors;
 public class ADBJoinQuery implements ADBQuery {
 
     @Getter
-    protected ObjectList<ADBJoinQueryTerm> terms = new ObjectArrayList<>();
+    protected List<ADBJoinQueryTerm> terms = new ArrayList<>();
+    @Getter
+    protected boolean isMaterialized;
 
     public void addTerm(ADBJoinQueryTerm term) {
         this.getTerms().add(term);
@@ -55,6 +59,6 @@ public class ADBJoinQuery implements ADBQuery {
                                                 collection2.addAll(collection1);
                                                 return collection2;
                                             }
-                                    )));
+                                    )), this.isMaterialized);
     }
 }
