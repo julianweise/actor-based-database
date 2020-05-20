@@ -9,16 +9,14 @@ import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.settings.Settings;
-import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2Factory;
+import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
-import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBPair;
-import de.hpi.julianweise.utility.largemessage.ADBSemiMaterializedPair;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -68,48 +66,33 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     @AllArgsConstructor
-    public static class SemiMaterializeTuples implements Command {
-        private final ActorRef<SemiMaterializedTuples> respondTo;
-        private final int foreignPartitionId;
-        private final ObjectList<ADBKeyPair> targets;
-        private final boolean reversed;
+    public static class MaterializeToEntities implements Command {
+        private final IntList internalIds;
+        private final ActorRef<MaterializedEntities> respondTo;
     }
 
     @AllArgsConstructor
     @Getter
-    public static class SemiMaterializedTuples implements Response {
-        private final int foreignPartitionId;
-        private final ObjectList<ADBSemiMaterializedPair> results;
-        private final boolean reversed;
-    }
+    public static class MaterializedEntities implements Command {
 
-    @AllArgsConstructor
-    public static class MaterializeTuples implements Command {
-        private final ActorRef<MaterializedTuples> respondTo;
-        private final ObjectList<ADBSemiMaterializedPair> targets;
-        private final boolean reversed;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class MaterializedTuples implements Command {
-        private final ObjectList<ADBPair<ADBEntity, ADBEntity>> results;
+        private final ObjectList<ADBEntity> results;
     }
 
     public ADBPartition(ActorContext<Command> context, int id, ObjectList<ADBEntity> data) {
         super(context);
         assert data.size() > 0;
-        SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
-        assert data.stream().mapToInt(ADBEntity::getSize).sum() < settings.MAX_SIZE_PARTITION;
+        assert data.stream().mapToInt(ADBEntity::getSize).sum() < Settings.SettingsProvider.get(getContext().getSystem()).MAX_SIZE_PARTITION;
         assert data.size() < MAX_ELEMENTS : "Maximum 2^16 elements allowed per partition";
+        assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
+
+        this.getContext().getLog().info("Partition maintains " + data.size() + " entities.");
 
         this.id = id;
-        this.getContext().getLog().info("Partition maintains " + data.size() + " entities.");
         this.data = data;
-        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id);
-        assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
-        ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
         this.sortedAttributes = ADBSortedEntityAttributes2Factory.of(data);
+
+        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id);
+        ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
     }
 
     @Override
@@ -117,8 +100,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         return newReceiveBuilder()
                 .onMessage(RequestData.class, this::handleProvideData)
                 .onMessage(RequestJoinAttributes.class, this::handleRequestJoinAttributes)
-                .onMessage(SemiMaterializeTuples.class, this::handleSemiMaterialize)
-                .onMessage(MaterializeTuples.class, this::handleMaterialize)
+                .onMessage(MaterializeToEntities.class, this::handleMaterialize)
                 .build();
     }
 
@@ -136,21 +118,11 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleSemiMaterialize(SemiMaterializeTuples command) {
-        command.respondTo.tell(new SemiMaterializedTuples(command.foreignPartitionId, command.targets
-                .parallelStream()
-                .map(tuple -> new ADBSemiMaterializedPair(tuple.getKey(), this.data.get(tuple.getValue())))
-                .collect(new ObjectArrayListCollector<>()), command.reversed));
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handleMaterialize(MaterializeTuples command) {
-        command.respondTo.tell(new MaterializedTuples(command.targets
-                .stream()
-                .map(tuple -> {
-                    if (command.reversed) return new ADBPair<>(tuple.getValue(), this.data.get(tuple.getKey()));
-                    return new ADBPair<>(this.data.get(tuple.getKey()), tuple.getValue());
-                }).collect(new ObjectArrayListCollector<>())));
+    private Behavior<Command> handleMaterialize(MaterializeToEntities command) {
+        ObjectList<ADBEntity> materializedResults = command.internalIds.parallelStream()
+                .map(internalId -> this.data.get(ADBInternalIDHelper.getEntityId(internalId)))
+                .collect(new ObjectArrayListCollector<>());
+        command.respondTo.tell(new MaterializedEntities(materializedResults));
         return Behaviors.same();
     }
 }

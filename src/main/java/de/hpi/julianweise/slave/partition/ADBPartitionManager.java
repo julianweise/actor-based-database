@@ -15,10 +15,13 @@ import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
+import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -28,9 +31,12 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.groupingBy;
 
 public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Command> {
 
@@ -127,6 +133,12 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         private final ObjectList<ADBPartitionHeader> headers;
     }
 
+    @AllArgsConstructor
+    public static class MaterializeToEntities implements Command {
+        ActorRef<ADBPartition.MaterializedEntities> respondTo;
+        IntList internalIds;
+    }
+
     public ADBPartitionManager(ActorContext<Command> context) {
         super(context);
         getContext().getSystem().receptionist().tell(Receptionist.register(SERVICE_KEY, this.getContext().getSelf()));
@@ -142,6 +154,7 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
                 .onMessage(RequestPartitionsForSelectionQuery.class, this::handleRequestForSelectionQuery)
                 .onMessage(RequestPartitionsForJoinQuery.class, this::handleRequestForJoinQuery)
                 .onMessage(RequestAllPartitionsAndHeaders.class, this::handleRequestAllPartitionsAndHeaders)
+                .onMessage(MaterializeToEntities.class, this::handleMaterializeToEntities)
                 .build();
     }
 
@@ -220,5 +233,18 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
 
     private boolean mightJoin(ADBPartitionHeader b, int index, ADBJoinQuery query) {
         return b.isOverlapping(this.partitionHeaders.get(index), query);
+    }
+
+    private Behavior<Command> handleMaterializeToEntities(MaterializeToEntities command) {
+        command.internalIds.parallelStream()
+                .collect(groupingBy(ADBInternalIDHelper::getPartitionId))
+                .forEach((p, e) -> this.requestMaterializedEntitiesFromPartition(p, e, command.respondTo));
+        return Behaviors.same();
+    }
+
+    private void requestMaterializedEntitiesFromPartition(int partitionId, List<Integer> entityIds,
+                                                          ActorRef<ADBPartition.MaterializedEntities> respond) {
+        this.partitions.get(partitionId)
+                       .tell(new ADBPartition.MaterializeToEntities(new IntArrayList(entityIds), respond));
     }
 }
