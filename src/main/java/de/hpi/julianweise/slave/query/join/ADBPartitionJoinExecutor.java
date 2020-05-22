@@ -8,7 +8,7 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.google.common.primitives.Floats;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartition;
@@ -106,12 +106,12 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     private ObjectList<ADBJoinTermCostModel> getCostModels() {
-        ObjectList<ADBJoinTermCostModel> costModels = new ObjectArrayList<>(this.query.getTerms().size());
-        for (int i = 0; i < this.query.getTerms().size(); i++) {
-            ADBJoinQueryTerm term = this.query.getTerms().get(i);
-            val left = this.foreignAttributes.get(this.query.getTerms().get(i).getLeftHandSideAttribute());
-            val right = this.localAttributes.get(this.query.getTerms().get(i).getRightHandSideAttribute());
-            costModels.add(ADBJoinTermCostModelFactory.calc(term, i, left, right));
+        ObjectList<ADBJoinTermCostModel> costModels = new ObjectArrayList<>(this.query.getPredicates().size());
+        for (int i = 0; i < this.query.getPredicates().size(); i++) {
+            ADBJoinQueryPredicate predicate = this.query.getPredicates().get(i);
+            val left = this.foreignAttributes.get(this.query.getPredicates().get(i).getLeftHandSideAttribute());
+            val right = this.localAttributes.get(this.query.getPredicates().get(i).getRightHandSideAttribute());
+            costModels.add(ADBJoinTermCostModelFactory.calc(predicate, i, left, right));
         }
         costModels.sort((m1, m2) -> Floats.compare(m1.getRelativeCost(), m2.getRelativeCost()));
         return costModels;

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class ADBJoinQueryTerm implements ADBQueryTerm {
+public class ADBJoinQueryPredicate implements ADBQueryTerm {
 
     private static RelationalOperator reverseOperator(RelationalOperator operator) {
         if (operator == RelationalOperator.LESS) {
@@ -38,8 +38,8 @@ public class ADBJoinQueryTerm implements ADBQueryTerm {
     }
 
     @JsonIgnore
-    public ADBJoinQueryTerm getReverse() {
-        return new ADBJoinQueryTerm(ADBJoinQueryTerm.reverseOperator(this.operator), this.rightHandSideAttribute,
-                this.leftHandSideAttribute);
+    public ADBJoinQueryPredicate getReverse() {
+        return new ADBJoinQueryPredicate(ADBJoinQueryPredicate.reverseOperator(operator),
+                this.rightHandSideAttribute, this.leftHandSideAttribute);
     }
 }

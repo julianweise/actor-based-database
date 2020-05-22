@@ -13,16 +13,16 @@ import java.util.List;
 public class ADBSelectionQuery implements ADBQuery {
 
     @Getter
-    protected final List<ADBSelectionQueryTerm> terms = new ArrayList<>();
+    protected final List<ADBSelectionQueryPredicate> predicates = new ArrayList<>();
 
-    public void addTerm(ADBSelectionQueryTerm term) {
-        this.terms.add(term);
+    public void addPredicate(ADBSelectionQueryPredicate predicate) {
+        this.predicates.add(predicate);
     }
 
     @Override
     public String toString() {
-        return "[SelectionQuery] " + this.terms.stream()
-                                               .map(ADBSelectionQueryTerm::toString)
-                                               .reduce((term, acc) -> acc + " & " + term).orElse("");
+        return "[SelectionQuery] " + this.predicates.stream()
+                                                    .map(ADBSelectionQueryPredicate::toString)
+                                                    .reduce((predicate, acc) -> acc + " & " + predicate).orElse("");
     }
 }

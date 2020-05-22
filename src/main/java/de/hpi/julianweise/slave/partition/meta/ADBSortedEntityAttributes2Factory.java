@@ -75,7 +75,7 @@ public class ADBSortedEntityAttributes2Factory {
         for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectHashMap<>());
         Set<String> relevantFields = relevantCostModels
                 .stream()
-                .flatMap(model -> Stream.of(model.getTerm().getLeftHandSideAttribute(), model.getTerm().getRightHandSideAttribute()))
+                .flatMap(model -> Stream.of(model.getPredicate().getLeftHandSideAttribute(), model.getPredicate().getRightHandSideAttribute()))
                 .collect(Collectors.toSet());
         for (String field : relevantFields) {
             for (ADBComparable2IntPair row : columnAttributes.get(field)) {

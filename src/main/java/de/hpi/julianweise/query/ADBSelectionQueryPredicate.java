@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ADBSelectionQueryTerm implements ADBQueryTerm {
+public class ADBSelectionQueryPredicate implements ADBQueryTerm {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)

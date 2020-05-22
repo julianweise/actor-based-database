@@ -139,7 +139,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
         this.resultCounter.set(this.resultCounter.get() + results.joinResults.size());
-        if (!this.query.isMaterialized()) {
+        if (!this.query.isShouldBeMaterialized()) {
             parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, results.joinResults, false));
             return Behaviors.same();
         }
@@ -209,7 +209,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @Override
     protected boolean isFinalized() {
-        if (!this.query.isMaterialized()) {
+        if (!this.query.isShouldBeMaterialized()) {
             return true;
         }
         return this.joinResults.isEmpty() && this.requestedEntitiesForMaterialization.isEmpty();

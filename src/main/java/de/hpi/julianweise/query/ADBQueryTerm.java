@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 
 @JsonSubTypes({
                       @JsonSubTypes.Type(value = ADBSelectionQuery.class, name = "ADBSelectionQueryTerm"),
-                      @JsonSubTypes.Type(value = ADBJoinQueryTerm.class, name = "ADBJoinQueryTerm"),
+                      @JsonSubTypes.Type(value = ADBJoinQueryPredicate.class, name = "ADBJoinQueryTerm"),
               })
 public interface ADBQueryTerm {
 

@@ -12,31 +12,31 @@ public class ADBJoinQueryTest {
 
     @Test
     public void initializeUsingConstructor() {
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
-        ObjectList<ADBJoinQueryTerm> termList = new ObjectArrayList<>();
-        termList.add(term);
+        ADBJoinQueryPredicate predicate = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
+        ObjectList<ADBJoinQueryPredicate> termList = new ObjectArrayList<>();
+        termList.add(predicate);
         ADBJoinQuery joinQuery = new ADBJoinQuery(termList);
 
-        assertThat(joinQuery.getTerms().size()).isOne();
-        assertThat(joinQuery.getTerms().get(0)).isEqualTo(term);
+        assertThat(joinQuery.getPredicates().size()).isOne();
+        assertThat(joinQuery.getPredicates().get(0)).isEqualTo(predicate);
     }
 
     @Test
     public void addTermsToQuery() {
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
+        ADBJoinQueryPredicate predicate = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
         ADBJoinQuery joinQuery = new ADBJoinQuery();
 
-        assertThat(joinQuery.getTerms().size()).isZero();
-        joinQuery.addTerm(term);
-        assertThat(joinQuery.getTerms().size()).isOne();
-        assertThat(joinQuery.getTerms().get(0)).isEqualTo(term);
+        assertThat(joinQuery.getPredicates().size()).isZero();
+        joinQuery.addPredicate(predicate);
+        assertThat(joinQuery.getPredicates().size()).isOne();
+        assertThat(joinQuery.getPredicates().get(0)).isEqualTo(predicate);
     }
 
     @Test
     public void queryHasInformativeStringRepresentation() {
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
-        ObjectList<ADBJoinQueryTerm> termList = new ObjectArrayList<>();
-        termList.add(term);
+        ADBJoinQueryPredicate predicate = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
+        ObjectList<ADBJoinQueryPredicate> termList = new ObjectArrayList<>();
+        termList.add(predicate);
         ADBJoinQuery joinQuery = new ADBJoinQuery(termList);
 
         assertThat(joinQuery.toString()).contains("test", "testTarget", "EQUALITY", "JoinQuery");
@@ -44,42 +44,42 @@ public class ADBJoinQueryTest {
 
     @Test
     public void queryReversesAllTerms() {
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
-        ADBJoinQueryTerm term2 = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS, "test", "testTarget");
+        ADBJoinQueryPredicate predicate = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget");
+        ADBJoinQueryPredicate term2 = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "test", "testTarget");
         ADBJoinQuery joinQuery = new ADBJoinQuery();
 
-        joinQuery.addTerm(term);
-        joinQuery.addTerm(term2);
+        joinQuery.addPredicate(predicate);
+        joinQuery.addPredicate(term2);
 
-        assertThat(joinQuery.terms.size()).isEqualTo(2);
-        assertThat(joinQuery.getTerms().get(0)).isEqualTo(term);
-        assertThat(joinQuery.getTerms().get(1)).isEqualTo(term2);
+        assertThat(joinQuery.predicates.size()).isEqualTo(2);
+        assertThat(joinQuery.getPredicates().get(0)).isEqualTo(predicate);
+        assertThat(joinQuery.getPredicates().get(1)).isEqualTo(term2);
 
         ADBJoinQuery reversedJoinQuery = joinQuery.getReverse();
 
-        assertThat(reversedJoinQuery.terms.size()).isEqualTo(2);
-        assertThat(reversedJoinQuery.getTerms().get(0)).isNotEqualTo(term);
-        assertThat(reversedJoinQuery.getTerms().get(1)).isNotEqualTo(term2);
+        assertThat(reversedJoinQuery.predicates.size()).isEqualTo(2);
+        assertThat(reversedJoinQuery.getPredicates().get(0)).isNotEqualTo(predicate);
+        assertThat(reversedJoinQuery.getPredicates().get(1)).isNotEqualTo(term2);
 
-        assertThat(reversedJoinQuery.getTerms().get(0).getLeftHandSideAttribute()).isEqualTo(joinQuery.getTerms().get(0).getRightHandSideAttribute());
-        assertThat(reversedJoinQuery.getTerms().get(0).getRightHandSideAttribute()).isEqualTo(joinQuery.getTerms().get(0).getLeftHandSideAttribute());
-        assertThat(reversedJoinQuery.getTerms().get(0).getOperator()).isEqualTo(ADBQueryTerm.RelationalOperator.EQUALITY);
+        assertThat(reversedJoinQuery.getPredicates().get(0).getLeftHandSideAttribute()).isEqualTo(joinQuery.getPredicates().get(0).getRightHandSideAttribute());
+        assertThat(reversedJoinQuery.getPredicates().get(0).getRightHandSideAttribute()).isEqualTo(joinQuery.getPredicates().get(0).getLeftHandSideAttribute());
+        assertThat(reversedJoinQuery.getPredicates().get(0).getOperator()).isEqualTo(ADBQueryTerm.RelationalOperator.EQUALITY);
 
-        assertThat(reversedJoinQuery.getTerms().get(1).getLeftHandSideAttribute()).isEqualTo(joinQuery.getTerms().get(1).getRightHandSideAttribute());
-        assertThat(reversedJoinQuery.getTerms().get(1).getRightHandSideAttribute()).isEqualTo(joinQuery.getTerms().get(1).getLeftHandSideAttribute());
-        assertThat(reversedJoinQuery.getTerms().get(1).getOperator()).isEqualTo(ADBQueryTerm.RelationalOperator.GREATER);
+        assertThat(reversedJoinQuery.getPredicates().get(1).getLeftHandSideAttribute()).isEqualTo(joinQuery.getPredicates().get(1).getRightHandSideAttribute());
+        assertThat(reversedJoinQuery.getPredicates().get(1).getRightHandSideAttribute()).isEqualTo(joinQuery.getPredicates().get(1).getLeftHandSideAttribute());
+        assertThat(reversedJoinQuery.getPredicates().get(1).getOperator()).isEqualTo(ADBQueryTerm.RelationalOperator.GREATER);
     }
 
     @Test
     public void getAllFieldsUniquely() {
-        ADBJoinQueryTerm term = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget1");
-        ADBJoinQueryTerm term2 = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS, "test", "testTarget2");
-        ADBJoinQueryTerm term3 = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS, "test2", "testTarget1");
+        ADBJoinQueryPredicate predicate = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "test", "testTarget1");
+        ADBJoinQueryPredicate term2 = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "test", "testTarget2");
+        ADBJoinQueryPredicate term3 = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "test2", "testTarget1");
         ADBJoinQuery joinQuery = new ADBJoinQuery();
 
-        joinQuery.addTerm(term);
-        joinQuery.addTerm(term2);
-        joinQuery.addTerm(term3);
+        joinQuery.addPredicate(predicate);
+        joinQuery.addPredicate(term2);
+        joinQuery.addPredicate(term3);
 
         Set<String> uniqueFields = joinQuery.getAllFields();
 

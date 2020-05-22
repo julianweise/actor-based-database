@@ -3,7 +3,7 @@ package de.hpi.julianweise.domain;
 import de.hpi.julianweise.domain.key.ADBKey;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,8 +41,8 @@ public abstract class ADBEntity implements CborSerializable {
     }
 
     public final boolean matches(ADBSelectionQuery query) {
-        for (ADBSelectionQueryTerm term : query.getTerms()) {
-            if (!this.matches(term)) {
+        for (ADBSelectionQueryPredicate predicate : query.getPredicates()) {
+            if (!this.matches(predicate)) {
                 return false;
             }
         }
@@ -50,8 +50,8 @@ public abstract class ADBEntity implements CborSerializable {
     }
 
     @SuppressWarnings("unchecked")
-    public final boolean matches(ADBSelectionQueryTerm term) {
-        return fieldMatches(term.getFieldName(), (Comparable<Object>) term.getValue(), term.getOperator());
+    public final boolean matches(ADBSelectionQueryPredicate predicate) {
+        return fieldMatches(predicate.getFieldName(), (Comparable<Object>) predicate.getValue(), predicate.getOperator());
     }
 
     public final boolean fieldMatches(String fieldName, Comparable<Object> value, ADBQueryTerm.RelationalOperator opr) {

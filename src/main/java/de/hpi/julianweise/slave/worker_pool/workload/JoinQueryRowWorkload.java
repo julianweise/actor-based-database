@@ -37,9 +37,9 @@ public class JoinQueryRowWorkload extends Workload {
             if (this.rowSatisfyJoinCondition(joinCandidate)) {
                 results.add(new ADBKeyPair(
                         left.get(ADBInternalIDHelper.getEntityId(joinCandidate.getKey()))
-                            .get(this.costModels.get(0).getTerm().getLeftHandSideAttribute()).getValue(),
+                            .get(this.costModels.get(0).getPredicate().getLeftHandSideAttribute()).getValue(),
                         right.get(ADBInternalIDHelper.getEntityId(joinCandidate.getValue()))
-                             .get(this.costModels.get(0).getTerm().getRightHandSideAttribute()).getValue()
+                             .get(this.costModels.get(0).getPredicate().getRightHandSideAttribute()).getValue()
                 ));
             }
         }
@@ -49,10 +49,10 @@ public class JoinQueryRowWorkload extends Workload {
     private boolean rowSatisfyJoinCondition(ADBKeyPair candidate) {
         for (ADBJoinTermCostModel termCostModel : costModels) {
             val lField = left.get(ADBInternalIDHelper.getEntityId(candidate.getKey()))
-                             .get(termCostModel.getTerm().getLeftHandSideAttribute()).getKey();
+                             .get(termCostModel.getPredicate().getLeftHandSideAttribute()).getKey();
             val rField = right.get(ADBInternalIDHelper.getEntityId(candidate.getValue()))
-                              .get(termCostModel.getTerm().getRightHandSideAttribute()).getKey();
-            if (!ADBEntity.matches(lField, rField, termCostModel.getTerm().getOperator())) {
+                              .get(termCostModel.getPredicate().getRightHandSideAttribute()).getKey();
+            if (!ADBEntity.matches(lField, rField, termCostModel.getPredicate().getOperator())) {
                 return false;
             }
         }

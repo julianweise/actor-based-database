@@ -10,22 +10,22 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
 @AllArgsConstructor
-public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQueryTerm> {
+public class ADBSelectionQueryTermDeserializer extends JsonDeserializer<ADBSelectionQueryPredicate> {
 
     private final Class<? extends ADBEntity> entityClass;
 
     @SneakyThrows
     @Override
-    public ADBSelectionQueryTerm deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
+    public ADBSelectionQueryPredicate deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
 
         ObjectCodec oc = jsonParser.getCodec();
         JsonNode node = oc.readTree(jsonParser);
 
-        return ADBSelectionQueryTerm.builder()
-                                    .fieldName(node.get("fieldName").asText())
-                                    .operator(ADBQueryTerm.RelationalOperator.valueOf(node.get("operator").asText()))
-                                    .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
-                                    .build();
+        return ADBSelectionQueryPredicate.builder()
+                                         .fieldName(node.get("fieldName").asText())
+                                         .operator(ADBQueryTerm.RelationalOperator.valueOf(node.get("operator").asText()))
+                                         .value(this.convertToCorrectDataFormat(node.get("fieldName").asText(), node))
+                                         .build();
     }
 
     private Comparable<?> convertToCorrectDataFormat(String fieldName, JsonNode node) throws NoSuchFieldException {

@@ -8,7 +8,7 @@ import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
@@ -60,7 +60,7 @@ public class ADBSlaveJoinSessionTest {
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         ADBQueryManager.QueryEntities queryCommand = ADBQueryManager.QueryEntities.builder()
                                                                            .query(joinQuery)

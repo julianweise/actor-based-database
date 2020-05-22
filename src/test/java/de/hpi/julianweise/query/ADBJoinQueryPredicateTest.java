@@ -4,11 +4,11 @@ import org.junit.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class ADBJoinQueryTermTest {
+public class ADBJoinQueryPredicateTest {
 
     @Test
     public void testToString() {
-        ADBJoinQueryTerm termUnderTest = new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "test",
+        ADBJoinQueryPredicate termUnderTest = new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "test",
                 "testTarget");
         assertThat(termUnderTest.toString()).contains("testTarget", "test", "EQUALITY", "JoinTerm");
     }

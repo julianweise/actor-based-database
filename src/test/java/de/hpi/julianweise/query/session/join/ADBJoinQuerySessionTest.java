@@ -10,7 +10,7 @@ import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
@@ -58,7 +58,7 @@ public class ADBJoinQuerySessionTest {
         TestProbe<ADBPartitionManager.Command> partition = testKit.createTestProbe();
 
         ADBJoinQuery query = new ADBJoinQuery();
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        query.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArrayList<>();
         queryManagers.add(queryManager.ref());
@@ -84,7 +84,7 @@ public class ADBJoinQuerySessionTest {
         TestProbe<ADBSlaveJoinSession.Command> joinSessionHandler = testKit.createTestProbe();
 
         ADBJoinQuery query = new ADBJoinQuery();
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        query.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArrayList<>();
         queryManagers.add(queryManager.ref());
@@ -125,7 +125,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partitionManager2.ref());
 
         ADBJoinQuery query = new ADBJoinQuery();
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        query.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
@@ -169,7 +169,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partitionManager2.ref());
 
         ADBJoinQuery query = new ADBJoinQuery();
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        query.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
@@ -206,7 +206,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partitionManager2.ref());
 
         ADBJoinQuery query = new ADBJoinQuery();
-        query.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        query.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,

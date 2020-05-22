@@ -1,6 +1,6 @@
 package de.hpi.julianweise.slave.query.join.cost;
 
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermEqualityCostCalculator;
@@ -30,13 +30,13 @@ public class ADBJoinTermCostModelFactory {
                 put(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, new ADBJoinTermGreaterOrEqualCostCalculator());
             }};
 
-    public static ADBJoinTermCostModel calc(ADBJoinQueryTerm term,
+    public static ADBJoinTermCostModel calc(ADBJoinQueryPredicate predicate,
                                             int termId,
                                             ObjectList<ADBComparable2IntPair> left,
                                             ObjectList<ADBComparable2IntPair> right) {
-        ADBInterval[] joinCandidates = ADBJoinTermCostModelFactory.strategies.get(term.getOperator()).calc(left, right);
+        ADBInterval[] joinCandidates = ADBJoinTermCostModelFactory.strategies.get(predicate.getOperator()).calc(left, right);
         return ADBJoinTermCostModel.builder()
-                                   .term(term)
+                                   .predicate(predicate)
                                    .joinCandidates(joinCandidates)
                                    .sizeLeft(left.size())
                                    .sizeRight(right.size())

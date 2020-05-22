@@ -1,6 +1,6 @@
 package de.hpi.julianweise.slave.query.join.cost;
 
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
@@ -19,7 +19,7 @@ import java.util.Map;
 @Builder
 @Getter
 public class ADBJoinTermCostModel {
-    private final ADBJoinQueryTerm term;
+    private final ADBJoinQueryPredicate predicate;
     private final ADBInterval[] joinCandidates;
     private final int sizeLeft;
     private final int sizeRight;
@@ -35,8 +35,8 @@ public class ADBJoinTermCostModel {
 
     public ObjectList<ADBKeyPair> getJoinCandidates(Map<String, ObjectList<ADBComparable2IntPair>> left,
                                                     Map<String, ObjectList<ADBComparable2IntPair>> right) {
-        ObjectList<ADBComparable2IntPair> leftValues = left.get(this.term.getLeftHandSideAttribute());
-        ObjectList<ADBComparable2IntPair> rightValues = right.get(this.term.getRightHandSideAttribute());
+        ObjectList<ADBComparable2IntPair> leftValues = left.get(this.predicate.getLeftHandSideAttribute());
+        ObjectList<ADBComparable2IntPair> rightValues = right.get(this.predicate.getRightHandSideAttribute());
         ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(this.getCost());
         for (int i = 0; i < this.joinCandidates.length; i++) {
             ADBInterval interval = this.joinCandidates[i];
@@ -84,6 +84,6 @@ public class ADBJoinTermCostModel {
 
     @Override
     public String toString() {
-        return "[Predicate Cost Model] for: " + getTerm() + " relCost: " + getRelativeCost() + " abs: " + getCost();
+        return "[Predicate Cost Model] for: " + getPredicate() + " relCost: " + getRelativeCost() + " abs: " + getCost();
     }
 }

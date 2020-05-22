@@ -78,8 +78,8 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
         for (ADBJoinTermCostModel costModel : this.costModels) {
             val workload = JoinQueryColumnWorkload
                     .builder()
-                    .left(this.left.get(costModel.getTerm().getLeftHandSideAttribute()))
-                    .right(this.right.get(costModel.getTerm().getRightHandSideAttribute()))
+                    .left(this.left.get(costModel.getPredicate().getLeftHandSideAttribute()))
+                    .right(this.right.get(costModel.getPredicate().getRightHandSideAttribute()))
                     .costModel(costModel)
                     .build();
             ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));
@@ -112,10 +112,10 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
     }
 
     private ObjectList<ADBKeyPair> mapResults() {
-        val leftList = this.left.get(this.costModels.get(0).getTerm().getLeftHandSideAttribute());
+        val leftList = this.left.get(this.costModels.get(0).getPredicate().getLeftHandSideAttribute());
         int leftNodeId = ADBInternalIDHelper.getNodeId(leftList.get(0).getValue());
         int leftPartitionId = ADBInternalIDHelper.getPartitionId(leftList.get(0).getValue());
-        val rightList = this.right.get(this.costModels.get(0).getTerm().getRightHandSideAttribute());
+        val rightList = this.right.get(this.costModels.get(0).getPredicate().getRightHandSideAttribute());
         int rightNodeId = ADBInternalIDHelper.getNodeId(rightList.get(0).getValue());
         int rightPartitionId = ADBInternalIDHelper.getPartitionId(rightList.get(0).getValue());
         ObjectList<ADBKeyPair> results = new ObjectArrayList<>(Arrays.stream(resultSet).mapToInt(SparseBitSet::cardinality).sum());

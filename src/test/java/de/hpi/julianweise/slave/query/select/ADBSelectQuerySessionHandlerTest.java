@@ -11,7 +11,7 @@ import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.select.ADBMasterSelectSession;
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
@@ -64,13 +64,13 @@ public class ADBSelectQuerySessionHandlerTest {
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
                 .value(1)
                 .build();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
         ADBQueryManager.QueryEntities message = new ADBQueryManager.QueryEntities(transactionId, responseProbe.ref(),
                 initializeTransferTestProbe.ref(), query);
@@ -117,13 +117,13 @@ public class ADBSelectQuerySessionHandlerTest {
                 manager.tell(new ADBPartitionManager.ConcludeTransfer()));
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
                 .value(1)
                 .build();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
 
         ADBQueryManager.QueryEntities message = new ADBQueryManager.QueryEntities(transactionId, responseProbe.ref(),

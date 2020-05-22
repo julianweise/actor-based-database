@@ -2,10 +2,10 @@ package de.hpi.julianweise.slave.partition.meta;
 
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,37 +30,37 @@ public class ADBPartitionHeader {
     }
 
     public boolean isOverlapping(ADBPartitionHeader b, ADBJoinQuery joinQuery) {
-        return joinQuery.getTerms().stream().allMatch(term -> this.isOverlapping(b, term));
+        return joinQuery.getPredicates().stream().allMatch(predicate -> this.isOverlapping(b, predicate));
     }
 
-    public boolean isOverlapping(ADBPartitionHeader b, ADBJoinQueryTerm joinQueryTerm) {
-        Comparable<Object> leftMin = this.minValues.get(joinQueryTerm.getLeftHandSideAttribute());
-        Comparable<Object> leftMax = this.maxValues.get(joinQueryTerm.getLeftHandSideAttribute());
-        Comparable<Object> rightMin = b.minValues.get(joinQueryTerm.getRightHandSideAttribute());
-        Comparable<Object> rightMax = b.maxValues.get(joinQueryTerm.getRightHandSideAttribute());
-        if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS)) {
+    public boolean isOverlapping(ADBPartitionHeader b, ADBJoinQueryPredicate joinPredicate) {
+        Comparable<Object> leftMin = this.minValues.get(joinPredicate.getLeftHandSideAttribute());
+        Comparable<Object> leftMax = this.maxValues.get(joinPredicate.getLeftHandSideAttribute());
+        Comparable<Object> rightMin = b.minValues.get(joinPredicate.getRightHandSideAttribute());
+        Comparable<Object> rightMax = b.maxValues.get(joinPredicate.getRightHandSideAttribute());
+        if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS)) {
             return !(leftMin.compareTo(rightMax) >= 0);
         }
-        if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL)) {
+        if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL)) {
             return !(leftMin.compareTo(rightMax) > 0);
         }
-        if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER)) {
+        if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER)) {
             return !(leftMax.compareTo(rightMin) <= 0);
         }
-        if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL)) {
+        if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL)) {
             return !(leftMax.compareTo(rightMin) < 0);
         }
-        if (joinQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.EQUALITY)) {
+        if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.EQUALITY)) {
             return leftMax.compareTo(rightMin) >= 0 && leftMin.compareTo(rightMax) <= 0;
         }
         return true;
     }
 
     public boolean isRelevant(ADBSelectionQuery selectionQuery) {
-        return selectionQuery.getTerms().stream().allMatch(this::isRelevant);
+        return selectionQuery.getPredicates().stream().allMatch(this::isRelevant);
     }
 
-    public boolean isRelevant(ADBSelectionQueryTerm selectionQueryTerm) {
+    public boolean isRelevant(ADBSelectionQueryPredicate selectionQueryTerm) {
         Comparable<Object> min = this.minValues.get(selectionQueryTerm.getFieldName());
         Comparable<Object> max = this.maxValues.get(selectionQueryTerm.getFieldName());
 

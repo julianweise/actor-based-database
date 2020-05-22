@@ -13,7 +13,7 @@ import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirerFactory;
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
@@ -153,7 +153,7 @@ public class ADBPartitionInquirerTest {
                 manager.tell(new ADBPartitionManager.ConcludeTransfer()));
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(new ADBSelectionQueryTerm(11212, "aInteger", EQUALITY));
+        query.addPredicate(new ADBSelectionQueryPredicate(11212, "aInteger", EQUALITY));
         inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
                                                       .requestId(requestId)
                                                       .query(query)
@@ -204,13 +204,13 @@ public class ADBPartitionInquirerTest {
         Thread.sleep(500);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
                 .value(1)
                 .build();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
         inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
                                                       .requestId(requestId)

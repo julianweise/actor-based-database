@@ -21,40 +21,40 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class ADBJoinQuery implements ADBQuery {
 
-    protected List<ADBJoinQueryTerm> terms = new ArrayList<>();
-    protected boolean isMaterialized;
+    protected List<ADBJoinQueryPredicate> predicates = new ArrayList<>();
+    protected boolean shouldBeMaterialized;
 
-    public ADBJoinQuery(List<ADBJoinQueryTerm> terms) {
-        this.terms = terms;
+    public ADBJoinQuery(List<ADBJoinQueryPredicate> predicates) {
+        this.predicates = predicates;
     }
 
-    public void addTerm(ADBJoinQueryTerm term) {
-        this.getTerms().add(term);
+    public void addPredicate(ADBJoinQueryPredicate predicate) {
+        this.getPredicates().add(predicate);
     }
 
     public Set<String> getAllFields() {
-        return this.getTerms().stream()
-            .map(term -> {
+        return this.getPredicates().stream()
+                   .map(predicate -> {
                 ObjectList<String> fields = new ObjectArrayList<>(2);
-                fields.add(term.getLeftHandSideAttribute());
-                fields.add(term.getRightHandSideAttribute());
+                fields.add(predicate.getLeftHandSideAttribute());
+                fields.add(predicate.getRightHandSideAttribute());
                 return fields;
             })
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
+                   .flatMap(Collection::stream)
+                   .collect(Collectors.toSet());
     }
 
     @Override
     public String toString() {
-        return "[JoinQuery] " + this.getTerms().stream()
-                                          .map(ADBJoinQueryTerm::toString)
-                                          .reduce((term, acc) -> acc + " & " + term).orElse("");
+        return "[JoinQuery] " + this.getPredicates().stream()
+                                    .map(ADBJoinQueryPredicate::toString)
+                                    .reduce((predicate, acc) -> acc + " & " + predicate).orElse("");
     }
 
     @JsonIgnore
     public ADBJoinQuery getReverse() {
-        return new ADBJoinQuery(this.getTerms().stream()
-                                    .map(ADBJoinQueryTerm::getReverse)
-                                    .collect(new ObjectArrayListCollector<>()), this.isMaterialized);
+        return new ADBJoinQuery(this.getPredicates().stream()
+                                    .map(ADBJoinQueryPredicate::getReverse)
+                                    .collect(new ObjectArrayListCollector<>()), this.shouldBeMaterialized);
     }
 }

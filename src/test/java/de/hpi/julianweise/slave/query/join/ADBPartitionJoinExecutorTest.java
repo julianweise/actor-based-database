@@ -8,7 +8,7 @@ import akka.actor.typed.Behavior;
 import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartition;
@@ -72,7 +72,7 @@ public class ADBPartitionJoinExecutorTest {
         foreignAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory.createDefault(joinQuery,
                 localPartition.ref(), foreignAttributes, supervisor.ref(), false);
@@ -118,7 +118,7 @@ public class ADBPartitionJoinExecutorTest {
         foreignAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior =
                 ADBPartitionJoinExecutorFactory.createDefault(joinQuery.getReverse(),
@@ -160,7 +160,7 @@ public class ADBPartitionJoinExecutorTest {
         foreignAttributes.put("bInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "bInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "bInteger"));
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior =
                 ADBPartitionJoinExecutorFactory.createDefault(joinQuery.getReverse(),
@@ -203,8 +203,8 @@ public class ADBPartitionJoinExecutorTest {
         foreignAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory.createDefault(joinQuery,
                 localPartition.ref(), foreignAttributes, supervisor.ref(), false);

@@ -2,7 +2,7 @@ package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import org.junit.Test;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
@@ -19,7 +19,7 @@ public class ADBEntityTest {
     // ##### Integer #####
     @Test
     public void matchesEqualityIntegerQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -27,15 +27,15 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesInEqualityIntegerQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(INEQUALITY)
@@ -43,15 +43,15 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     @Test
     public void matchesLessIntegerQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(LESS)
@@ -59,18 +59,18 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isFalse();
+        assertThat(entity1.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     @Test
     public void matchesGreaterIntegerQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(GREATER)
@@ -78,18 +78,18 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isFalse();
+        assertThat(entity1.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesLessOrEqualIntegerQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(LESS_OR_EQUAL)
@@ -97,18 +97,18 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isTrue();
+        assertThat(entity1.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesGreaterOrEqualIntegerQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(GREATER_OR_EQUAL)
@@ -116,20 +116,20 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isTrue();
+        assertThat(entity1.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     // ##### Float #####
 
     @Test
     public void matchesEqualityFloatQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)
@@ -137,15 +137,15 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesInEqualityFloatQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(INEQUALITY)
@@ -153,15 +153,15 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     @Test
     public void matchesLessFloatQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(LESS)
@@ -169,18 +169,18 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isFalse();
+        assertThat(entity1.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(1, "Test", 0.01f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     @Test
     public void matchesGreaterFloatQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(GREATER)
@@ -188,18 +188,18 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isFalse();
+        assertThat(entity1.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesLessOrEqualFloatQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(LESS_OR_EQUAL)
@@ -207,18 +207,18 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isTrue();
+        assertThat(entity1.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "Test", 1.02f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesGreaterOrEqualFloatQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(GREATER_OR_EQUAL)
@@ -226,20 +226,20 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isTrue();
+        assertThat(entity1.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     // ##### String #####
 
     @Test
     public void matchesEqualityStringQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
@@ -247,15 +247,15 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesInEqualityStringQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("bString")
                 .operator(INEQUALITY)
@@ -263,17 +263,17 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     // ##### Boolean #####
 
     @Test
     public void matchesEqualityBooleanQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("dBoolean")
                 .operator(EQUALITY)
@@ -281,15 +281,15 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isTrue();
+        assertThat(entity.matches(predicate)).isTrue();
 
         TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, false, 12.02, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     @Test
     public void matchesInEqualityBooleanQueryTermSuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("dBoolean")
                 .operator(INEQUALITY)
@@ -297,17 +297,17 @@ public class ADBEntityTest {
                 .build();
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, false, 12.02, 'w');
-        assertThat(entity2.matches(term)).isTrue();
+        assertThat(entity2.matches(predicate)).isTrue();
     }
 
     // #### Defaults / Exceptions
 
     @Test
     public void defaultsToFalseForUnknownOperator() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(UNSPECIFIED)
@@ -316,20 +316,20 @@ public class ADBEntityTest {
 
 
         TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
-        assertThat(entity.matches(term)).isFalse();
+        assertThat(entity.matches(predicate)).isFalse();
 
         TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
-        assertThat(entity1.matches(term)).isFalse();
+        assertThat(entity1.matches(predicate)).isFalse();
 
         TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
-        assertThat(entity2.matches(term)).isFalse();
+        assertThat(entity2.matches(predicate)).isFalse();
     }
 
     // #### Queries ####
 
     @Test
     public void matchesStringQuerySuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
@@ -337,7 +337,7 @@ public class ADBEntityTest {
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(query)).isTrue();
@@ -348,14 +348,14 @@ public class ADBEntityTest {
 
     @Test
     public void matchesQueryMultipleTermsSuccessfully() {
-        ADBSelectionQueryTerm term1 = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate term1 = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
                 .value("Test")
                 .build();
 
-        ADBSelectionQueryTerm term2 = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate term2 = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(INEQUALITY)
@@ -363,8 +363,8 @@ public class ADBEntityTest {
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(term1);
-        query.addTerm(term2);
+        query.addPredicate(term1);
+        query.addPredicate(term2);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(query)).isTrue();
@@ -375,7 +375,7 @@ public class ADBEntityTest {
 
     @Test
     public void matchesIntegerQuerySuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
@@ -383,7 +383,7 @@ public class ADBEntityTest {
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(query)).isTrue();
@@ -394,7 +394,7 @@ public class ADBEntityTest {
 
     @Test
     public void matchesFloatQuerySuccessfully() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)
@@ -402,7 +402,7 @@ public class ADBEntityTest {
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
         TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
         assertThat(entity.matches(query)).isTrue();

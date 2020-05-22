@@ -22,7 +22,7 @@ import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributorFactory;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.query.ADBSelectionQueryTermDeserializer;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.config.SlaveConfiguration;
@@ -58,7 +58,7 @@ public class ADBApplication {
         SimpleModule module = new SimpleModule();
         module.addDeserializer(ADBEntity.class, ADBEntityFactoryProvider.getInstance().buildDeserializer());
         module.registerSubtypes(ADBEntityFactoryProvider.getInstance().getTargetClass());
-        module.addDeserializer(ADBSelectionQueryTerm.class,
+        module.addDeserializer(ADBSelectionQueryPredicate.class,
                 new ADBSelectionQueryTermDeserializer(ADBEntityFactoryProvider.getInstance().getTargetClass()));
         JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
                 .get(context.getSystem()).serializerFor(CborSerializable.class);

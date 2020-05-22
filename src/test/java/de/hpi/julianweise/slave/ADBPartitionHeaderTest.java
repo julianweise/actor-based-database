@@ -5,7 +5,7 @@ import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryTerm;
+import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
@@ -74,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -155,7 +155,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -200,7 +200,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "aInteger"));
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -281,7 +281,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -327,7 +327,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -373,7 +373,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addTerm(new ADBJoinQueryTerm(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString"));
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString"));
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 

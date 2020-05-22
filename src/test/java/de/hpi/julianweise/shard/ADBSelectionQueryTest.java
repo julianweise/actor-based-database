@@ -1,7 +1,7 @@
 package de.hpi.julianweise.shard;
 
 import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryTerm;
+import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
 import org.junit.Test;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
@@ -13,44 +13,44 @@ public class ADBSelectionQueryTest {
     public void addTermToQuery() {
         ADBSelectionQuery query = new ADBSelectionQuery();
 
-        assertThat(query.getTerms().size()).isZero();
+        assertThat(query.getPredicates().size()).isZero();
 
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
                 .value(1)
                 .build();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
-        assertThat(query.getTerms().size()).isEqualTo(1);
-        assertThat(query.getTerms().get(0)).isEqualTo(term);
+        assertThat(query.getPredicates().size()).isEqualTo(1);
+        assertThat(query.getPredicates().get(0)).isEqualTo(predicate);
     }
 
     @Test
     public void queryTermStringRepresentation() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm.builder()
-                                                          .fieldName("aInteger")
-                                                          .operator(EQUALITY)
-                                                          .value(2)
-                                                          .build();
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate.builder()
+                                                                    .fieldName("aInteger")
+                                                                    .operator(EQUALITY)
+                                                                    .value(2)
+                                                                    .build();
 
-        assertThat(term.toString()).contains("Term");
-        assertThat(term.toString()).contains("2");
-        assertThat(term.toString()).contains("aInteger");
-        assertThat(term.toString()).contains("EQUALITY");
+        assertThat(predicate.toString()).contains("predicate");
+        assertThat(predicate.toString()).contains("2");
+        assertThat(predicate.toString()).contains("aInteger");
+        assertThat(predicate.toString()).contains("EQUALITY");
     }
 
     @Test
     public void queryStringRepresentation() {
-        ADBSelectionQueryTerm term = ADBSelectionQueryTerm.builder()
-                                                          .fieldName("aInteger")
-                                                          .operator(EQUALITY)
-                                                          .value(2)
-                                                          .build();
+        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate.builder()
+                                                                    .fieldName("aInteger")
+                                                                    .operator(EQUALITY)
+                                                                    .value(2)
+                                                                    .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addTerm(term);
+        query.addPredicate(predicate);
 
         assertThat(query.toString()).contains("Query");
         assertThat(query.toString()).contains("2");
@@ -60,11 +60,11 @@ public class ADBSelectionQueryTest {
 
     @Test
     public void noArgsConstructorIsPresentForDeserialization() {
-        ADBSelectionQueryTerm term = new ADBSelectionQueryTerm();
+        ADBSelectionQueryPredicate predicate = new ADBSelectionQueryPredicate();
 
-        assertThat(term.getFieldName()).isNull();
-        assertThat(term.getValue()).isNull();
-        assertThat(term.getOperator()).isNull();
+        assertThat(predicate.getFieldName()).isNull();
+        assertThat(predicate.getValue()).isNull();
+        assertThat(predicate.getOperator()).isNull();
     }
 
 }
