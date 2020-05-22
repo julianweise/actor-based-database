@@ -7,20 +7,22 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
+import de.hpi.julianweise.master.ADBMaster;
 import de.hpi.julianweise.master.io.ADBResultWriter;
 import de.hpi.julianweise.master.query.ADBMasterQuerySessionFactory;
 import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.agrona.collections.Int2ObjectHashMap;
 
-import java.util.Set;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -28,10 +30,11 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
 
     @SuppressWarnings("rawtypes")
     private final Int2ObjectHashMap<ObjectList> results = new Int2ObjectHashMap<>();
-    private final Set<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArraySet<>();
     private final Int2ObjectHashMap<QueryShards> transactionToRequest = new Int2ObjectHashMap<>();
     private final AtomicInteger transactionCounter = new AtomicInteger();
     private final ActorRef<ADBResultWriter.Command> resultWriter;
+    private ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManager = new ObjectArrayList<>();
+    private ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArrayList<>();
 
     public interface Command extends CborSerializable {
 
@@ -45,7 +48,6 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     @Getter
     public static class WrappedListing implements Command {
         private final Receptionist.Listing listing;
-
     }
 
     @AllArgsConstructor
@@ -56,7 +58,6 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
         private final ADBQuery query;
         private final boolean async;
         private final ActorRef<Response> respondTo;
-
     }
 
     @SuppressWarnings("rawtypes")
@@ -97,7 +98,15 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     }
 
     private Behavior<Command> handleReceptionistListing(WrappedListing wrapper) {
-        this.queryManagers.addAll(wrapper.getListing().getServiceInstances(ADBQueryManager.SERVICE_KEY));
+        if (wrapper.listing.isForKey(ADBQueryManager.SERVICE_KEY)) {
+            this.queryManagers = wrapper.getListing().getServiceInstances(ADBQueryManager.SERVICE_KEY)
+                                        .stream().sorted(Comparator.comparingInt(ADBMaster::getGlobalIdFor))
+                                        .collect(new ObjectArrayListCollector<>());
+        } else if (wrapper.listing.isForKey(ADBPartitionManager.SERVICE_KEY)) {
+            this.partitionManager = wrapper.getListing().getServiceInstances(ADBPartitionManager.SERVICE_KEY)
+                                           .stream().sorted(Comparator.comparingInt(ADBMaster::getGlobalIdFor))
+                                           .collect(new ObjectArrayListCollector<>());
+        }
         return Behaviors.same();
     }
 
@@ -114,7 +123,8 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     }
 
     private void createNewQuerySession(int transactionID, ADBQuery query) {
-        this.getContext().spawn(ADBMasterQuerySessionFactory.create(new ObjectArrayList<>(this.queryManagers), query, transactionID,
+        this.getContext().spawn(ADBMasterQuerySessionFactory.create(this.queryManagers,
+                this.partitionManager, query, transactionID,
                 this.getContext().getSelf()), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
     }
 

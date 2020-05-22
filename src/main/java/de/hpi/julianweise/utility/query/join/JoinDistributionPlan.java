@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -21,17 +22,17 @@ public class JoinDistributionPlan {
 
     private final static Logger LOG = LoggerFactory.getLogger(JoinDistributionPlan.class);
 
-    private final ObjectList<ActorRef<ADBQueryManager.Command>> queryManager;
+    private final ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers;
     private final BitSet[] distributionMap;
     private final Int2ObjectMap<AtomicInteger> dataAccesses = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<AtomicInteger> dataRequests = new Int2ObjectOpenHashMap<>();
     private final AtomicInteger finalizedComparisons = new AtomicInteger(0);
 
-    public JoinDistributionPlan(ObjectList<ActorRef<ADBQueryManager.Command>> queryManager) {
-        this.queryManager = queryManager;
-        this.distributionMap = this.initializeDistributionMap(this.queryManager.size());
-        IntStream.range(0, this.queryManager.size()).forEach(index -> this.dataAccesses.put(index, new AtomicInteger()));
-        IntStream.range(0, this.queryManager.size()).forEach(index -> this.dataRequests.put(index, new AtomicInteger()));
+    public JoinDistributionPlan(ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers) {
+        this.queryManagers = queryManagers;
+        this.distributionMap = this.initializeDistributionMap(this.queryManagers.size());
+        IntStream.range(0, this.queryManagers.size()).forEach(index -> this.dataAccesses.put(index, new AtomicInteger()));
+        IntStream.range(0, this.queryManagers.size()).forEach(index -> this.dataRequests.put(index, new AtomicInteger()));
     }
 
     private BitSet[] initializeDistributionMap(int numberOfShards) {
@@ -51,7 +52,7 @@ public class JoinDistributionPlan {
         LOG.info(String.format("[DistributionPlan] Shard #%d requested new shard to join. Suggested shard # %d",
                 shardIndex, shardIndexMinimalAccesses));
         LOG.info("[Overall Process]: {}/{}", this.finalizedComparisons.incrementAndGet(),
-                this.queryManager.size() * (this.queryManager.size() + 1) / 2);
+                this.queryManagers.size() * (this.queryManagers.size() + 1) / 2);
         if (shardIndexMinimalAccesses < 0) {
             return null;
         }
@@ -60,11 +61,11 @@ public class JoinDistributionPlan {
         this.dataAccesses.get(shardIndex).incrementAndGet();
         this.dataAccesses.get(shardIndexMinimalAccesses).incrementAndGet();
         this.dataRequests.get(shardIndex).incrementAndGet();
-        return this.queryManager.get(shardIndexMinimalAccesses);
+        return this.queryManagers.get(shardIndexMinimalAccesses);
     }
 
     private int getIndexOfShard(ActorRef<ADBQueryManager.Command> shard) {
-        return this.queryManager.indexOf(shard);
+        return this.queryManagers.indexOf(shard);
     }
 
     private int getShardIndexWithMinimalAccessesForShard(int index) {
@@ -73,6 +74,7 @@ public class JoinDistributionPlan {
         int minDataAccesses = relevantAccesses.size() > 0 ? Collections.min(relevantAccesses) : Integer.MAX_VALUE;
         return this.dataAccesses.int2ObjectEntrySet()
                                 .stream()
+                                .sorted(Comparator.comparingInt(Int2ObjectMap.Entry::getIntKey))
                                 .filter(eS -> this.notCompared(eS.getIntKey(), index))
                                 .filter(eS1 -> eS1.getValue().get() <= minDataAccesses)
                                 .min((eS1, eS2) -> this.dataRequests.get(eS2.getIntKey()).get() - this.dataRequests.get(eS1.getIntKey()).get())

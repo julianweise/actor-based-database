@@ -10,6 +10,7 @@ import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -31,9 +32,13 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
 
     }
 
-    public ADBMasterSelectSession(ActorContext<Command> context, ObjectList<ActorRef<ADBQueryManager.Command>> queryManager,
-                                  int transactionId, ActorRef<ADBPartitionInquirer.Command> parent, ADBSelectionQuery query) {
-        super(context, queryManager, transactionId, parent);
+    public ADBMasterSelectSession(ActorContext<Command> context,
+                                  ObjectList<ActorRef<ADBQueryManager.Command>> queryManager,
+                                  ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManager,
+                                  int transactionId,
+                                  ActorRef<ADBPartitionInquirer.Command> parent,
+                                  ADBSelectionQuery query) {
+        super(context, queryManager, partitionManager, transactionId, parent);
         // Send initial query
         this.distributeQuery(query);
     }
@@ -73,5 +78,10 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
     @Override
     protected void submitResults() {
         this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), true));
+    }
+
+    @Override
+    protected boolean isFinalized() {
+        return true;
     }
 }

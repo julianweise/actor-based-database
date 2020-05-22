@@ -10,12 +10,9 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.query.ADBQuery;
-import de.hpi.julianweise.slave.partition.ADBPartition;
-import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
-import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -71,12 +68,6 @@ public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
         ActorRef<ADBSlaveQuerySession.Command> handler;
     }
 
-    @AllArgsConstructor
-    public static class MaterializeToEntities implements Command {
-        ActorRef<ADBPartition.MaterializedEntities> respondTo;
-        IntList internalIds;
-    }
-
     public ADBQueryManager(ActorContext<Command> context) {
         super(context);
         getContext().getSystem().receptionist().tell(Receptionist.register(SERVICE_KEY, this.getContext().getSelf()));
@@ -87,7 +78,6 @@ public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
         return newReceiveBuilder()
                 .onMessage(QueryEntities.class, this::handleQueryEntities)
                 .onMessage(SessionHandlerTerminated.class, this::handleQuerySessionHandlerTerminated)
-                .onMessage(MaterializeToEntities.class, this::handleMaterializeToEntities)
                 .build();
     }
 
@@ -101,12 +91,6 @@ public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
     }
 
     private Behavior<Command> handleQuerySessionHandlerTerminated(SessionHandlerTerminated message) {
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handleMaterializeToEntities(MaterializeToEntities command) {
-        ADBPartitionManager.getInstance().tell(new ADBPartitionManager.MaterializeToEntities(command.respondTo,
-                command.internalIds));
         return Behaviors.same();
     }
 }

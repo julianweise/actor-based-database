@@ -5,6 +5,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.receptionist.Receptionist;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 
 public class ADBPartitionInquirerFactory {
@@ -13,6 +14,7 @@ public class ADBPartitionInquirerFactory {
         return Behaviors.setup(context -> {
             ActorRef<Receptionist.Listing> wrapper = ADBPartitionInquirerFactory.createListingWrapper(context);
             context.getSystem().receptionist().tell(Receptionist.subscribe(ADBQueryManager.SERVICE_KEY, wrapper));
+            context.getSystem().receptionist().tell(Receptionist.subscribe(ADBPartitionManager.SERVICE_KEY, wrapper));
             return new ADBPartitionInquirer(context);
         });
     }

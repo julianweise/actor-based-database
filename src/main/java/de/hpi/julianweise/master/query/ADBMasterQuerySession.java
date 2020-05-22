@@ -7,6 +7,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
@@ -30,6 +31,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
     protected final int transactionId;
     protected final ActorRef<ADBPartitionInquirer.Command> parent;
     protected final ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers;
+    protected final ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers;
     protected final Map<ActorRef<ADBQueryManager.Command>, ActorRef<ADBSlaveQuerySession.Command>> managerToHandlers;
     protected final Map<ActorRef<ADBSlaveQuerySession.Command>, ActorRef<ADBQueryManager.Command>> handlersToManager;
     protected final Set<ActorRef<ADBLargeMessageReceiver.Command>> openReceiverSessions;
@@ -75,11 +77,14 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
         private ADBLargeMessageReceiver.InitializeTransfer initializeTransfer;
     }
 
-    public ADBMasterQuerySession(ActorContext<Command> context, ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
+    public ADBMasterQuerySession(ActorContext<Command> context,
+                                 ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
+                                 ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                  int transactionId, ActorRef<ADBPartitionInquirer.Command> parent) {
         super(context);
         this.startTime = System.nanoTime();
         this.queryManagers = queryManagers;
+        this.partitionManagers = partitionManagers;
         this.transactionId = transactionId;
         this.parent = parent;
         this.managerToHandlers = new Object2ObjectHashMap<>();
@@ -132,7 +137,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
     }
 
     protected Behavior<ADBMasterQuerySession.Command> conditionallyConcludeTransaction() {
-        if (this.queryManagers.size() == this.completedSessions.size() && this.openReceiverSessions.size() < 1) {
+        if (this.queryManagers.size() == this.completedSessions.size() && this.openReceiverSessions.size() < 1 && this.isFinalized()) {
             this.submitResults();
             return this.concludeSession();
         }
@@ -147,4 +152,5 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
 
     protected abstract String getQuerySessionName();
     protected abstract void submitResults();
+    protected abstract boolean isFinalized();
 }

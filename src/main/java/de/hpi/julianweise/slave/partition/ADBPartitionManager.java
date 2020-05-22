@@ -14,6 +14,7 @@ import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
+import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
@@ -21,7 +22,6 @@ import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -134,9 +134,9 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     }
 
     @AllArgsConstructor
-    public static class MaterializeToEntities implements Command {
+    public static class MaterializeToEntities implements Command, CborSerializable {
         ActorRef<ADBPartition.MaterializedEntities> respondTo;
-        IntList internalIds;
+        IntArrayList internalIds;
     }
 
     public ADBPartitionManager(ActorContext<Command> context) {
@@ -236,6 +236,10 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     }
 
     private Behavior<Command> handleMaterializeToEntities(MaterializeToEntities command) {
+        assert command.internalIds.stream().filter(id -> ADBInternalIDHelper.getNodeId(id) != ADBSlave.ID).count() < 1 :
+                "Received ids not " +
+                "belonging" +
+                " to this node";
         command.internalIds.parallelStream()
                 .collect(groupingBy(ADBInternalIDHelper::getPartitionId))
                 .forEach((p, e) -> this.requestMaterializedEntitiesFromPartition(p, e, command.respondTo));

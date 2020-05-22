@@ -167,7 +167,7 @@ public class ADBPartitionInquirerTest {
     }
 
     @Test
-    public void testValidResultsAreReturnedSuccessfully() {
+    public void testValidResultsAreReturnedSuccessfully() throws InterruptedException {
         int requestId = 1;
 
         TestProbe<ADBDataDistributor.Command> persistProbe = testKit.createTestProbe();
@@ -195,12 +195,13 @@ public class ADBPartitionInquirerTest {
         assertThat(partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).size()).isZero();
         partitionListing = receptionistPartitionManagerProbe.expectMessageClass(Receptionist.Listing.class);
         assertThat(partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).size()).isOne();
+        partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager -> {
+            manager.tell(new ADBPartitionManager.PersistEntity(persistProbe.ref(), testEntity));
+            manager.tell(new ADBPartitionManager.ConcludeTransfer());
+        });
 
-        partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
-                manager.tell(new ADBPartitionManager.PersistEntity(persistProbe.ref(), testEntity)));
-        partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
-                manager.tell(new ADBPartitionManager.ConcludeTransfer()));
-
+        // Wait for Partitions to be propagated; This is usually ensured by
+        Thread.sleep(500);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryTerm term = ADBSelectionQueryTerm

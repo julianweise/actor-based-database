@@ -16,10 +16,12 @@ import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2Factory
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.util.Map;
@@ -72,10 +74,10 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     @AllArgsConstructor
+    @NoArgsConstructor
     @Getter
-    public static class MaterializedEntities implements Command {
-
-        private final ObjectList<ADBEntity> results;
+    public static class MaterializedEntities implements Command, KryoSerializable {
+        private ObjectList<ADBEntity> results;
     }
 
     public ADBPartition(ActorContext<Command> context, int id, ObjectList<ADBEntity> data) {
@@ -119,6 +121,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     private Behavior<Command> handleMaterialize(MaterializeToEntities command) {
+        assert command.internalIds.stream().filter(id -> this.id != ADBInternalIDHelper.getPartitionId(id)).count() < 1: "Entities belonging to different Partition";
         ObjectList<ADBEntity> materializedResults = command.internalIds.parallelStream()
                 .map(internalId -> this.data.get(ADBInternalIDHelper.getEntityId(internalId)))
                 .collect(new ObjectArrayListCollector<>());

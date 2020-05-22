@@ -12,6 +12,7 @@ import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.slave.partition.ADBPartition;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
@@ -19,11 +20,13 @@ import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
-import de.hpi.julianweise.utility.list.IntArrayListCollector;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -36,6 +39,7 @@ import org.agrona.collections.Int2ObjectHashMap;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntConsumer;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -44,8 +48,11 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     private final JoinDistributionPlan distributionPlan;
     private final AtomicInteger resultCounter = new AtomicInteger(0);
     private final Int2ObjectHashMap<ADBEntity> materializedEntities = new Int2ObjectHashMap<>();
-    private final ObjectList<ADBKeyPair> joinResults = new ObjectArrayList<>();
+    private final IntSet requestedEntitiesForMaterialization = new IntOpenHashSet();
+    private final ObjectArrayFIFOQueue<ADBKeyPair> joinResults = new ObjectArrayFIFOQueue<>();
     private final ADBJoinQuery query;
+    private final ActorRef<ADBPartition.MaterializedEntities> materializedRespondTo =
+            this.getContext().messageAdapter(ADBPartition.MaterializedEntities.class, MaterializedEntitiesWrapper::new);
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -76,10 +83,11 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     public ADBMasterJoinSession(ActorContext<ADBMasterQuerySession.Command> context,
                                 ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
+                                ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                 int transactionId,
                                 ActorRef<ADBPartitionInquirer.Command> parent,
                                 ADBJoinQuery query) {
-        super(context, queryManagers, transactionId, parent);
+        super(context, queryManagers, partitionManagers, transactionId, parent);
         this.distributionPlan = new JoinDistributionPlan(this.queryManagers);
         this.query = query;
 
@@ -135,7 +143,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
             parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, results.joinResults, false));
             return Behaviors.same();
         }
-        this.joinResults.addAll(results.getJoinResults());
+        results.joinResults.forEach(this.joinResults::enqueue);
         this.requestResultMaterialization(results.getJoinResults());
         return Behaviors.same();
     }
@@ -147,10 +155,14 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private void requestMaterializedEntitiesFromNode(int nodeId, List<Integer> intIds) {
-        val respTo = getContext().messageAdapter(ADBPartition.MaterializedEntities.class,
-                MaterializedEntitiesWrapper::new);
-        IntList filteredIds = intIds.stream().filter(id -> !materializedEntities.containsKey(id)).collect(new IntArrayListCollector());
-        queryManagers.get(nodeId).tell(new ADBQueryManager.MaterializeToEntities(respTo, new IntArrayList(filteredIds)));
+        IntList filteredIds = intIds.stream()
+                                    .mapToInt(id -> id)
+                                    .filter(id -> !this.requestedEntitiesForMaterialization.contains(id))
+                                    .filter(id -> !this.materializedEntities.containsKey(id))
+                                    .collect(IntArrayList::new, IntArrayList::add, IntArrayList::addAll);
+        filteredIds.forEach((IntConsumer) this.requestedEntitiesForMaterialization::add);
+        IntArrayList ids = new IntArrayList(filteredIds);
+        partitionManagers.get(nodeId).tell(new ADBPartitionManager.MaterializeToEntities(materializedRespondTo, ids));
     }
 
     @Override
@@ -167,20 +179,39 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     private Behavior<Command> handleMaterializedEntities(MaterializedEntitiesWrapper wrapper) {
         for (ADBEntity entity : wrapper.entities.getResults()) {
             this.materializedEntities.put(entity.getInternalID(), entity);
+            this.requestedEntitiesForMaterialization.remove(entity.getInternalID());
         }
-        ObjectArrayList<ADBPair<ADBEntity, ADBEntity>> partialResults = new ObjectArrayList<>();
-        int index = 0;
-        for (ADBKeyPair joinTuple : this.joinResults) {
-            if (this.materializedEntities.containsKey(joinTuple.getKey()) && this.materializedEntities.containsKey(joinTuple.getValue())) {
-                partialResults.add(new ADBPair<>(
-                        this.materializedEntities.get(joinTuple.getKey()),
-                        this.materializedEntities.get(joinTuple.getValue()))
-                );
-                this.joinResults.remove(index);
+        ObjectList<ADBPair<ADBEntity, ADBEntity>> materializedResults = new ObjectArrayList<>(this.joinResults.size());
+        int initialQueueSize = this.joinResults.size();
+        for (int i = 0; i < initialQueueSize; i++) {
+            ADBKeyPair pair = this.joinResults.dequeue();
+            if (!this.isJoinPairMaterializable(pair)) {
+                this.joinResults.enqueue(pair);
+                continue;
             }
-            index++;
+            materializedResults.add(this.materializePair(pair));
         }
-        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, partialResults, false));
+
+        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, materializedResults, false));
+        this.conditionallyConcludeTransaction();
         return Behaviors.same();
+    }
+
+    private boolean isJoinPairMaterializable(ADBKeyPair pair) {
+        return materializedEntities.containsKey(pair.getKey()) && materializedEntities.containsKey(pair.getValue());
+    }
+
+    private ADBPair<ADBEntity, ADBEntity> materializePair(ADBKeyPair pair) {
+        assert this.materializedEntities.containsKey(pair.getKey()) : "Cannot mater. pair with unmapped key ID";
+        assert this.materializedEntities.containsKey(pair.getValue()) : "Cannot mater. pair with unmapped value ID";
+        return new ADBPair<>(materializedEntities.get(pair.getKey()), materializedEntities.get(pair.getValue()));
+    }
+
+    @Override
+    protected boolean isFinalized() {
+        if (!this.query.isMaterialized()) {
+            return true;
+        }
+        return this.joinResults.isEmpty() && this.requestedEntitiesForMaterialization.isEmpty();
     }
 }

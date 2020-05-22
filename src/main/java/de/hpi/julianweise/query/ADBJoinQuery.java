@@ -17,14 +17,16 @@ import java.util.stream.Collectors;
 
 @Setter
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ADBJoinQuery implements ADBQuery {
 
-    @Getter
     protected List<ADBJoinQueryTerm> terms = new ArrayList<>();
-    @Getter
     protected boolean isMaterialized;
+
+    public ADBJoinQuery(List<ADBJoinQueryTerm> terms) {
+        this.terms = terms;
+    }
 
     public void addTerm(ADBJoinQueryTerm term) {
         this.getTerms().add(term);
