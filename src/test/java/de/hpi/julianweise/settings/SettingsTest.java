@@ -42,7 +42,7 @@ public class SettingsTest {
     }
 
     @Test
-    public void lookupSingelton() {
+    public void lookupSingleton() {
         Settings settings = Settings.SettingsProvider;
         assertThat(settings.lookup()).isEqualTo(settings);
     }

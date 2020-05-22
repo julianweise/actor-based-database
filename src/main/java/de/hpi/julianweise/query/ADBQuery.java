@@ -14,7 +14,5 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
                       @JsonSubTypes.Type(value=ADBJoinQuery.class, name = "ADBJoinQuery")
               })
 public interface ADBQuery {
-
     List<? extends ADBQueryTerm> getTerms();
-
 }

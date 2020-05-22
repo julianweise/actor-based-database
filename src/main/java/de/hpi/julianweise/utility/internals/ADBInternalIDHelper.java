@@ -1,6 +1,7 @@
 package de.hpi.julianweise.utility.internals;
 
 
+@SuppressWarnings("SpellCheckingInspection")
 public class ADBInternalIDHelper {
 
     // [NNNNNNNN | PPPPPPPP | EEEEEEEEEEEEEEEE]

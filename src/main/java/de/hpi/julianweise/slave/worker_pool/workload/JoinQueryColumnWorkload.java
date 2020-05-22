@@ -27,6 +27,7 @@ public class JoinQueryColumnWorkload extends Workload {
 
     }
 
+    @SuppressWarnings("unused")
     @Builder
     public JoinQueryColumnWorkload(ObjectList<ADBComparable2IntPair> left,
                                    ObjectList<ADBComparable2IntPair> right,

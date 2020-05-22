@@ -22,10 +22,10 @@ public class FileValidatorTest {
     @Test
     public void testThrowsExceptionFileNotFound() {
         expectedEx.expect(ParameterException.class);
-        expectedEx.expectMessage("the given testfile.csv does not exist");
+        expectedEx.expectMessage("the given TestFile.csv does not exist");
 
         FileValidator validatorUnderTest = new FileValidator();
-        validatorUnderTest.validate("testfile.csv", Paths.get("invalid path"));
+        validatorUnderTest.validate("TestFile.csv", Paths.get("invalid path"));
     }
 
     @Test

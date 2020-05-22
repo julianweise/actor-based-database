@@ -17,7 +17,7 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-public class ADBPartitionHeaderTest {
+@SuppressWarnings("ALL") public class ADBPartitionHeaderTest {
 
     @Before
     public void setUp() {
