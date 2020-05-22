@@ -1,6 +1,7 @@
 package de.hpi.julianweise.query;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Setter
@@ -53,14 +53,8 @@ public class ADBJoinQuery implements ADBQuery {
 
     @JsonIgnore
     public ADBJoinQuery getReverse() {
-        return new ADBJoinQuery(this.getTerms().stream().map(ADBJoinQueryTerm::getReverse)
-                                    .collect(Collector.of(
-                                            ObjectArrayList::new,
-                                            ObjectArrayList::add,
-                                            (collection1, collection2) -> {
-                                                collection2.addAll(collection1);
-                                                return collection2;
-                                            }
-                                    )), this.isMaterialized);
+        return new ADBJoinQuery(this.getTerms().stream()
+                                    .map(ADBJoinQueryTerm::getReverse)
+                                    .collect(new ObjectArrayListCollector<>()), this.isMaterialized);
     }
 }
