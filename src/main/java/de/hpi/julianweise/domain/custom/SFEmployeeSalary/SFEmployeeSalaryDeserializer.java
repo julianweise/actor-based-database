@@ -1,4 +1,4 @@
-package de.hpi.julianweise.domain.custom;
+package de.hpi.julianweise.domain.custom.SFEmployeeSalary;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;

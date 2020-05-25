@@ -1,4 +1,4 @@
-package de.hpi.julianweise.domain.custom;
+package de.hpi.julianweise.domain.custom.SFEmployeeSalary;
 
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.ADBEntityFactory;

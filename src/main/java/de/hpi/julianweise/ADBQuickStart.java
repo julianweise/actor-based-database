@@ -1,7 +1,7 @@
 package de.hpi.julianweise;
 
 import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.domain.custom.SFEmployeeFactory;
+import de.hpi.julianweise.domain.custom.SFEmployeeSalary.SFEmployeeFactory;
 
 public class ADBQuickStart {
     public static void main(String[] args) {

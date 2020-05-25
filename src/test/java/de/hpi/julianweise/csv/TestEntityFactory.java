@@ -2,7 +2,7 @@ package de.hpi.julianweise.csv;
 
 import de.hpi.julianweise.domain.ADBEntity;
 import de.hpi.julianweise.domain.ADBEntityFactory;
-import de.hpi.julianweise.domain.custom.PatientDeserializer;
+import de.hpi.julianweise.domain.custom.Patient.PatientDeserializer;
 import org.apache.commons.csv.CSVRecord;
 
 import static java.lang.Float.parseFloat;
