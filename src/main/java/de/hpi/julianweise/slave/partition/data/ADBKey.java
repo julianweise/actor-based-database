@@ -1,4 +1,4 @@
-package de.hpi.julianweise.domain.key;
+package de.hpi.julianweise.slave.partition.data;
 
 public interface ADBKey extends Comparable<ADBKey> {
     boolean equals(Object other);

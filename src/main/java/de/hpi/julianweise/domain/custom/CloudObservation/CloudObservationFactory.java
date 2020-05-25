@@ -1,8 +1,8 @@
 package de.hpi.julianweise.domain.custom.CloudObservation;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import de.hpi.julianweise.domain.ADBEntity;
-import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import org.apache.commons.csv.CSVRecord;
 
 import static java.lang.Integer.parseInt;

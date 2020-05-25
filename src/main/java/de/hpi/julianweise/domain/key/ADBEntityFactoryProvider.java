@@ -1,6 +1,6 @@
 package de.hpi.julianweise.domain.key;
 
-import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 
 public class ADBEntityFactoryProvider {
 

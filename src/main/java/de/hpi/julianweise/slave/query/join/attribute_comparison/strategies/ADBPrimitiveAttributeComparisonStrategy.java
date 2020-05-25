@@ -1,6 +1,6 @@
 package de.hpi.julianweise.slave.query.join.attribute_comparison.strategies;
 
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;

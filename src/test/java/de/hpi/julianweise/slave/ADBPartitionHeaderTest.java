@@ -2,7 +2,7 @@ package de.hpi.julianweise.slave;
 
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.query.ADBJoinQueryPredicate;

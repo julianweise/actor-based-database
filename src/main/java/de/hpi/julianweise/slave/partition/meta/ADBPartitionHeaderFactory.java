@@ -1,6 +1,6 @@
 package de.hpi.julianweise.slave.partition.meta;
 
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 

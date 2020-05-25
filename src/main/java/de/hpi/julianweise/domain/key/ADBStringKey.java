@@ -1,5 +1,6 @@
 package de.hpi.julianweise.domain.key;
 
+import de.hpi.julianweise.slave.partition.data.ADBKey;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

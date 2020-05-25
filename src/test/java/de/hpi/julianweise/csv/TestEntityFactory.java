@@ -1,7 +1,7 @@
 package de.hpi.julianweise.csv;
 
-import de.hpi.julianweise.domain.ADBEntity;
-import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import de.hpi.julianweise.domain.custom.Patient.PatientDeserializer;
 import org.apache.commons.csv.CSVRecord;
 

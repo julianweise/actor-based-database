@@ -2,7 +2,7 @@ package de.hpi.julianweise.slave.partition;
 
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.objects.ObjectList;

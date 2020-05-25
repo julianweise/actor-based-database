@@ -1,6 +1,6 @@
 package de.hpi.julianweise.slave.partition.meta;
 
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;

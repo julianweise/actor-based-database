@@ -1,8 +1,8 @@
 package de.hpi.julianweise.domain.custom.SFEmployeeSalary;
 
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBIntegerKey;
-import de.hpi.julianweise.domain.key.ADBKey;
+import de.hpi.julianweise.slave.partition.data.ADBKey;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

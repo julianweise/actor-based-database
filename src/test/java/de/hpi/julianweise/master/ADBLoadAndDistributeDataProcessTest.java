@@ -7,7 +7,7 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;

@@ -1,6 +1,6 @@
 package de.hpi.julianweise.slave.partition.meta;
 
-import de.hpi.julianweise.domain.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;

@@ -1,7 +1,7 @@
 package de.hpi.julianweise.domain.custom.SFEmployeeSalary;
 
-import de.hpi.julianweise.domain.ADBEntity;
-import de.hpi.julianweise.domain.ADBEntityFactory;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import org.apache.commons.csv.CSVRecord;
 
 public class SFEmployeeFactory implements ADBEntityFactory {
