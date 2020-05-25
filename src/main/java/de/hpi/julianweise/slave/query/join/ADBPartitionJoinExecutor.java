@@ -12,7 +12,7 @@ import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartition;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2Factory;
+import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModelFactory;
@@ -140,8 +140,8 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     private void joinRowBased(ObjectList<ADBKeyPair> joinCandidates, ObjectList<ADBJoinTermCostModel> costModels) {
-        val leftAttributes = ADBSortedEntityAttributes2Factory.resortByIndex(this.foreignAttributes, costModels);
-        val rightAttributes = ADBSortedEntityAttributes2Factory.resortByIndex(this.localAttributes, costModels);
+        val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.foreignAttributes, costModels);
+        val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.localAttributes, costModels);
         val workload = new JoinQueryRowWorkload(joinCandidates, leftAttributes, rightAttributes, costModels);
         val respondTo = getContext().messageAdapter(GenericWorker.Response.class, GenericWorkerResponseWrapper::new);
         ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));

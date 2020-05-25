@@ -20,7 +20,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ADBSortedEntityAttributes2Factory {
+public class ADBSortedEntityAttributesFactory {
 
     @AllArgsConstructor
     private static class AttributeIndexComparator implements IntComparator {
@@ -34,27 +34,27 @@ public class ADBSortedEntityAttributes2Factory {
         }
     }
 
-    public static Object2ObjectMap<String, ADBSortedEntityAttributes2> of(ObjectList<ADBEntity> data) {
+    public static Object2ObjectMap<String, ADBSortedEntityAttributes> of(ObjectList<ADBEntity> data) {
         assert data.size() > 0;
         assert data.stream().map(ADBEntity::getClass).collect(Collectors.toSet()).size() == 1;
         Field[] attributes = data.get(0).getClass().getDeclaredFields();
-        Object2ObjectMap<String, ADBSortedEntityAttributes2> results = new Object2ObjectOpenHashMap<>(attributes.length);
+        Object2ObjectMap<String, ADBSortedEntityAttributes> results = new Object2ObjectOpenHashMap<>(attributes.length);
 
         for (Field field : attributes) {
-            results.put(field.getName(), ADBSortedEntityAttributes2Factory.of(field.getName(), data));
+            results.put(field.getName(), ADBSortedEntityAttributesFactory.of(field.getName(), data));
         }
         return results;
     }
 
     // Assuming all entities provided are of the sane type
-    public static ADBSortedEntityAttributes2 of(String fieldName, ObjectList<ADBEntity> data) {
+    public static ADBSortedEntityAttributes of(String fieldName, ObjectList<ADBEntity> data) {
         assert data.stream().map(ADBEntity::getClass).collect(Collectors.toSet()).size() == 1;
 
         if (data.size() < 1) {
-            return new ADBSortedEntityAttributes2(fieldName, new int[0]);
+            return new ADBSortedEntityAttributes(fieldName, new int[0]);
         }
         int[] sortedIndices = getSortedIndices(data, ADBEntity.getGetterForField(fieldName, data.get(0).getClass()));
-        return new ADBSortedEntityAttributes2(fieldName, sortedIndices);
+        return new ADBSortedEntityAttributes(fieldName, sortedIndices);
     }
 
     private static int[] getSortedIndices(final ObjectList<ADBEntity> data,

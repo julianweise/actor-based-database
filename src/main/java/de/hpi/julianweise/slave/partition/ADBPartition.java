@@ -11,8 +11,8 @@ import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes2Factory;
+import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes;
+import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
@@ -33,7 +33,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     private static final int MAX_ELEMENTS = 0x10000;
 
     private final ObjectList<ADBEntity> data;
-    private final Map<String, ADBSortedEntityAttributes2> sortedAttributes;
+    private final Map<String, ADBSortedEntityAttributes> sortedAttributes;
     private final int id;
 
     public interface Command {
@@ -91,7 +91,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
         this.id = id;
         this.data = data;
-        this.sortedAttributes = ADBSortedEntityAttributes2Factory.of(data);
+        this.sortedAttributes = ADBSortedEntityAttributesFactory.of(data);
 
         ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id);
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
@@ -115,7 +115,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         val attributes = command.query.getAllFields()
                                       .stream()
                                       .map(this.sortedAttributes::get)
-                                      .collect(Collectors.toMap(ADBSortedEntityAttributes2::getField, s -> s.getMaterialized(this.data)));
+                                      .collect(Collectors.toMap(ADBSortedEntityAttributes::getField, s -> s.getMaterialized(this.data)));
         command.respondTo.tell(new JoinAttributes(attributes, this.id));
         return Behaviors.same();
     }

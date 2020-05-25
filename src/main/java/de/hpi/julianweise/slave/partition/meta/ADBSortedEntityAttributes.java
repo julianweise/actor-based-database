@@ -11,7 +11,7 @@ import java.util.function.Function;
 
 @AllArgsConstructor
 @Getter
-public class ADBSortedEntityAttributes2 {
+public class ADBSortedEntityAttributes {
 
     private final String field;
     private final int[] sortedIndices;
