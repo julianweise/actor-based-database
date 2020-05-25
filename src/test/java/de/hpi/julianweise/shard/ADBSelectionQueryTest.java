@@ -35,7 +35,7 @@ public class ADBSelectionQueryTest {
                                                                     .value(2)
                                                                     .build();
 
-        assertThat(predicate.toString()).contains("predicate");
+        assertThat(predicate.toString()).contains("Predicate");
         assertThat(predicate.toString()).contains("2");
         assertThat(predicate.toString()).contains("aInteger");
         assertThat(predicate.toString()).contains("EQUALITY");

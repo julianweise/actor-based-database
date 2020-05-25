@@ -30,6 +30,6 @@ public class ADBSelectionQueryPredicate implements ADBQueryTerm {
 
     @Override
     public String toString() {
-        return "[SelectionTerm] " + this.fieldName + " " + this.operator + " " + this.value;
+        return "[SelectionPredicate] " + this.fieldName + " " + this.operator + " " + this.value;
     }
 }
