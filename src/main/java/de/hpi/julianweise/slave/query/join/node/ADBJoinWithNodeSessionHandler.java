@@ -6,13 +6,14 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.query.ADBJoinQuery;
+import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.query.ADBQuery;
+import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
-import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
@@ -35,7 +36,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     private final ActorRef<ADBJoinWithNodeSession.Command> session;
     private final ADBJoinQuery query;
     private final AtomicInteger localPartitionsToProvideAttributesFor = new AtomicInteger(0);
-    private Int2ObjectMap<Map<String, ObjectList<ADBComparable2IntPair>>> attributes;
+    private Int2ObjectMap<Map<String, ObjectList<ADBEntityEntry>>> attributes;
     private Int2ObjectMap<int[]> lPartitionIdsLeft;
     private Int2ObjectMap<int[]> lPartitionIdsRight;
     private AtomicInteger numberOfExternalPartitionsToCheck;
@@ -66,6 +67,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
                                          ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query,
                                          int remoteShardId) {
         super(context);
+        ADBQueryPerformanceSampler.log(true, "ADBJoinWithNodeSessionHandler", "start", this.hashCode());
         session.tell(new ADBJoinWithNodeSession.RegisterHandler(this.getContext().getSelf()));
 
         this.session = session;
@@ -84,11 +86,6 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
                    .onMessage(JoinAttributesWrapper.class, this::handleJoinAttributes)
                    .onMessage(ConcludeSession.class, this::handleConcludeSession)
                    .build();
-    }
-
-    @Override
-    protected Behavior<Command> handleLargeMessageTransferCompleted(ADBLargeMessageSender.TransferCompleted response) {
-        return Behaviors.same();
     }
 
     private Behavior<Command> handleRequestJoinAttributes(RequestJoinAttributes command) {
@@ -148,6 +145,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     private Behavior<Command> handleConcludeSession(ConcludeSession command) {
         if (this.localPartitionsToProvideAttributesFor.get() < 1) {
             this.getContext().getLog().info("Stopping handler ...");
+            ADBQueryPerformanceSampler.log(false, "ADBJoinWithNodeSessionHandler", "stop", this.hashCode());
             return Behaviors.stopped();
         }
         this.getContext().getLog().warn("Unable to stop handler. Still remaining attributes to send for local part.");

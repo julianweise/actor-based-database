@@ -7,12 +7,12 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.zaxxer.sparsebits.SparseBitSet;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryColumnWorkload;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
-import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -46,16 +46,16 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
         private final ObjectList<ADBKeyPair> results;
     }
 
-    private final Map<String, ObjectList<ADBComparable2IntPair>> left;
-    private final Map<String, ObjectList<ADBComparable2IntPair>> right;
+    private final Map<String, ObjectList<ADBEntityEntry>> left;
+    private final Map<String, ObjectList<ADBEntityEntry>> right;
     private final ObjectList<ADBJoinTermCostModel> costModels;
     private final ActorRef<StepExecuted> respondTo;
     private final AtomicInteger intersectsPerformed = new AtomicInteger(0);
     private SparseBitSet[] resultSet;
 
     public ADBColumnJoinStepExecutor(ActorContext<Command> context,
-                                     Map<String, ObjectList<ADBComparable2IntPair>> left,
-                                     Map<String, ObjectList<ADBComparable2IntPair>> right,
+                                     Map<String, ObjectList<ADBEntityEntry>> left,
+                                     Map<String, ObjectList<ADBEntityEntry>> right,
                                      ObjectList<ADBJoinTermCostModel> costModels,
                                      ActorRef<StepExecuted> respondTo) {
         super(context);
@@ -113,11 +113,11 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
 
     private ObjectList<ADBKeyPair> mapResults() {
         val leftList = this.left.get(this.costModels.get(0).getPredicate().getLeftHandSideAttribute());
-        int leftNodeId = ADBInternalIDHelper.getNodeId(leftList.get(0).getValue());
-        int leftPartitionId = ADBInternalIDHelper.getPartitionId(leftList.get(0).getValue());
+        int leftNodeId = ADBInternalIDHelper.getNodeId(leftList.get(0).getId());
+        int leftPartitionId = ADBInternalIDHelper.getPartitionId(leftList.get(0).getId());
         val rightList = this.right.get(this.costModels.get(0).getPredicate().getRightHandSideAttribute());
-        int rightNodeId = ADBInternalIDHelper.getNodeId(rightList.get(0).getValue());
-        int rightPartitionId = ADBInternalIDHelper.getPartitionId(rightList.get(0).getValue());
+        int rightNodeId = ADBInternalIDHelper.getNodeId(rightList.get(0).getId());
+        int rightPartitionId = ADBInternalIDHelper.getPartitionId(rightList.get(0).getId());
         ObjectList<ADBKeyPair> results = new ObjectArrayList<>(Arrays.stream(resultSet).mapToInt(SparseBitSet::cardinality).sum());
         for(int a = 0; a < this.resultSet.length; a++) {
             for (int b = this.resultSet[a].nextSetBit(0); b >= 0; b = this.resultSet[a].nextSetBit(b+1)) {

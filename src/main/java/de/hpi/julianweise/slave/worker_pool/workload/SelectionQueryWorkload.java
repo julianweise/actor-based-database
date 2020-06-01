@@ -1,7 +1,7 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
-import de.hpi.julianweise.query.ADBSelectionQuery;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import it.unimi.dsi.fastutil.objects.ObjectList;

@@ -1,6 +1,8 @@
 package de.hpi.julianweise.query;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 
 @JsonSubTypes({
                       @JsonSubTypes.Type(value = ADBSelectionQuery.class, name = "ADBSelectionQueryTerm"),

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("unused")
 @AllArgsConstructor
 @NoArgsConstructor
 public class ADBDoubleKey implements ADBKey {

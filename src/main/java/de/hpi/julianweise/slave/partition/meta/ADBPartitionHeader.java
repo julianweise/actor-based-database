@@ -1,11 +1,14 @@
 package de.hpi.julianweise.slave.partition.meta;
 
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
-import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
-import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.join.ADBJoinQuery;
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateConstant;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,11 +20,11 @@ import java.util.Map;
 public class ADBPartitionHeader {
 
     private int id;
-    private Map<String, Comparable<Object>> minValues;
-    private Map<String, Comparable<Object>> maxValues;
+    private Map<String, ADBEntityEntry> minValues;
+    private Map<String, ADBEntityEntry> maxValues;
     private transient ObjectList<ADBEntity> data;
 
-    public ADBPartitionHeader(Map<String, Comparable<Object>> minValues, Map<String, Comparable<Object>> maxValues,
+    public ADBPartitionHeader(Map<String, ADBEntityEntry> minValues, Map<String, ADBEntityEntry> maxValues,
                               ObjectList<ADBEntity> data, int id) {
         this.minValues = minValues;
         this.maxValues = maxValues;
@@ -34,24 +37,26 @@ public class ADBPartitionHeader {
     }
 
     public boolean isOverlapping(ADBPartitionHeader b, ADBJoinQueryPredicate joinPredicate) {
-        Comparable<Object> leftMin = this.minValues.get(joinPredicate.getLeftHandSideAttribute());
-        Comparable<Object> leftMax = this.maxValues.get(joinPredicate.getLeftHandSideAttribute());
-        Comparable<Object> rightMin = b.minValues.get(joinPredicate.getRightHandSideAttribute());
-        Comparable<Object> rightMax = b.maxValues.get(joinPredicate.getRightHandSideAttribute());
+        ADBEntityEntry leftMin = this.minValues.get(joinPredicate.getLeftHandSideAttribute());
+        ADBEntityEntry leftMax = this.maxValues.get(joinPredicate.getLeftHandSideAttribute());
+        ADBEntityEntry rightMin = b.minValues.get(joinPredicate.getRightHandSideAttribute());
+        ADBEntityEntry rightMax = b.maxValues.get(joinPredicate.getRightHandSideAttribute());
         if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS)) {
-            return !(leftMin.compareTo(rightMax) >= 0);
+            return !(ADBComparator.getFor(leftMin.getValueField(), rightMax.getValueField()).compare(leftMin, rightMax) >= 0);
         }
         if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL)) {
-            return !(leftMin.compareTo(rightMax) > 0);
+            return !(ADBComparator.getFor(leftMin.getValueField(), rightMax.getValueField()).compare(leftMin, rightMax) > 0);
         }
         if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER)) {
-            return !(leftMax.compareTo(rightMin) <= 0);
+            return !(ADBComparator.getFor(leftMax.getValueField(), rightMin.getValueField()).compare(leftMax, rightMin) <= 0);
         }
         if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL)) {
-            return !(leftMax.compareTo(rightMin) < 0);
+            return !(ADBComparator.getFor(leftMax.getValueField(), rightMin.getValueField()).compare(leftMax, rightMin) < 0);
         }
         if (joinPredicate.getOperator().equals(ADBQueryTerm.RelationalOperator.EQUALITY)) {
-            return leftMax.compareTo(rightMin) >= 0 && leftMin.compareTo(rightMax) <= 0;
+            ADBComparator x = ADBComparator.getFor(leftMax.getValueField(), rightMin.getValueField());
+            ADBComparator y = ADBComparator.getFor(leftMin.getValueField(), rightMax.getValueField());
+            return x.compare(leftMax, rightMin) >= 0 && y.compare(leftMin, rightMax) <= 0;
         }
         return true;
     }
@@ -61,21 +66,28 @@ public class ADBPartitionHeader {
     }
 
     public boolean isRelevant(ADBSelectionQueryPredicate selectionQueryTerm) {
-        Comparable<Object> min = this.minValues.get(selectionQueryTerm.getFieldName());
-        Comparable<Object> max = this.maxValues.get(selectionQueryTerm.getFieldName());
+        ADBEntityEntry min = this.minValues.get(selectionQueryTerm.getFieldName());
+        ADBEntityEntry max = this.maxValues.get(selectionQueryTerm.getFieldName());
 
         if (selectionQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS)) {
-            return min.compareTo(selectionQueryTerm.getValue()) < 0;
+            ADBPredicateConstant value = selectionQueryTerm.getValue();
+            return ADBComparator.getFor(min.getValueField(), value.getValueField()).compare(min, value) < 0;
         }
         if (selectionQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL)) {
-            return min.compareTo(selectionQueryTerm.getValue()) <= 0;
+            ADBPredicateConstant value = selectionQueryTerm.getValue();
+            return ADBComparator.getFor(min.getValueField(), value.getValueField()).compare(min, value) <= 0;
         }
         if (selectionQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER)) {
-            return max.compareTo(selectionQueryTerm.getValue()) > 0;
+            ADBPredicateConstant value = selectionQueryTerm.getValue();
+            return ADBComparator.getFor(max.getValueField(), value.getValueField()).compare(max, value) > 0;
         }
         if (selectionQueryTerm.getOperator().equals(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL)) {
-            return max.compareTo(selectionQueryTerm.getValue()) > 0;
+            ADBPredicateConstant value = selectionQueryTerm.getValue();
+            return ADBComparator.getFor(max.getValueField(), value.getValueField()).compare(max, value) >= 0;
         }
-        return min.compareTo(selectionQueryTerm.getValue()) <= 0 && max.compareTo(selectionQueryTerm.getValue()) >= 0;
+        ADBPredicateConstant value = selectionQueryTerm.getValue();
+        ADBComparator a = ADBComparator.getFor(min.getValueField(), value.getValueField());
+        ADBComparator b = ADBComparator.getFor(max.getValueField(), value.getValueField());
+        return a.compare(min, value) <= 0 && b.compare(max, value) >= 0;
     }
 }

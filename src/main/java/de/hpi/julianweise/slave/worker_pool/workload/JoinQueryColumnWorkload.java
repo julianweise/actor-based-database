@@ -1,13 +1,13 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
 import com.zaxxer.sparsebits.SparseBitSet;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
-import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,8 +15,8 @@ import lombok.Getter;
 
 public class JoinQueryColumnWorkload extends Workload {
 
-    private final ObjectList<ADBComparable2IntPair> leftSideValues;
-    private final ObjectList<ADBComparable2IntPair> rightSideValues;
+    private final ObjectList<ADBEntityEntry> leftSideValues;
+    private final ObjectList<ADBEntityEntry> rightSideValues;
     private final ADBJoinTermCostModel costModel;
     private final SparseBitSet[] bitMatrix;
 
@@ -29,8 +29,8 @@ public class JoinQueryColumnWorkload extends Workload {
 
     @SuppressWarnings("unused")
     @Builder
-    public JoinQueryColumnWorkload(ObjectList<ADBComparable2IntPair> left,
-                                   ObjectList<ADBComparable2IntPair> right,
+    public JoinQueryColumnWorkload(ObjectList<ADBEntityEntry> left,
+                                   ObjectList<ADBEntityEntry> right,
                                    ADBJoinTermCostModel costModel) {
         this.leftSideValues = left;
         this.rightSideValues = right;
@@ -76,8 +76,8 @@ public class JoinQueryColumnWorkload extends Workload {
 
     private void handleInterval(int rowIndex, int start, int end) {
         for(int i = start; i <= end; i++) {
-            int normalizedMatrixRow = ADBInternalIDHelper.getEntityId(this.leftSideValues.get(rowIndex).getValue());
-            int normalizedMatrixColumn = ADBInternalIDHelper.getEntityId(this.rightSideValues.get(i).getValue());
+            int normalizedMatrixRow = ADBInternalIDHelper.getEntityId(this.leftSideValues.get(rowIndex).getId());
+            int normalizedMatrixColumn = ADBInternalIDHelper.getEntityId(this.rightSideValues.get(i).getId());
             this.bitMatrix[normalizedMatrixRow].set(normalizedMatrixColumn);
         }
     }

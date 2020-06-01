@@ -7,7 +7,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
-import de.hpi.julianweise.query.ADBJoinQuery;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSession;
@@ -65,9 +64,6 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     @AllArgsConstructor
-    public static class FinalizedInterNodeJoin implements Command {}
-
-    @AllArgsConstructor
     public static class InterNodeSessionTerminated implements Command {
         ActorRef<ADBJoinWithNodeSession.Command> session;
     }
@@ -78,7 +74,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     @AllArgsConstructor
-    public static class RequestNextPartition implements Command {}
+    public static class RequestNextPartitions implements Command {}
 
     @AllArgsConstructor
     public static class Conclude implements Command {}
@@ -86,9 +82,8 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     public ADBSlaveJoinSession(ActorContext<Command> context,
                                ActorRef<ADBMasterQuerySession.Command> client,
                                ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
-                               int transactionId,
-                               ADBJoinQuery query) {
-        super(context, client, clientLargeMessageReceiver, transactionId, query);
+                               ADBJoinQueryContext joinQueryContext) {
+        super(context, client, clientLargeMessageReceiver, joinQueryContext);
     }
 
     @Override
@@ -99,10 +94,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
                    .onMessage(OpenInterShardJoinSession.class, this::handleOpenInterShardJoinSession)
                    .onMessage(HandleJoinShardResults.class, this::handleJoinWithShardResults)
                    .onMessage(NoMoreShardsToJoinWith.class, this::handleNoMoreShardToJoinWith)
-                   .onMessage(FinalizedInterNodeJoin.class, this::handleFinalizedInterNodeJoin)
                    .onMessage(InterNodeSessionTerminated.class, this::handleInterNodeSessionTerminated)
                    .onMessage(InterNodeSessionHandlerTerminated.class, this::handleInterNodeSessionHandlerTerminated)
-                   .onMessage(RequestNextPartition.class, this::handleRequestNextPartition)
+                   .onMessage(RequestNextPartitions.class, this::handleRequestNextPartition)
                    .onMessage(Conclude.class, this::handleConclude)
                    .build();
     }
@@ -114,9 +108,10 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     private Behavior<Command> handleJoinWithShard(JoinWithShard message) {
         this.getContext().getLog().info("Received request to join with " + message.getForeignNodeId());
-        ADBJoinQuery query = (ADBJoinQuery) this.query;
-        String sessionName = ADBJoinWithNodeSessionFactory.sessionName(this.transactionId, message.getForeignNodeId());
-        val behavior = ADBJoinWithNodeSessionFactory.createDefault(query, this.getContext().getSelf(), message.foreignNodeId);
+        String sessionName = ADBJoinWithNodeSessionFactory.sessionName(queryContext.getTransactionId(), message.getForeignNodeId());
+        val behavior = ADBJoinWithNodeSessionFactory.createDefault((ADBJoinQueryContext) this.queryContext,
+                this.getContext().getSelf(),
+                message.foreignNodeId);
         ActorRef<ADBJoinWithNodeSession.Command> session = this.getContext().spawn(behavior, sessionName);
         this.getContext().watchWith(session, new InterNodeSessionTerminated(session));
         this.activeJoinSessions.add(session);
@@ -125,9 +120,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleOpenInterShardJoinSession(OpenInterShardJoinSession command) {
-        String name = ADBJoinWithNodeSessionHandlerFactory.name(this.transactionId, command.initializingPartitionId);
+        String name = ADBJoinWithNodeSessionHandlerFactory.name(queryContext.getTransactionId(), command.initializingPartitionId);
         val behavior = ADBJoinWithNodeSessionHandlerFactory.createDefault(command.getInitiatingSession(),
-                this.query, command.getInitializingPartitionId());
+                queryContext.getQuery(), command.getInitializingPartitionId());
         ActorRef<ADBJoinWithNodeSessionHandler.Command> handler = this.getContext().spawn(behavior, name);
         this.getContext().watchWith(handler, new InterNodeSessionHandlerTerminated(handler));
         this.activeJoinSessionHandlers.add(handler);
@@ -137,7 +132,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     private Behavior<Command> handleJoinWithShardResults(HandleJoinShardResults command) {
         this.sendToSession(ADBMasterJoinSession.JoinQueryResults
                 .builder()
-                .transactionId(this.transactionId)
+                .transactionId(queryContext.getTransactionId())
                 .nodeId(ADBSlave.ID)
                 .joinResults(command.getJoinCandidates())
                 .build());
@@ -151,13 +146,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleRequestNextPartition(RequestNextPartition command) {
+    private Behavior<Command> handleRequestNextPartition(RequestNextPartitions command) {
         this.getContext().getLog().info("Asking master for next node to join with.");
         this.session.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(this.getContext().getSelf()));
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handleFinalizedInterNodeJoin(FinalizedInterNodeJoin command) {
         return Behaviors.same();
     }
 

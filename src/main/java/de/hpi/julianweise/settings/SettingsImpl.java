@@ -13,6 +13,7 @@ public class SettingsImpl implements Extension {
     public final int MAX_SIZE_PARTITION;
     public final double JOIN_STRATEGY_LOWER_BOUND;
     public final double JOIN_STRATEGY_UPPER_BOUND;
+    public final int PARALLEL_PARTITION_JOINS;
 
     public SettingsImpl(Config config) {
         CSV_CHUNK_SIZE = config.getInt("actor-db.csv.chunk-size");
@@ -23,5 +24,6 @@ public class SettingsImpl implements Extension {
         JOIN_STRATEGY_UPPER_BOUND = config.getDouble("actor-db.join.strategy.upper-bound");
         JOIN_ROW_CHUNK_SIZE = config.getInt("actor-db.join.row.chunk-size");
         MAX_SIZE_PARTITION = config.getInt("actor-db.partition.size");
+        PARALLEL_PARTITION_JOINS = config.getInt("actor-db.number-of-parallel-partition-joins");
     }
 }

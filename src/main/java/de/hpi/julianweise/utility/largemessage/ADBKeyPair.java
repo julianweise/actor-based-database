@@ -1,5 +1,6 @@
 package de.hpi.julianweise.utility.largemessage;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -7,15 +8,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class ADBKeyPair {
 
     private int key;
     private int value;
-
-    public ADBKeyPair(int a, int b) {
-        this.key = a;
-        this.value = b;
-    }
 
     @Override
     public boolean equals(Object o) {

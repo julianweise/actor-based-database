@@ -1,8 +1,15 @@
 package de.hpi.julianweise.domain;
 
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateBooleanConstant;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateFloatConstant;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateIntConstant;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateStringConstant;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
+import org.junit.Before;
 import org.junit.Test;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
@@ -16,6 +23,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBEntityTest {
 
+    @Before
+    public void setUp() {
+        ADBComparator.buildComparatorMapping();
+        ADBComparator.buildComparatorMapping();
+    }
+
     // ##### Integer #####
     @Test
     public void matchesEqualityIntegerQueryTermSuccessfully() {
@@ -23,13 +36,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -39,13 +52,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(INEQUALITY)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -55,16 +68,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(LESS)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
-        TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -74,16 +87,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(GREATER)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
-        TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(2, "Test", 1.01f, true, 12.94232);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(0, "Test", 1.01f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -93,16 +106,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(LESS_OR_EQUAL)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
-        TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -112,16 +125,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(GREATER_OR_EQUAL)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
-        TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(0, "Test", 1.01f, true, 12.94232);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(2, "Test", 1.01f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -133,13 +146,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -149,13 +162,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(INEQUALITY)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.94232);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -165,16 +178,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(LESS)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 2.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 0.01f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 0.01f, true, 12.02);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -184,16 +197,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(GREATER)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 2.00f, true, 12.94232);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 1.00f, true, 12.02);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -203,16 +216,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(LESS_OR_EQUAL)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 1.02f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 1.02f, true, 12.02);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -222,16 +235,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(GREATER_OR_EQUAL)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -243,13 +256,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
-                .value("Test")
+                .value(new ADBPredicateStringConstant("Test"))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -259,13 +272,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("bString")
                 .operator(INEQUALITY)
-                .value("Test")
+                .value(new ADBPredicateStringConstant("Test"))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -277,13 +290,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("dBoolean")
                 .operator(EQUALITY)
-                .value(true)
+                .value(new ADBPredicateBooleanConstant(true))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, false, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, false, 12.02);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -293,13 +306,13 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("dBoolean")
                 .operator(INEQUALITY)
-                .value(true)
+                .value(new ADBPredicateBooleanConstant(true))
                 .build();
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, false, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, false, 12.02);
         assertThat(entity2.matches(predicate)).isTrue();
     }
 
@@ -311,17 +324,17 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(UNSPECIFIED)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
 
-        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.00f, true, 12.94232);
         assertThat(entity.matches(predicate)).isFalse();
 
-        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity1 = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity1.matches(predicate)).isFalse();
 
-        TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "Test", 2.01f, true, 12.02);
         assertThat(entity2.matches(predicate)).isFalse();
     }
 
@@ -333,16 +346,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
-                .value("Test")
+                .value(new ADBPredicateStringConstant("Test"))
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addPredicate(predicate);
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(query)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02);
         assertThat(entity2.matches(query)).isFalse();
     }
 
@@ -352,24 +365,24 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("bString")
                 .operator(EQUALITY)
-                .value("Test")
+                .value(new ADBPredicateStringConstant("Test"))
                 .build();
 
         ADBSelectionQueryPredicate term2 = ADBSelectionQueryPredicate
                 .builder()
                 .fieldName("cFloat")
                 .operator(INEQUALITY)
-                .value(1f)
+                .value(new ADBPredicateFloatConstant(1f))
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addPredicate(term1);
         query.addPredicate(term2);
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(query)).isTrue();
 
-        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(1, "TestNotEqual", 1.00f, true, 12.02);
         assertThat(entity2.matches(query)).isFalse();
     }
 
@@ -379,16 +392,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addPredicate(predicate);
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(query)).isTrue();
 
-        TestEntity entity2 = new TestEntity(2, "TestNotEqual", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(2, "TestNotEqual", 1.00f, true, 12.02);
         assertThat(entity2.matches(query)).isFalse();
     }
 
@@ -398,16 +411,16 @@ public class ADBEntityTest {
                 .builder()
                 .fieldName("cFloat")
                 .operator(EQUALITY)
-                .value(1.01f)
+                .value(new ADBPredicateFloatConstant(1.01f))
                 .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addPredicate(predicate);
 
-        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02, 'w');
+        TestEntity entity = new TestEntity(1, "Test", 1.01f, true, 12.02);
         assertThat(entity.matches(query)).isTrue();
 
-        TestEntity entity2 = new TestEntity(2, "TestNotEqual", 1.00f, true, 12.02, 'w');
+        TestEntity entity2 = new TestEntity(2, "TestNotEqual", 1.00f, true, 12.02);
         assertThat(entity2.matches(query)).isFalse();
     }
 }

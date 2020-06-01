@@ -19,9 +19,10 @@ public class ADBQueryPerformanceSampler {
         private final boolean isStart;
         private final String className;
         private final String purpose;
+        private final int id;
     }
 
-    public static final boolean ENABLED = false;
+    public static final boolean ENABLED = true;
     private static final String RESULT_DIR = System.getProperty("user.dir") + "/" + "query_performance_sampler_results";
     private static final Queue<LogDate> RESULT_COLLECTION = new ConcurrentLinkedQueue<>();
 
@@ -38,12 +39,13 @@ public class ADBQueryPerformanceSampler {
         return path;
     }
 
-    public static void log(boolean isStart, String className, String purpose) {
+    public static void log(boolean isStart, String className, String purpose, int id) {
         if (!ENABLED) {
             return;
         }
         RESULT_COLLECTION.add(
-                new LogDate(System.currentTimeMillis(), Thread.currentThread().getId(), isStart, className, purpose));
+                new LogDate(System.currentTimeMillis(), Thread.currentThread().getId(), isStart, className, purpose,
+                        id));
     }
 
     public static void concludeSampler(int nodeId, int transactionId) {
@@ -63,6 +65,8 @@ public class ADBQueryPerformanceSampler {
             csvWriter.append("class_name");
             csvWriter.append(",");
             csvWriter.append("purpose");
+            csvWriter.append(",");
+            csvWriter.append("id");
             csvWriter.append("\n");
 
             for (LogDate row : RESULT_COLLECTION) {
@@ -75,6 +79,8 @@ public class ADBQueryPerformanceSampler {
                 csvWriter.append(row.className);
                 csvWriter.append(",");
                 csvWriter.append(row.purpose);
+                csvWriter.append(",");
+                csvWriter.append(Integer.toString(row.id));
                 csvWriter.append("\n");
             }
 

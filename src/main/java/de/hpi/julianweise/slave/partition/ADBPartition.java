@@ -6,15 +6,15 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
-import de.hpi.julianweise.query.ADBJoinQuery;
+import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.settings.Settings;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
-import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -63,7 +63,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @AllArgsConstructor
     @Getter
     public static class JoinAttributes implements Response {
-        private final Map<String, ObjectList<ADBComparable2IntPair>> attributes;
+        private final Map<String, ObjectList<ADBEntityEntry>> attributes;
         private final int partitionId;
     }
 
@@ -93,7 +93,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         this.data = data;
         this.sortedAttributes = ADBSortedEntityAttributesFactory.of(data);
 
-        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id);
+        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id, this.sortedAttributes);
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
     }
 
@@ -115,7 +115,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         val attributes = command.query.getAllFields()
                                       .stream()
                                       .map(this.sortedAttributes::get)
-                                      .collect(Collectors.toMap(ADBSortedEntityAttributes::getField, s -> s.getMaterialized(this.data)));
+                                      .collect(Collectors.toMap(s -> s.getField().getName(), s -> s.getMaterialized(this.data)));
         command.respondTo.tell(new JoinAttributes(attributes, this.id));
         return Behaviors.same();
     }

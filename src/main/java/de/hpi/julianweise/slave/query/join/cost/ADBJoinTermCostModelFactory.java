@@ -1,7 +1,8 @@
 package de.hpi.julianweise.slave.query.join.cost;
 
-import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermEqualityCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermGreaterCostCalculator;
@@ -10,7 +11,6 @@ import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermInequalit
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermLessCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermLessOrEqualCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
-import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import org.agrona.collections.Object2ObjectHashMap;
@@ -32,8 +32,8 @@ public class ADBJoinTermCostModelFactory {
 
     public static ADBJoinTermCostModel calc(ADBJoinQueryPredicate predicate,
                                             int termId,
-                                            ObjectList<ADBComparable2IntPair> left,
-                                            ObjectList<ADBComparable2IntPair> right) {
+                                            ObjectList<ADBEntityEntry> left,
+                                            ObjectList<ADBEntityEntry> right) {
         ADBInterval[] joinCandidates = ADBJoinTermCostModelFactory.strategies.get(predicate.getOperator()).calc(left, right);
         return ADBJoinTermCostModel.builder()
                                    .predicate(predicate)

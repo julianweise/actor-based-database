@@ -1,5 +1,6 @@
 package de.hpi.julianweise.query;
 
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import org.junit.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

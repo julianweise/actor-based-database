@@ -6,16 +6,19 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirerFactory;
-import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateIntConstant;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -35,6 +38,7 @@ public class ADBPartitionInquirerTest {
     public void setUp() {
         ADBEntityFactoryProvider.initialize(new TestEntityFactory());
         testKit.spawn(ADBSlave.create());
+        ADBComparator.buildComparatorMapping();
     }
 
     @After
@@ -133,7 +137,7 @@ public class ADBPartitionInquirerTest {
                 receptionistProbe2.ref()));
 
         // Ensure shard is present
-        ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132, 'w');
+        ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132);
 
         TestProbe<ADBPartitionInquirer.Response> resultProbe = testKit.createTestProbe();
         ActorRef<ADBPartitionInquirer.Command> inquirer = testKit.spawn(ADBPartitionInquirerFactory.createDefault());
@@ -153,7 +157,7 @@ public class ADBPartitionInquirerTest {
                 manager.tell(new ADBPartitionManager.ConcludeTransfer()));
 
         ADBSelectionQuery query = new ADBSelectionQuery();
-        query.addPredicate(new ADBSelectionQueryPredicate(11212, "aInteger", EQUALITY));
+        query.addPredicate(new ADBSelectionQueryPredicate(new ADBPredicateIntConstant(11212), "aInteger", EQUALITY));
         inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
                                                       .requestId(requestId)
                                                       .query(query)
@@ -164,66 +168,6 @@ public class ADBPartitionInquirerTest {
         ADBPartitionInquirer.SyncQueryResults typedResults = (ADBPartitionInquirer.SyncQueryResults) results;
 
         assertThat(typedResults.getResults().length).isZero();
-    }
-
-    @Test
-    public void testValidResultsAreReturnedSuccessfully() throws InterruptedException {
-        int requestId = 1;
-
-        TestProbe<ADBDataDistributor.Command> persistProbe = testKit.createTestProbe();
-        TestProbe<ADBPartitionInquirer.Response> resultProbe = testKit.createTestProbe();
-        ActorRef<ADBPartitionInquirer.Command> inquirer = testKit.spawn(ADBPartitionInquirerFactory.createDefault());
-
-        // Implicitly ensure that test waits for receptionist registrations to propagate
-        TestProbe<Receptionist.Listing> receptionistQueryManagerProbe = testKit.createTestProbe();
-        TestProbe<Receptionist.Listing> receptionistPartitionManagerProbe = testKit.createTestProbe();
-        testKit.system().receptionist().tell(Receptionist.subscribe(ADBQueryManager.SERVICE_KEY,
-                receptionistQueryManagerProbe.ref()));
-        testKit.system().receptionist().tell(Receptionist.subscribe(ADBPartitionManager.SERVICE_KEY,
-                receptionistPartitionManagerProbe.ref()));
-
-        // Ensure shard is present
-        ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132, 'w');
-
-        // necessary to ensure receptionist registration propagates successfully before querying shards
-        Receptionist.Listing queryListing = receptionistQueryManagerProbe.expectMessageClass(Receptionist.Listing.class);
-        assertThat(queryListing.getAllServiceInstances(ADBQueryManager.SERVICE_KEY).size()).isZero();
-        queryListing = receptionistQueryManagerProbe.expectMessageClass(Receptionist.Listing.class);
-        assertThat(queryListing.getAllServiceInstances(ADBQueryManager.SERVICE_KEY).size()).isOne();
-
-        Receptionist.Listing partitionListing = receptionistPartitionManagerProbe.expectMessageClass(Receptionist.Listing.class);
-        assertThat(partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).size()).isZero();
-        partitionListing = receptionistPartitionManagerProbe.expectMessageClass(Receptionist.Listing.class);
-        assertThat(partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).size()).isOne();
-        partitionListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager -> {
-            manager.tell(new ADBPartitionManager.PersistEntity(persistProbe.ref(), testEntity));
-            manager.tell(new ADBPartitionManager.ConcludeTransfer());
-        });
-
-        // Wait for Partitions to be propagated; This is usually ensured by
-        Thread.sleep(500);
-
-        ADBSelectionQuery query = new ADBSelectionQuery();
-        ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
-                .builder()
-                .fieldName("aInteger")
-                .operator(EQUALITY)
-                .value(1)
-                .build();
-        query.addPredicate(predicate);
-
-        inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
-                                                      .requestId(requestId)
-                                                      .query(query)
-                                                      .respondTo(resultProbe.ref())
-                                                      .build());
-
-        ADBPartitionInquirer.SyncQueryResults results =
-                resultProbe.expectMessageClass(ADBPartitionInquirer.SyncQueryResults.class);
-
-        assertThat(results.getResults().length).isOne();
-        assertThat(((TestEntity) results.getResults()[0]).getPrimaryKey()).isEqualTo(testEntity.getPrimaryKey());
-        assertThat(results.getRequestId()).isEqualTo(requestId);
     }
 
     @Test

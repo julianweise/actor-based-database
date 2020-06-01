@@ -5,13 +5,14 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.select.ADBMasterSelectSession;
-import de.hpi.julianweise.query.ADBSelectionQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.query.ADBQueryContext;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
@@ -52,9 +53,8 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
     public ADBSlaveSelectSession(ActorContext<ADBSlaveQuerySession.Command> context,
                                  ActorRef<ADBMasterQuerySession.Command> client,
                                  ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
-                                 int transactionId,
-                                 ADBSelectionQuery query) {
-        super(context, client, clientLargeMessageReceiver, transactionId, query);
+                                 ADBQueryContext queryContext) {
+        super(context, client, clientLargeMessageReceiver, queryContext);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
                 RelevantPartitionsWrapper::new);
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.RequestPartitionsForSelectionQuery(
-                partitionsRef, (ADBSelectionQuery) this.query));
+                partitionsRef, (ADBSelectionQuery) this.queryContext.getQuery()));
         return Behaviors.same();
     }
 
@@ -89,7 +89,7 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
 
     private Behavior<Command> handlePartitionData(PartitionDataWrapper wrapper) {
         val resultRef = this.getContext().messageAdapter(GenericWorker.Response.class, SelectionWorkerWrapper::new);
-        ADBSelectionQuery query = (ADBSelectionQuery) this.query;
+        ADBSelectionQuery query = (ADBSelectionQuery) this.queryContext.getQuery();
         Workload workload = new SelectionQueryWorkload(wrapper.response.getData(), query);
         ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(resultRef, workload));
         return Behaviors.same();
@@ -117,7 +117,7 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
         this.sendToSession(ADBMasterSelectSession.SelectQueryResults.builder()
                                                                     .results(this.partialResults)
                                                                     .nodeId(ADBSlave.ID)
-                                                                    .transactionId(transactionId)
+                                                                    .transactionId(this.queryContext.getTransactionId())
                                                                     .build());
         return Behaviors.same();
     }

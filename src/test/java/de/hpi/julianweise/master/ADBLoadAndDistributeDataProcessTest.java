@@ -7,11 +7,11 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Behaviors;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -79,7 +79,7 @@ public class ADBLoadAndDistributeDataProcessTest {
                 testKit.spawn(ADBLoadAndDistributeDataProcessFactory.createDefault(mockedParser, mockedDistributor));
 
         ObjectList<ADBEntity> chunkList = new ObjectArrayList<>();
-        chunkList.add(new TestEntity(1, "Test", 1f, true, 12.03234, 'w'));
+        chunkList.add(new TestEntity(1, "Test", 1f, true, 12.03234));
         CSVParsingActor.DomainDataChunk chunk = new CSVParsingActor.DomainDataChunk(chunkList);
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedCSVParserResponse(chunk));
 

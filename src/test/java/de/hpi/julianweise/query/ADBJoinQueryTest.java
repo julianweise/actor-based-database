@@ -1,5 +1,7 @@
 package de.hpi.julianweise.query;
 
+import de.hpi.julianweise.query.join.ADBJoinQuery;
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.Test;
@@ -51,13 +53,13 @@ public class ADBJoinQueryTest {
         joinQuery.addPredicate(predicate);
         joinQuery.addPredicate(term2);
 
-        assertThat(joinQuery.predicates.size()).isEqualTo(2);
+        assertThat(joinQuery.getPredicates().size()).isEqualTo(2);
         assertThat(joinQuery.getPredicates().get(0)).isEqualTo(predicate);
         assertThat(joinQuery.getPredicates().get(1)).isEqualTo(term2);
 
         ADBJoinQuery reversedJoinQuery = joinQuery.getReverse();
 
-        assertThat(reversedJoinQuery.predicates.size()).isEqualTo(2);
+        assertThat(reversedJoinQuery.getPredicates().size()).isEqualTo(2);
         assertThat(reversedJoinQuery.getPredicates().get(0)).isNotEqualTo(predicate);
         assertThat(reversedJoinQuery.getPredicates().get(1)).isNotEqualTo(term2);
 

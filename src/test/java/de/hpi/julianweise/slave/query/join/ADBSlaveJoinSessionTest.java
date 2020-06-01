@@ -7,11 +7,12 @@ import de.hpi.julianweise.csv.TestEntityFactory;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
-import de.hpi.julianweise.query.ADBJoinQuery;
-import de.hpi.julianweise.query.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.ADBQueryTerm;
+import de.hpi.julianweise.query.join.ADBJoinQuery;
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySessionFactory;
@@ -35,6 +36,7 @@ public class ADBSlaveJoinSessionTest {
     public void setUp() {
         ADBEntityFactoryProvider.initialize(new TestEntityFactory());
         testKit.spawn(ADBSlave.create());
+        ADBComparator.buildComparatorMapping();
     }
 
     @After
@@ -80,7 +82,7 @@ public class ADBSlaveJoinSessionTest {
         assertThat(handlerRegistration.getSessionHandler()).isEqualTo(joinHandler);
         assertThat(handlerRegistration.getQueryManager()).isEqualTo(ADBQueryManager.getInstance());
 
-        joinHandler.tell(new ADBSlaveJoinSession.RequestNextPartition());
+        joinHandler.tell(new ADBSlaveJoinSession.RequestNextPartitions());
 
         ADBMasterJoinSession.RequestNextNodeToJoin request =
                 querySession.expectMessageClass(ADBMasterJoinSession.RequestNextNodeToJoin.class);

@@ -26,8 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuerySession.Command> {
 
     protected final ActorRef<ADBMasterQuerySession.Command> session;
-    protected final ADBQuery query;
-    protected final int transactionId;
+    protected final ADBQueryContext queryContext;
     protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientResultReceiver;
     protected final AtomicInteger openTransferSessions = new AtomicInteger(0);
 
@@ -49,17 +48,16 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
     public ADBSlaveQuerySession(ActorContext<ADBSlaveQuerySession.Command> context,
                                 ActorRef<ADBMasterQuerySession.Command> session,
                                 ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientResultReceiver,
-                                int transactionId, ADBQuery query) {
+                                ADBQueryContext queryContext) {
         super(context);
         this.session = session;
-        this.transactionId = transactionId;
-        this.query = query;
+        this.queryContext = queryContext;
         this.clientResultReceiver = clientResultReceiver;
 
         this.session.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(ADBQueryManager.getInstance(),
                 getContext().getSelf()));
 
-        this.getContext().getLog().info("Started QuerySession " + transactionId  + " for " + this.getQuerySessionName());
+        this.getContext().getLog().info("Started QuerySession " + queryContext.transactionId  + " for " + this.getQuerySessionName());
 
     }
 
@@ -76,14 +74,13 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     protected void concludeTransaction() {
         this.session.tell(new ADBMasterQuerySession.ConcludeTransaction(this.getContext().getSelf()));
-        this.getContext().getLog().info("Asking master to conclude session TX#" + transactionId + " handling " + getQuerySessionName());
-        ADBQueryPerformanceSampler.concludeSampler(ADBSlave.ID, this.transactionId);
+        this.getContext().getLog().debug("Asking master to conclude session TX#" + queryContext.transactionId + " handling " + getQuerySessionName());
     }
 
     protected void sendToSession(ADBLargeMessageSender.LargeMessage message) {
         this.openTransferSessions.incrementAndGet();
         String receiverName = ADBLargeMessageSenderFactory.name(this.getContext().getSelf(),
-                this.clientResultReceiver, message.getClass(), "TX-" + this.transactionId + "-results");
+                this.clientResultReceiver, message.getClass(), "TX-" + queryContext.transactionId + "-results");
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
         val receiver = this.getContext().spawn(ADBLargeMessageSenderFactory
                 .createDefault(message, respondTo), receiverName);
@@ -93,6 +90,7 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     private Behavior<Command> handleTerminate(Terminate command) {
         this.getContext().getLog().info("Terminating " + this.getQuerySessionName());
+        ADBQueryPerformanceSampler.concludeSampler(ADBSlave.ID, queryContext.transactionId);
         return Behaviors.stopped();
     }
 

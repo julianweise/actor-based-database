@@ -1,10 +1,10 @@
 package de.hpi.julianweise.slave.query.join.cost;
 
-import de.hpi.julianweise.query.ADBJoinQueryPredicate;
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
-import de.hpi.julianweise.utility.largemessage.ADBComparable2IntPair;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -33,10 +33,10 @@ public class ADBJoinTermCostModel {
         return (float) this.getCost() / (this.sizeLeft * this.sizeRight);
     }
 
-    public ObjectList<ADBKeyPair> getJoinCandidates(Map<String, ObjectList<ADBComparable2IntPair>> left,
-                                                    Map<String, ObjectList<ADBComparable2IntPair>> right) {
-        ObjectList<ADBComparable2IntPair> leftValues = left.get(this.predicate.getLeftHandSideAttribute());
-        ObjectList<ADBComparable2IntPair> rightValues = right.get(this.predicate.getRightHandSideAttribute());
+    public ObjectList<ADBKeyPair> getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
+                                                    Map<String, ObjectList<ADBEntityEntry>> right) {
+        ObjectList<ADBEntityEntry> leftValues = left.get(this.predicate.getLeftHandSideAttribute());
+        ObjectList<ADBEntityEntry> rightValues = right.get(this.predicate.getRightHandSideAttribute());
         ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(this.getCost());
         for (int i = 0; i < this.joinCandidates.length; i++) {
             ADBInterval interval = this.joinCandidates[i];
@@ -50,33 +50,33 @@ public class ADBJoinTermCostModel {
     }
 
     public ObjectList<ADBKeyPair> getJoinCandidatesForRow(ADBIntervalImpl interval,
-                                                    ADBComparable2IntPair left,
-                                                    ObjectList<ADBComparable2IntPair> right) {
+                                                    ADBEntityEntry left,
+                                                    ObjectList<ADBEntityEntry> right) {
         if (interval.equals(ADBIntervalImpl.NO_INTERSECTION)) {
             return new ObjectArrayList<>();
         }
         ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
         for(int i = interval.getStart(); i <= interval.getEnd(); i++) {
-            candidates.add(new ADBKeyPair(left.getValue(), right.get(i).getValue()));
+            candidates.add(new ADBKeyPair(left.getId(), right.get(i).getId()));
         }
         return candidates;
     }
 
     public ObjectList<ADBKeyPair> getJoinCandidatesForRow(ADBInverseInterval interval,
-                                                    ADBComparable2IntPair left,
-                                                    ObjectList<ADBComparable2IntPair> right) {
+                                                          ADBEntityEntry left,
+                                                    ObjectList<ADBEntityEntry> right) {
         if (interval.equals(ADBInverseInterval.NO_INTERSECTION)) {
             return new ObjectArrayList<>();
         }
         ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
         if (interval.getStart() > 0) {
             for(int i = 0; i < interval.getStart(); i++) {
-                candidates.add(new ADBKeyPair(left.getValue(), right.get(i).getValue()));
+                candidates.add(new ADBKeyPair(left.getId(), right.get(i).getId()));
             }
         }
         if (interval.getEnd() < interval.getReferenceEnd()) {
             for(int i = interval.getEnd(); i <= interval.getReferenceEnd(); i++) {
-                candidates.add(new ADBKeyPair(left.getValue(), right.get(i).getValue()));
+                candidates.add(new ADBKeyPair(left.getId(), right.get(i).getId()));
             }
         }
         return candidates;

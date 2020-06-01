@@ -42,12 +42,10 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
 
     private Behavior<Command> handleWrappedLargeMessageSenderResponse(WrappedLargeMessageSenderResponse response) {
         if (response.getResponse() instanceof ADBLargeMessageSender.TransferCompleted) {
-            return this.handleLargeMessageTransferCompleted((ADBLargeMessageSender.TransferCompleted) response.getResponse());
+            return Behaviors.same();
         }
         this.getContext().getLog().warn(String.format("[%s] Received LargeMessageSender response of unknown subtype."
                 , this.getClass().getName().split("\\.")[this.getClass().getName().split("\\.").length - 1]));
         return Behaviors.same();
     }
-
-    protected abstract Behavior<Command> handleLargeMessageTransferCompleted(ADBLargeMessageSender.TransferCompleted response);
 }

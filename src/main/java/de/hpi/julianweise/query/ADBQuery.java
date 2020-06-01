@@ -2,6 +2,8 @@ package de.hpi.julianweise.query;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.hpi.julianweise.query.join.ADBJoinQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 
 import java.util.List;
 

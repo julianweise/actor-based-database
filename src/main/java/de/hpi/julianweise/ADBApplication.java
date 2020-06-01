@@ -13,8 +13,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.csv.CSVParsingActorFactory;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
-import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.ADBMasterFactory;
 import de.hpi.julianweise.master.config.MasterConfiguration;
@@ -22,10 +20,12 @@ import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributorFactory;
-import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
-import de.hpi.julianweise.query.ADBSelectionQueryTermDeserializer;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicateDeserializer;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.config.SlaveConfiguration;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import de.hpi.julianweise.utility.config.ConfigurationBase;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 
@@ -59,7 +59,7 @@ public class ADBApplication {
         module.addDeserializer(ADBEntity.class, ADBEntityFactoryProvider.getInstance().buildDeserializer());
         module.registerSubtypes(ADBEntityFactoryProvider.getInstance().getTargetClass());
         module.addDeserializer(ADBSelectionQueryPredicate.class,
-                new ADBSelectionQueryTermDeserializer(ADBEntityFactoryProvider.getInstance().getTargetClass()));
+                new ADBSelectionQueryPredicateDeserializer(ADBEntityFactoryProvider.getInstance().getTargetClass()));
         JacksonCborSerializer serializer = (JacksonCborSerializer) SerializationExtension
                 .get(context.getSystem()).serializerFor(CborSerializable.class);
         serializer.objectMapper().registerModule(module);

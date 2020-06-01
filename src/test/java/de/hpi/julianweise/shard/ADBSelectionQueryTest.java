@@ -1,7 +1,8 @@
 package de.hpi.julianweise.shard;
 
-import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateIntConstant;
 import org.junit.Test;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
@@ -19,7 +20,7 @@ public class ADBSelectionQueryTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
-                .value(1)
+                .value(new ADBPredicateIntConstant(2))
                 .build();
         query.addPredicate(predicate);
 
@@ -32,7 +33,7 @@ public class ADBSelectionQueryTest {
         ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate.builder()
                                                                     .fieldName("aInteger")
                                                                     .operator(EQUALITY)
-                                                                    .value(2)
+                                                                    .value(new ADBPredicateIntConstant(2))
                                                                     .build();
 
         assertThat(predicate.toString()).contains("Predicate");
@@ -46,7 +47,7 @@ public class ADBSelectionQueryTest {
         ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate.builder()
                                                                     .fieldName("aInteger")
                                                                     .operator(EQUALITY)
-                                                                    .value(2)
+                                                                    .value(new ADBPredicateIntConstant(2))
                                                                     .build();
 
         ADBSelectionQuery query = new ADBSelectionQuery();

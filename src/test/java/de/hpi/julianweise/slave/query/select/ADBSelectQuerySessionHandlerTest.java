@@ -6,14 +6,17 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.select.ADBMasterSelectSession;
-import de.hpi.julianweise.query.ADBSelectionQuery;
-import de.hpi.julianweise.query.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.ADBSelectionQuery;
+import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.query.selection.constant.ADBPredicateIntConstant;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySessionFactory;
@@ -36,6 +39,7 @@ public class ADBSelectQuerySessionHandlerTest {
     @Before
     public void setUp() {
         testKit.spawn(ADBSlave.create());
+        ADBComparator.buildComparatorMapping();
     }
 
     @After
@@ -68,7 +72,7 @@ public class ADBSelectQuerySessionHandlerTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
         query.addPredicate(predicate);
 
@@ -110,7 +114,7 @@ public class ADBSelectQuerySessionHandlerTest {
         Receptionist.Listing validListing = receptionistProbe.expectMessageClass(Receptionist.Listing.class);
         assertThat(validListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).size()).isOne();
 
-        ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132, 'w');
+        ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132);
         validListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
                 manager.tell(new ADBPartitionManager.PersistEntity(persistProbe.ref(), testEntity)));
         validListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
@@ -121,7 +125,7 @@ public class ADBSelectQuerySessionHandlerTest {
                 .builder()
                 .fieldName("aInteger")
                 .operator(EQUALITY)
-                .value(1)
+                .value(new ADBPredicateIntConstant(1))
                 .build();
         query.addPredicate(predicate);
 
