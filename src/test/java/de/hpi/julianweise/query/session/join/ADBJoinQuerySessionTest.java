@@ -14,7 +14,6 @@ import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
-import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
@@ -69,7 +68,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partition.ref());
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref()));
+                        supervisor.ref(), false));
 
         ADBQueryManager.QueryEntities queryEntities = queryManager.expectMessageClass(ADBQueryManager.QueryEntities.class);
 
@@ -95,7 +94,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partition.ref());
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref()));
+                        supervisor.ref(), false));
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager.ref(), joinSessionHandler.ref()));
 
@@ -132,7 +131,7 @@ public class ADBJoinQuerySessionTest {
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref()));
+                        supervisor.ref(), false));
 
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));
@@ -176,7 +175,7 @@ public class ADBJoinQuerySessionTest {
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref()));
+                        supervisor.ref(), false));
 
         joinSession.tell(new ADBMasterJoinSession.TriggerShardComparison(queryManager2.ref(), joinSessionHandler1.ref()));
 
@@ -213,7 +212,7 @@ public class ADBJoinQuerySessionTest {
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref()));
+                        supervisor.ref(), false));
 
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));

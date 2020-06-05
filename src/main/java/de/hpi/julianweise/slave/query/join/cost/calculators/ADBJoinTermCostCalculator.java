@@ -6,5 +6,5 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 
 @FunctionalInterface
 public interface ADBJoinTermCostCalculator {
-    ADBInterval[] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right);
+    ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right);
 }

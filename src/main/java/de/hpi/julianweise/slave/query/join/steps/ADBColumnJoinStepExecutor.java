@@ -9,7 +9,7 @@ import akka.actor.typed.javadsl.Receive;
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
-import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryColumnWorkload;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
@@ -48,7 +48,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
 
     private final Map<String, ObjectList<ADBEntityEntry>> left;
     private final Map<String, ObjectList<ADBEntityEntry>> right;
-    private final ObjectList<ADBJoinTermCostModel> costModels;
+    private final ObjectList<ADBJoinPredicateCostModel> costModels;
     private final ActorRef<StepExecuted> respondTo;
     private final AtomicInteger intersectsPerformed = new AtomicInteger(0);
     private SparseBitSet[] resultSet;
@@ -56,7 +56,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
     public ADBColumnJoinStepExecutor(ActorContext<Command> context,
                                      Map<String, ObjectList<ADBEntityEntry>> left,
                                      Map<String, ObjectList<ADBEntityEntry>> right,
-                                     ObjectList<ADBJoinTermCostModel> costModels,
+                                     ObjectList<ADBJoinPredicateCostModel> costModels,
                                      ActorRef<StepExecuted> respondTo) {
         super(context);
         this.left = left;
@@ -75,7 +75,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
 
     private Behavior<Command> handleExecute(Execute command) {
         val respondTo = getContext().messageAdapter(GenericWorker.Response.class, GenericWorkerResponseWrapper::new);
-        for (ADBJoinTermCostModel costModel : this.costModels) {
+        for (ADBJoinPredicateCostModel costModel : this.costModels) {
             val workload = JoinQueryColumnWorkload
                     .builder()
                     .left(this.left.get(costModel.getPredicate().getLeftHandSideAttribute()))

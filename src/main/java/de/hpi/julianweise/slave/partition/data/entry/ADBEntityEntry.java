@@ -32,4 +32,7 @@ public abstract class ADBEntityEntry {
     }
 
     public abstract Field getValueField();
+
+    @Override
+    public abstract int hashCode();
 }

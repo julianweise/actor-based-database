@@ -13,7 +13,7 @@ public abstract class ADBEntityEntryFactory {
 
     public static final Map<Class<?>, BiFunction<ADBEntity, Field, ADBEntityEntry>> typedEntries = new HashMap<Class<?>,
             BiFunction<ADBEntity, Field, ADBEntityEntry>>() {{
-        put(byte.class, (ADBEntity entity, Field field) -> new ADBEntityBooleanEntry(entity.getInternalID(), field,
+        put(byte.class, (ADBEntity entity, Field field) -> new ADBEntityByteEntry(entity.getInternalID(), field,
                 entity));
         put(boolean.class, (ADBEntity entity, Field field) -> new ADBEntityBooleanEntry(entity.getInternalID(), field,
                 entity));

@@ -36,4 +36,12 @@ public class ADBEntityDoubleEntry extends ADBEntityEntry {
     public Field getValueField() {
         return ADBEntityDoubleEntry.valueField;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = prime + Integer.hashCode(this.getId());
+        result = prime * result + Double.hashCode(this.value);
+        return result;
+    }
 }

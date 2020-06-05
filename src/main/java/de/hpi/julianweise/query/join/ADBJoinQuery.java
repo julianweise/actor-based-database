@@ -33,17 +33,18 @@ public class ADBJoinQuery implements ADBQuery {
         this.getPredicates().add(predicate);
     }
 
-    public Set<String> getAllFields() {
+    public Set<String> getAllLeftHandSideFields() {
         return this.getPredicates().stream()
-                   .map(predicate -> {
-                ObjectList<String> fields = new ObjectArrayList<>(2);
-                fields.add(predicate.getLeftHandSideAttribute());
-                fields.add(predicate.getRightHandSideAttribute());
-                return fields;
-            })
-                   .flatMap(Collection::stream)
+                   .map(ADBJoinQueryPredicate::getLeftHandSideAttribute)
                    .collect(Collectors.toSet());
     }
+
+    public Set<String> getAllRightHandSideFields() {
+        return this.getPredicates().stream()
+                   .map(ADBJoinQueryPredicate::getRightHandSideAttribute)
+                   .collect(Collectors.toSet());
+    }
+
 
     @Override
     public String toString() {

@@ -1,7 +1,7 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
-import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
@@ -20,7 +20,7 @@ public class JoinQueryRowWorkload extends Workload {
     private final ObjectList<ADBKeyPair> joinCandidates;
     private final ObjectList<Map<String, ADBEntityEntry>> left;
     private final ObjectList<Map<String, ADBEntityEntry>> right;
-    private final ObjectList<ADBJoinTermCostModel> costModels;
+    private final ObjectList<ADBJoinPredicateCostModel> costModels;
 
     @AllArgsConstructor
     @Getter
@@ -45,7 +45,7 @@ public class JoinQueryRowWorkload extends Workload {
     }
 
     private boolean rowSatisfyJoinCondition(ADBKeyPair candidate) {
-        for (ADBJoinTermCostModel termCostModel : costModels) {
+        for (ADBJoinPredicateCostModel termCostModel : costModels) {
             ADBEntityEntry lField = left.get(ADBInternalIDHelper.getEntityId(candidate.getKey()))
                              .get(termCostModel.getPredicate().getLeftHandSideAttribute());
             ADBEntityEntry rField = right.get(ADBInternalIDHelper.getEntityId(candidate.getValue()))

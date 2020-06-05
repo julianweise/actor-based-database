@@ -8,7 +8,6 @@ import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
-import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -47,7 +46,7 @@ public class ADBJoinTermEqualityCostCalculatorTest {
         ObjectList<ADBEntityEntry> left = new ObjectArrayList<>();
         ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
     }
 
@@ -61,7 +60,7 @@ public class ADBJoinTermEqualityCostCalculatorTest {
         right.add(this.createTestEntry(2, 2));
         right.add(this.createTestEntry(3, 3));
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
     }
 
@@ -75,11 +74,11 @@ public class ADBJoinTermEqualityCostCalculatorTest {
         left.add(this.createTestEntry(3, 3));
         ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(3);
-        assertThat(result[0]).isEqualTo(ADBIntervalImpl.NO_INTERSECTION);
-        assertThat(result[1]).isEqualTo(ADBIntervalImpl.NO_INTERSECTION);
-        assertThat(result[2]).isEqualTo(ADBIntervalImpl.NO_INTERSECTION);
+        assertThat(result[0][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[1][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[2][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
     }
 
     @Test
@@ -95,11 +94,39 @@ public class ADBJoinTermEqualityCostCalculatorTest {
         right.add(this.createTestEntry(2, 2));
         right.add(this.createTestEntry(2, 3));
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(3);
-        assertThat(result[0]).isEqualTo(new ADBIntervalImpl(0, 0));
-        assertThat(result[1]).isEqualTo(new ADBIntervalImpl(1, 2));
-        assertThat(result[2]).isEqualTo(ADBIntervalImpl.NO_INTERSECTION);
+        assertThat(result[0][0]).isEqualTo(new ADBInterval(0, 0));
+        assertThat(result[1][0]).isEqualTo(new ADBInterval(1, 2));
+        assertThat(result[2][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+    }
+
+    @Test
+    public void expectValidResultsForBothListsFilledWithDuplicates() {
+        ADBJoinTermEqualityCostCalculator calculator = new ADBJoinTermEqualityCostCalculator();
+
+        ObjectList<ADBEntityEntry> left = new ObjectArrayList<>();
+        left.add(this.createTestEntry(1, 1));
+        left.add(this.createTestEntry(2, 2));
+        left.add(this.createTestEntry(2, 3));
+        left.add(this.createTestEntry(3, 4));
+        left.add(this.createTestEntry(3, 5));
+        left.add(this.createTestEntry(4, 6));
+        ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
+        right.add(this.createTestEntry(1, 1));
+        right.add(this.createTestEntry(2, 2));
+        right.add(this.createTestEntry(2, 3));
+        right.add(this.createTestEntry(3, 4));
+        right.add(this.createTestEntry(4, 5));
+
+        ADBInterval[][] result = calculator.calc(left, right);
+        assertThat(result.length).isEqualTo(6);
+        assertThat(result[0][0]).isEqualTo(new ADBInterval(0, 0));
+        assertThat(result[1][0]).isEqualTo(new ADBInterval(1, 2));
+        assertThat(result[2][0]).isEqualTo(new ADBInterval(1, 2));
+        assertThat(result[3][0]).isEqualTo(new ADBInterval(3, 3));
+        assertThat(result[4][0]).isEqualTo(new ADBInterval(3, 3));
+        assertThat(result[5][0]).isEqualTo(new ADBInterval(4, 4));
     }
 
 }

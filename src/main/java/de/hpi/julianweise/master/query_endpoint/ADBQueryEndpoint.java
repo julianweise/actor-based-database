@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.val;
 import scala.concurrent.duration.Duration;
 
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +35,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     private final ActorRef<ADBPartitionInquirer.Command> shardInquirer;
     private final ActorRef<ADBPartitionInquirer.Response> shardInquirerResponseWrapper;
-    private final Int2ObjectMap<CompletableFuture<Object[]>> requests = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<CompletableFuture<Object>> requests = new Int2ObjectOpenHashMap<>();
     private final AtomicInteger requestCounter = new AtomicInteger();
     private CompletionStage<ServerBinding> binding;
 
@@ -83,37 +84,49 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
                 Directives.path("query-async",
                         () -> Directives.withRequestTimeout(Duration.fromNanos(2e9),
                                 () -> Directives.post(() -> Directives.entity(
-                                Jackson.unmarshaller(ADBQuery.class), this::handleAsyncQuery))))
+                                Jackson.unmarshaller(ADBQuery.class), this::handleAsyncQuery)))),
+                Directives.path("query-time",
+                        () -> Directives.withoutRequestTimeout(
+                                () -> Directives.post(() -> Directives.entity(
+                                        Jackson.unmarshaller(ADBQuery.class), this::handleTimeQuery))))
         );
     }
 
     private RouteAdapter handleAsyncQuery(ADBQuery query) {
-        return this.handleQuery(query, true);
+        return this.handleQuery(query, true, false);
     }
 
     private RouteAdapter handleSyncQuery(ADBQuery query) {
-        return this.handleQuery(query, false);
+        return this.handleQuery(query, false, false);
     }
 
-    private RouteAdapter handleQuery(ADBQuery query, boolean async) {
+    private RouteAdapter handleTimeQuery(ADBQuery query) { return this.handleQuery(query, false, true);
+    }
+
+    private RouteAdapter handleQuery(ADBQuery query, boolean async, boolean timeOnly) {
         this.getContext().getLog().info("Received new query: " + query);
-        CompletableFuture<Object[]> future = new CompletableFuture<>();
+        CompletableFuture<Object> future = new CompletableFuture<>();
         int requestId = this.requestCounter.getAndIncrement();
         this.requests.put(requestId, future);
         this.shardInquirer.tell(ADBPartitionInquirer.QueryShards.builder()
                                                                 .query(query)
+                                                                .timeOnly(timeOnly)
                                                                 .requestId(requestId)
                                                                 .async(async)
                                                                 .respondTo(this.shardInquirerResponseWrapper)
                                                                 .build());
-        return Directives.onSuccess(future,
-                extracted -> Directives.complete(this.visualize(extracted)));
+        return Directives.onSuccess(future, extracted -> Directives.complete(this.visualize(extracted)));
     }
 
-    private String visualize(Object[] results) {
+    private String visualize(Object results) {
         StringBuilder builder = new StringBuilder();
-        for(Object element : results) {
-            builder.append(element.toString());
+        if (results instanceof Object[]) {
+            for(Object element : (Object[]) results) {
+                builder.append(element.toString());
+                builder.append("\n");
+            }
+        } else {
+            builder.append(results.toString());
             builder.append("\n");
         }
         return builder.toString();
@@ -132,6 +145,9 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
             ADBPartitionInquirer.AsyncQueryResults res = (ADBPartitionInquirer.AsyncQueryResults) wrapper.getResponse();
             Integer[] transactionId = {res.getTransactionId()};
             this.requests.get(res.getRequestId()).complete(transactionId);
+        } else if (wrapper.getResponse() instanceof ADBPartitionInquirer.QueryTimeResults) {
+            val res = (ADBPartitionInquirer.QueryTimeResults) wrapper.getResponse();
+            this.requests.get(res.getRequestId()).complete(res.getQueryTime());
         }
         return Behaviors.same();
     }

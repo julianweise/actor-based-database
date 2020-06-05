@@ -86,8 +86,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                 ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                 int transactionId,
                                 ActorRef<ADBPartitionInquirer.Command> parent,
-                                ADBJoinQuery query) {
-        super(context, queryManagers, partitionManagers, transactionId, parent);
+                                ADBJoinQuery query, boolean timeOnly) {
+        super(context, queryManagers, partitionManagers, transactionId, parent, timeOnly);
         this.distributionPlan = new JoinDistributionPlan(this.queryManagers);
         this.query = query;
 

@@ -4,14 +4,15 @@ package de.hpi.julianweise.utility.internals;
 @SuppressWarnings("SpellCheckingInspection")
 public class ADBInternalIDHelper {
 
-    // [NNNNNNNN | PPPPPPPP | EEEEEEEEEEEEEEEE]
+    // [NNNN | PPPPPPPPPPPP | EEEEEEEEEEEEEEEE]
+    //   4   |      16      |        16
 
-    private static final int SHIFT_NODE = 24;
+    private static final int SHIFT_NODE = 28;
     private static final int SHIFT_PARTITION = 16;
 
-    private static final int BIT_MASK_NODE = 0xFF000000;
-    private static final int BIT_MASK_PARTITION = 0xFF0000;
-    private static final int BIT_MASK_ENTITY = 0xFFFF;
+    private static final int BIT_MASK_NODE = 0xF0000000;
+    private static final int BIT_MASK_PARTITION = 0x0FFFF000;
+    private static final int BIT_MASK_ENTITY = 0x0000FFFF;
 
     public static int createID(int nodeId, int partitionId, int entityId) {
         return (nodeId << SHIFT_NODE) | (partitionId << SHIFT_PARTITION) | entityId;

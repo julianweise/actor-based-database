@@ -5,13 +5,11 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.settings.Settings;
+import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.ADBSlave;
-import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
-import de.hpi.julianweise.slave.partition.ADBPartitionManager.AllPartitionsAndHeaders;
-import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager.AllPartitionsHeaders;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBJoinQueryContext;
@@ -19,19 +17,19 @@ import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor.PartitionsJoined;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutorFactory;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
@@ -39,44 +37,47 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private final ActorRef<ADBSlaveQuerySession.Command> supervisor;
     private final int remoteNodeId;
     private final ADBJoinQueryContext joinQueryContext;
-    private final AtomicInteger runningExecutors = new AtomicInteger(0);
-    private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
-    private ObjectList<ActorRef<ADBPartition.Command>> localPartitions;
-    private ObjectList<ADBPartitionHeader> localHeaders;
+    private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final ObjectArrayFIFOQueue<ADBPartitionJoinTask> joinTasks = new ObjectArrayFIFOQueue<>();
+    private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsIdle = new ObjectArrayFIFOQueue<>();
+    private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsPrepared = new ObjectArrayFIFOQueue<>();
+    private final AtomicInteger activeExecutors = new AtomicInteger(0);
+    private int expectedNumberOfRemotePartitionHeaderResponses = 0;
+    private int actualNumberOfRemotePartitionHeaderResponses = 0;
+
+    private ActorRef<ADBPartitionManager.Command> foreignPartitionManager;
+    private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
 
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
     public static class RegisterHandler implements Command, CborSerializable {
         private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
+        private ActorRef<ADBPartitionManager.Command> foreignPartitionManager;
     }
 
     @AllArgsConstructor
-    private static class AllPartitionsHeaderWrapper implements Command {
-        private final AllPartitionsAndHeaders response;
+    public static class AllPartitionsHeaderWrapper implements Command {
+        private final AllPartitionsHeaders response;
     }
 
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
-    public static class ForeignNodeAttributes implements ADBLargeMessageSender.LargeMessage {
-        private Int2ObjectMap<Map<String, ObjectList<ADBEntityEntry>>> joinAttributes;
-        private Int2ObjectMap<int[]> fPartitionIdLeft;
-        private Int2ObjectMap<int[]> fPartitionIdRight;
+    @Builder
+    public static class RelevantJoinPartitions implements Command, KryoSerializable {
+        private int lPartitionId;
+        private int[] fPartitionIdLeft;
+        private int[] fPartitionIdRight;
     }
 
     @AllArgsConstructor
-    public static class PartitionsJoinedWrapper implements Command {
-        ADBPartitionJoinExecutor.PartitionsJoined joinResults;
+    public static class ExecutorResponseWrapper implements Command {
+        ADBPartitionJoinExecutor.Response response;
     }
 
     @AllArgsConstructor
     private static class Conclude implements Command {
-    }
-
-    @AllArgsConstructor
-    private static class RequestForeignJoinAttributes implements Command {
     }
 
     public ADBJoinWithNodeSession(ActorContext<Command> context,
@@ -84,121 +85,149 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
                                   ActorRef<ADBSlaveQuerySession.Command> supervisor,
                                   int remoteNodeId) {
         super(context);
-        ADBQueryPerformanceSampler.log(true, "ADBJoinWithNodeSession", "start", this.hashCode());
         this.supervisor = supervisor;
         this.joinQueryContext = joinQueryContext;
         this.remoteNodeId = remoteNodeId;
 
-        val respondTo = getContext().messageAdapter(AllPartitionsAndHeaders.class, AllPartitionsHeaderWrapper::new);
+        val respondTo = getContext().messageAdapter(AllPartitionsHeaders.class, AllPartitionsHeaderWrapper::new);
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
-        ADBPartitionManager.getInstance().tell(new ADBPartitionManager.RequestAllPartitionsAndHeaders(respondTo));
+        ADBPartitionManager.getInstance().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
+        this.setUpExecutors();
     }
 
     @Override
     public Receive<Command> createReceive() {
         return this.createReceiveBuilder()
                    .onMessage(RegisterHandler.class, this::handleRegisterHandler)
-                   .onMessage(RequestForeignJoinAttributes.class, this::handleRequestForeignJoinAttributes)
-                   .onMessage(AllPartitionsHeaderWrapper.class, this::handleAllPartitionsHeader)
-                   .onMessage(ForeignNodeAttributes.class, this::handleForeignAttributes)
-                   .onMessage(PartitionsJoinedWrapper.class, this::handlePartitionsJoined)
+                   .onMessage(AllPartitionsHeaderWrapper.class, this::handleAllPartitionHeaders)
+                   .onMessage(RelevantJoinPartitions.class, this::handleRelevantForeignPartitions)
+                   .onMessage(ExecutorResponseWrapper.class, this::handleExecutorResponse)
                    .onMessage(Conclude.class, this::handleConclude)
                    .build();
     }
 
     private Behavior<Command> handleRegisterHandler(RegisterHandler command) {
         this.sessionHandler = command.sessionHandler;
+        this.foreignPartitionManager = command.foreignPartitionManager;
         this.getContext().getLog().info("[Create] On node#" + ADBSlave.ID + " to join node#" + remoteNodeId);
-        this.getContext().getSelf().tell(new RequestForeignJoinAttributes());
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleAllPartitionsHeader(AllPartitionsHeaderWrapper wrapper) {
-        this.getContext().getLog().debug("Received {} relevant headers", wrapper.response.getHeaders().size());
-        this.localPartitions = wrapper.response.getPartitions();
-        this.localHeaders = wrapper.response.getHeaders();
+    private Behavior<Command> handleAllPartitionHeaders(AllPartitionsHeaderWrapper wrapper) {
+        if (this.sessionHandler == null) {
+            this.getContext().scheduleOnce(Duration.ofMillis(10), this.getContext().getSelf(), wrapper);
+            return Behaviors.same();
+        }
         if (wrapper.response.getHeaders().size() < 1) {
             this.getContext().getLog().warn("No relevant partition headers present. Concluding session.");
             this.getContext().getSelf().tell(new Conclude());
         }
+        this.expectedNumberOfRemotePartitionHeaderResponses = wrapper.response.getHeaders().size();
+        for (ADBPartitionHeader header : wrapper.response.getHeaders()) {
+            this.sessionHandler.tell(new ADBJoinWithNodeSessionHandler.ProvideRelevantJoinPartitions(header));
+        }
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleRequestForeignJoinAttributes(RequestForeignJoinAttributes command) {
-        if (this.localHeaders == null) {
-            this.getContext().getLog().warn("Local headers not yet present. Unable to proceed join for the moment.");
-            this.getContext().scheduleOnce(Duration.ofMillis(10), this.getContext().getSelf(), command);
-            return Behaviors.same();
+    private Behavior<Command> handleRelevantForeignPartitions(RelevantJoinPartitions command) {
+        this.generateLeftSideJoinTasks(command.fPartitionIdLeft, command.lPartitionId);
+        if (ADBSlave.ID != this.remoteNodeId) {
+            this.generateRightSideJoinTasks(command.fPartitionIdRight, command.lPartitionId);
         }
-        this.sessionHandler.tell(new ADBJoinWithNodeSessionHandler.RequestJoinAttributes(this.localHeaders));
+        this.actualNumberOfRemotePartitionHeaderResponses++;
+        this.getContext().getLog().debug("Generated " + this.joinTasks.size() + " join tasks");
+        this.nextExecutionRound();
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleForeignAttributes(ForeignNodeAttributes command) {
-        val messageAdapter = getContext().messageAdapter(PartitionsJoined.class, PartitionsJoinedWrapper::new);
-        for (Int2ObjectMap.Entry<int[]> mapping : command.fPartitionIdLeft.int2ObjectEntrySet()) {
-            for (int fPartitionId : mapping.getValue()) {
-                this.joinTasks.enqueue(ADBPartitionJoinTask
-                        .builder()
-                        .reversed(false)
-                        .localPartition(this.localPartitions.get(mapping.getIntKey()))
-                        .query(this.joinQueryContext.getQuery())
-                        .foreignAttributes(command.getJoinAttributes().get(fPartitionId))
-                        .respondTo(messageAdapter)
-                        .build());
-            }
+    private void generateLeftSideJoinTasks(int[] foreignPartitionIds, int localPartitionId) {
+        for (int fPartitionId : foreignPartitionIds) {
+            this.joinTasks.enqueue(ADBPartitionJoinTask
+                    .builder()
+                    .leftPartitionId(fPartitionId)
+                    .leftPartitionManager(this.foreignPartitionManager)
+                    .rightPartitionId(localPartitionId)
+                    .rightPartitionManager(ADBPartitionManager.getInstance())
+                    .build());
         }
-        if (ADBSlave.ID == this.remoteNodeId) {
-            this.triggerExecution(Settings.SettingsProvider.get(getContext().getSystem()).PARALLEL_PARTITION_JOINS);
-            return Behaviors.same();
+    }
+
+    private void generateRightSideJoinTasks(int[] foreignPartitionIds, int localPartitionId) {
+        for (int fPartitionId : foreignPartitionIds) {
+            this.joinTasks.enqueue(ADBPartitionJoinTask
+                    .builder()
+                    .leftPartitionId(localPartitionId)
+                    .leftPartitionManager(ADBPartitionManager.getInstance())
+                    .rightPartitionId(fPartitionId)
+                    .rightPartitionManager(this.foreignPartitionManager)
+                    .build());
         }
-        for (Int2ObjectMap.Entry<int[]> mapping : command.fPartitionIdRight.int2ObjectEntrySet()) {
-            for (int fPartitionId : mapping.getValue()) {
-                this.joinTasks.enqueue(ADBPartitionJoinTask
-                        .builder()
-                        .reversed(true)
-                        .localPartition(this.localPartitions.get(mapping.getIntKey()))
-                        .query(this.joinQueryContext.getQuery().getReverse())
-                        .foreignAttributes(command.getJoinAttributes().get(fPartitionId))
-                        .respondTo(messageAdapter)
-                        .build());
-            }
+    }
+
+    private Behavior<Command> handleExecutorResponse(ExecutorResponseWrapper wrapper) {
+        if (wrapper.response instanceof ADBPartitionJoinExecutor.PartitionsJoined) {
+            ADBPartitionJoinExecutor.PartitionsJoined message = ((PartitionsJoined)wrapper.response);
+            this.handleJoinResults(message.getRespondTo(), message.getJoinTuples());
+        } else if (wrapper.response instanceof ADBPartitionJoinExecutor.JoinTaskPrepared) {
+            this.executorsPrepared.enqueue(((ADBPartitionJoinExecutor.JoinTaskPrepared) wrapper.response).getRespondTo());
         }
-        this.triggerExecution(Settings.SettingsProvider.get(getContext().getSystem()).PARALLEL_PARTITION_JOINS);
+        this.nextExecutionRound();
         return Behaviors.same();
     }
 
-    private Behavior<Command> handlePartitionsJoined(PartitionsJoinedWrapper wrapper) {
-        this.supervisor.tell(new ADBSlaveJoinSession.HandleJoinShardResults(wrapper.joinResults.getJoinTuples()));
-        this.triggerExecution(1);
-        if (this.runningExecutors.decrementAndGet() < 1 && this.joinTasks.isEmpty()) {
+    private void handleJoinResults(ActorRef<ADBPartitionJoinExecutor.Command> executor,
+                                   ObjectList<ADBKeyPair> joinTuples) {
+        getContext().getLog().debug("Received " + joinTuples.size() + " results from task");
+        this.executorsIdle.enqueue(executor);
+        this.activeExecutors.decrementAndGet();
+        this.supervisor.tell(new ADBSlaveJoinSession.JoinPartitionsResults(joinTuples));
+    }
+
+    private void setUpExecutors() {
+        val respondTo = getContext().messageAdapter(ADBPartitionJoinExecutor.Response.class, ExecutorResponseWrapper::new);
+        for (int i = 0; i < Settings.SettingsProvider.get(getContext().getSystem()).PARALLEL_PARTITION_JOINS; i++) {
+            val behavior = ADBPartitionJoinExecutorFactory.createDefault(this.joinQueryContext.getQuery(), respondTo);
+            val executor = getContext().spawn(behavior, ADBPartitionJoinExecutorFactory.name(joinQueryContext.getQuery()));
+            this.executorsIdle.enqueue(executor);
+        }
+    }
+
+    private void nextExecutionRound() {
+        while(!executorsPrepared.isEmpty() && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS - 1) {
+            this.executeNextTask();
+        }
+        while (!this.joinTasks.isEmpty() && !this.executorsIdle.isEmpty()) {
+            this.prepareNextTask();
+        }
+        if (this.isReadyToConclude()) {
             this.getContext().getSelf().tell(new Conclude());
         }
-        return Behaviors.same();
+    }
+
+    private void executeNextTask() {
+        executorsPrepared.dequeue().tell(new ADBPartitionJoinExecutor.Execute());
+        this.getContext().getLog().debug("Executing next task");
+        this.activeExecutors.incrementAndGet();
+    }
+
+    private void prepareNextTask() {
+        ADBPartitionJoinTask task = this.joinTasks.dequeue();
+        ActorRef<ADBPartitionJoinExecutor.Command> executor = this.executorsIdle.dequeue();
+        executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
     }
 
     private Behavior<Command> handleConclude(Conclude command) {
-        if (this.sessionHandler == null) {
-            this.getContext().getLog().warn("Session handler not yet present. Unable to proceed with join conclusion.");
-            this.getContext().scheduleOnce(Duration.ofMillis(1), this.getContext().getSelf(), command);
-            return Behaviors.same();
-        }
         this.getContext().getLog().info("Concluding session.");
         this.sessionHandler.tell(new ADBJoinWithNodeSessionHandler.ConcludeSession());
-        ADBQueryPerformanceSampler.log(false, "ADBJoinWithNodeSession", "stop", this.hashCode());
         this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
         return Behaviors.stopped();
     }
 
-    private void triggerExecution(int maxExecutions) {
-        for (int i = 0; i < maxExecutions && !this.joinTasks.isEmpty(); i++) {
-            this.runningExecutors.incrementAndGet();
-            this.spawnExecutor(this.joinTasks.dequeue());
-        }
-    }
-
-    private void spawnExecutor(ADBPartitionJoinTask task) {
-        val behavior = ADBPartitionJoinExecutorFactory.createDefault(task);
-        this.getContext().spawn(behavior, ADBPartitionJoinExecutorFactory.name(task.getQuery()));
+    private boolean isReadyToConclude() {
+        return executorsIdle.size() == settings.PARALLEL_PARTITION_JOINS &&
+                executorsPrepared.isEmpty() &&
+                joinTasks.isEmpty() &&
+                this.activeExecutors.get() == 0 &&
+                actualNumberOfRemotePartitionHeaderResponses == expectedNumberOfRemotePartitionHeaderResponses;
     }
 }

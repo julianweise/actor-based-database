@@ -38,4 +38,12 @@ public class ADBEntityBooleanEntry extends ADBEntityEntry {
     public Field getValueField() {
         return ADBEntityBooleanEntry.valueField;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = prime + Integer.hashCode(this.getId());
+        result = prime * result + Boolean.hashCode(this.value);
+        return result;
+    }
 }

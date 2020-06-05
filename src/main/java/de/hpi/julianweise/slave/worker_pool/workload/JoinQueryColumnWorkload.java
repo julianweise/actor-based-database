@@ -2,10 +2,8 @@ package de.hpi.julianweise.slave.worker_pool.workload;
 
 import com.zaxxer.sparsebits.SparseBitSet;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
-import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
-import de.hpi.julianweise.slave.query.join.cost.interval.ADBIntervalImpl;
-import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -17,7 +15,7 @@ public class JoinQueryColumnWorkload extends Workload {
 
     private final ObjectList<ADBEntityEntry> leftSideValues;
     private final ObjectList<ADBEntityEntry> rightSideValues;
-    private final ADBJoinTermCostModel costModel;
+    private final ADBJoinPredicateCostModel costModel;
     private final SparseBitSet[] bitMatrix;
 
     @AllArgsConstructor
@@ -31,7 +29,7 @@ public class JoinQueryColumnWorkload extends Workload {
     @Builder
     public JoinQueryColumnWorkload(ObjectList<ADBEntityEntry> left,
                                    ObjectList<ADBEntityEntry> right,
-                                   ADBJoinTermCostModel costModel) {
+                                   ADBJoinPredicateCostModel costModel) {
         this.leftSideValues = left;
         this.rightSideValues = right;
         this.costModel = costModel;
@@ -44,34 +42,18 @@ public class JoinQueryColumnWorkload extends Workload {
             this.bitMatrix[i] = new SparseBitSet(this.rightSideValues.size());
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
-            ADBInterval interval = this.costModel.getJoinCandidates()[i];
-            if (interval instanceof ADBIntervalImpl) {
-                this.handleInterval(i, (ADBIntervalImpl) interval);
-            } else if (interval instanceof ADBInverseInterval) {
-                this.handleInterval(i, (ADBInverseInterval) interval);
+            for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
+                this.handleInterval(i, interval);
             }
         }
         message.getRespondTo().tell(new Results(this.bitMatrix));
     }
 
-    private void handleInterval(int rowIndex, ADBIntervalImpl interval) {
-        if (interval.equals(ADBIntervalImpl.NO_INTERSECTION)) {
+    private void handleInterval(int rowIndex, ADBInterval interval) {
+        if (interval.equals(ADBInterval.NO_INTERSECTION)) {
             return;
         }
         this.handleInterval(rowIndex, interval.getStart(), interval.getEnd());
-    }
-
-    private void handleInterval(int rowIndex, ADBInverseInterval interval) {
-        if (interval.equals(ADBInverseInterval.NO_INTERSECTION)) {
-            return;
-        }
-        SparseBitSet bitSet = new SparseBitSet(this.rightSideValues.size());
-        if (interval.getStart() > 0) {
-            this.handleInterval(rowIndex, 0, interval.getStart() - 1);
-        }
-        if (interval.getEnd() < interval.getReferenceEnd()) {
-            bitSet.set(interval.getEnd() + 1, interval.getReferenceEnd());
-        }
     }
 
     private void handleInterval(int rowIndex, int start, int end) {

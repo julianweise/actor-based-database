@@ -1,21 +1,23 @@
 package de.hpi.julianweise.slave.query.join;
 
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import com.google.common.primitives.Floats;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartition;
+import de.hpi.julianweise.slave.partition.ADBPartition.MultipleAttributes;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
-import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModelFactory;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor;
@@ -30,15 +32,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.val;
 
+import java.time.Duration;
 import java.util.Map;
 
 public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinExecutor.Command> {
 
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
-    private final ADBPartitionJoinTask joinTask;
+    private final ADBJoinQuery joinQuery;
+    private final ActorRef<Response> respondTo;
 
-    private Map<String, ObjectList<ADBEntityEntry>> localAttributes;
-    private ObjectList<ADBJoinTermCostModel> costModels;
+    private ADBPartitionJoinTask joinTask;
+    private Map<String, ObjectList<ADBEntityEntry>> leftAttributes;
+    private Map<String, ObjectList<ADBEntityEntry>> rightAttributes;
+    private ObjectList<ADBJoinPredicateCostModel> costModels;
     private int costModelsProcessed = 0;
 
     public interface Command {
@@ -48,9 +54,14 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     @AllArgsConstructor
+    public static class Prepare implements Command {
+        private final ADBPartitionJoinTask joinTask;
+    }
+
+    @AllArgsConstructor
     @Getter
     public static class PartitionJoinAttributesWrapper implements Command {
-        ADBPartition.JoinAttributes response;
+        ADBPartition.MultipleAttributes response;
     }
 
     @AllArgsConstructor
@@ -59,99 +70,151 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     @AllArgsConstructor
+    public static class Execute implements Command {}
+
+    @AllArgsConstructor
     public static class ADBColumnJoinExecutorWrapper implements Command {
         ADBColumnJoinStepExecutor.StepExecuted response;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class JoinTaskPrepared implements Response {
+        ActorRef<ADBPartitionJoinExecutor.Command> respondTo;
     }
 
     @AllArgsConstructor
     @Builder
     @Getter
     public static class PartitionsJoined implements Response {
-        private final boolean reversed;
         private final ObjectList<ADBKeyPair> joinTuples;
+        private final ActorRef<ADBPartitionJoinExecutor.Command> respondTo;
     }
 
-    public ADBPartitionJoinExecutor(ActorContext<Command> context, ADBPartitionJoinTask joinTask) {
+    @AllArgsConstructor
+    public static class MultipleAttributesWrapper implements Command {
+        private final ADBPartition.MultipleAttributes response;
+    }
+
+    public ADBPartitionJoinExecutor(ActorContext<Command> context, ADBJoinQuery query, ActorRef<Response> res) {
         super(context);
-        this.joinTask = joinTask;
-
-        ADBQueryPerformanceSampler.log(true, "ADBPartitionJoinExecutor", "start", this.hashCode());
-
-        val resTo = getContext().messageAdapter(ADBPartition.JoinAttributes.class, PartitionJoinAttributesWrapper::new);
-        joinTask.getLocalPartition().tell(new ADBPartition.RequestJoinAttributes(resTo, joinTask.getQuery()));
+        this.joinQuery = query;
+        this.respondTo = res;
     }
 
     @Override
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
-                .onMessage(PartitionJoinAttributesWrapper.class, this::handlePartitionJoinAttributes)
+                .onMessage(Prepare.class, this::handlePrepare)
                 .onMessage(GenericWorkerResponseWrapper.class, this::handleGenericWorkerResponse)
                 .onMessage(ADBColumnJoinExecutorWrapper.class, this::handleADBColumnJoinExecutorWrapper)
+                .onMessage(Execute.class, this::handleExecute)
+                .onMessage(MultipleAttributesWrapper.class, this::handleMultipleAttributes)
                 .build();
     }
 
-    private Behavior<Command> handlePartitionJoinAttributes(PartitionJoinAttributesWrapper wrapper) {
-        this.localAttributes = wrapper.response.getAttributes();
-        this.costModels = this.getCostModels();
-        return this.execute();
+    private Behavior<Command> handlePrepare(Prepare command) {
+        assert this.joinTask == null && this.isNotPrepared() : "This executor is already prepared!";
+        this.joinTask = command.joinTask;
+        this.requestLeftSideAttributes();
+        return Behaviors.same();
     }
 
-    private ObjectList<ADBJoinTermCostModel> getCostModels() {
-        ADBJoinQuery  query = this.joinTask.getQuery();
-        ObjectList<ADBJoinTermCostModel> costModels = new ObjectArrayList<>(query.getPredicates().size());
-        for (int i = 0; i < query.getPredicates().size(); i++) {
-            ADBJoinQueryPredicate predicate = query.getPredicates().get(i);
-            val left = this.joinTask.getForeignAttributes().get(predicate.getLeftHandSideAttribute());
-            val right = this.localAttributes.get(predicate.getRightHandSideAttribute());
+    private void requestLeftSideAttributes() {
+        val respondTo = getContext().messageAdapter(MultipleAttributes.class, MultipleAttributesWrapper::new);
+        val leftCommand = new ADBPartition.RequestMultipleAttributes(respondTo, joinQuery.getAllLeftHandSideFields());
+        joinTask.getLeftPartitionManager()
+                .tell(new ADBPartitionManager.RedirectToPartition(joinTask.getLeftPartitionId(), leftCommand));
+    }
+
+    private void requestRightSideAttributes() {
+        val respondTo = getContext().messageAdapter(MultipleAttributes.class, MultipleAttributesWrapper::new);
+        val rightCommand = new ADBPartition.RequestMultipleAttributes(respondTo, joinQuery.getAllRightHandSideFields());
+        joinTask.getRightPartitionManager()
+                .tell(new ADBPartitionManager.RedirectToPartition(joinTask.getRightPartitionId(), rightCommand));
+    }
+
+    private Behavior<Command> handleMultipleAttributes(MultipleAttributesWrapper wrapper) {
+        if (this.leftAttributes == null) {
+            this.leftAttributes = wrapper.response.getAttributes();
+            this.requestRightSideAttributes();
+        } else {
+            this.rightAttributes = wrapper.response.getAttributes();
+            this.respondTo.tell(new JoinTaskPrepared(this.getContext().getSelf()));
+        }
+        return Behaviors.same();
+    }
+
+    private boolean isNotPrepared() {
+        return this.leftAttributes == null || this.rightAttributes == null;
+    }
+
+    private Behavior<Command> handleExecute(Execute command) {
+        if (this.isNotPrepared()) {
+            this.getContext().scheduleOnce(Duration.ofMillis(50), this.getContext().getSelf(), command);
+            this.getContext().getLog().warn("Missing attributes - rescheduling execution");
+            return Behaviors.same();
+        }
+        this.costModels = this.getCostModels();
+        this.execute();
+        return Behaviors.same();
+    }
+
+    private ObjectList<ADBJoinPredicateCostModel> getCostModels() {
+        ObjectList<ADBJoinPredicateCostModel> costModels = new ObjectArrayList<>(this.joinQuery.getPredicates().size());
+        for (int i = 0; i < this.joinQuery.getPredicates().size(); i++) {
+            ADBJoinQueryPredicate predicate = this.joinQuery.getPredicates().get(i);
+            val left = this.leftAttributes.get(predicate.getLeftHandSideAttribute());
+            val right = this.rightAttributes.get(predicate.getRightHandSideAttribute());
             costModels.add(ADBJoinTermCostModelFactory.calc(predicate, i, left, right));
         }
         costModels.sort((m1, m2) -> Floats.compare(m1.getRelativeCost(), m2.getRelativeCost()));
         return costModels;
     }
 
-    private Behavior<Command> execute() {
+    private void execute() {
         this.getContext().getLog().debug("[JOIN COST MODEL] Cheapest predicate: " + this.costModels.get(0));
-        Map<String, ObjectList<ADBEntityEntry>> foreignAttributes = this.joinTask.getForeignAttributes();
         if (this.costModels.size() < 2) {
-            ObjectList<ADBKeyPair> results = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
+            ObjectList<ADBKeyPair> results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
-            return this.returnResults(results);
+            this.returnResults(results);
+            return;
         }
         if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
-            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
+            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
         } else if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
             this.costModelsProcessed = this.costModels.size();
             this.joinColumnBased(this.costModels);
         } else {
-            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(foreignAttributes, localAttributes);
+            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
         }
-        return Behaviors.same();
     }
 
-    private void joinRowBased(ObjectList<ADBKeyPair> joinCandidates, ObjectList<ADBJoinTermCostModel> costModels) {
-        val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(joinTask.getForeignAttributes(), costModels);
-        val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.localAttributes, costModels);
+    private void joinRowBased(ObjectList<ADBKeyPair> joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
+        val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.leftAttributes, costModels);
+        val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.rightAttributes, costModels);
         val workload = new JoinQueryRowWorkload(joinCandidates, leftAttributes, rightAttributes, costModels);
         val respondTo = getContext().messageAdapter(GenericWorker.Response.class, GenericWorkerResponseWrapper::new);
         ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));
     }
 
-    private void joinColumnBased(ObjectList<ADBJoinTermCostModel> costModels) {
+    private void joinColumnBased(ObjectList<ADBJoinPredicateCostModel> costModels) {
         val respondTo = getContext().messageAdapter(ADBColumnJoinStepExecutor.StepExecuted.class,
                 ADBColumnJoinExecutorWrapper::new);
         this.getContext().spawn(ADBColumnJoinStepExecutorFactory
-                .createDefault(joinTask.getForeignAttributes(), this.localAttributes, costModels, respondTo), "ColumnJoinStep")
+                .createDefault(this.leftAttributes, this.rightAttributes, costModels, respondTo), "ColumnJoinStep")
             .tell(new ADBColumnJoinStepExecutor.Execute());
     }
 
     private Behavior<Command> handleGenericWorkerResponse(GenericWorkerResponseWrapper wrapper) {
         if (wrapper.response instanceof JoinQueryRowWorkload.Results) {
             ObjectList<ADBKeyPair> results = ((JoinQueryRowWorkload.Results) wrapper.response).getResults();
-            return this.returnResults(results);
+            this.returnResults(results);
+            return Behaviors.same();
         }
         return Behaviors.same();
     }
@@ -159,16 +222,23 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     private Behavior<Command> handleADBColumnJoinExecutorWrapper(ADBColumnJoinExecutorWrapper wrapper) {
         ObjectList<ADBKeyPair> results = wrapper.response.getResults();
         if (this.costModelsProcessed == this.costModels.size()) {
-            return this.returnResults(results);
+            this.returnResults(results);
+            return Behaviors.same();
         }
         this.joinRowBased(results, this.costModels.subList(this.costModelsProcessed, this.costModels.size()));
         this.costModelsProcessed = this.costModels.size();
         return Behaviors.same();
     }
 
-    private Behavior<Command> returnResults(ObjectList<ADBKeyPair> results) {
-        this.joinTask.getRespondTo().tell(new PartitionsJoined(joinTask.isReversed(), results));
-        ADBQueryPerformanceSampler.log(false, "ADBPartitionJoinExecutor", "stop", this.hashCode());
-        return Behaviors.stopped();
+    private void returnResults(ObjectList<ADBKeyPair> results) {
+        this.resetExecutor();
+        this.respondTo.tell(new PartitionsJoined(results, this.getContext().getSelf()));
+    }
+
+    private void resetExecutor() {
+        this.leftAttributes = null;
+        this.rightAttributes = null;
+        this.costModels = null;
+        this.joinTask = null;
     }
 }

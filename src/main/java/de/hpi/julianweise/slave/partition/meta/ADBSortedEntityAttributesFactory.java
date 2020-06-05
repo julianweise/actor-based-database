@@ -3,7 +3,7 @@ package de.hpi.julianweise.slave.partition.meta;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
-import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModel;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
@@ -68,7 +68,7 @@ public class ADBSortedEntityAttributesFactory {
 
     public static ObjectList<Map<String, ADBEntityEntry>> resortByIndex(
             Map<String, ObjectList<ADBEntityEntry>> columnAttributes,
-            ObjectList<ADBJoinTermCostModel> relevantCostModels) {
+            ObjectList<ADBJoinPredicateCostModel> relevantCostModels) {
         int numberOfRows = columnAttributes.values().stream().mapToInt(ObjectList::size).max().orElse(0);
         ObjectList<Map<String, ADBEntityEntry>> resultSet = new ObjectArrayList<>(numberOfRows);
         for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectHashMap<>());

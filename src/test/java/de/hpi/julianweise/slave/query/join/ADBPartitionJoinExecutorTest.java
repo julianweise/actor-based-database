@@ -80,209 +80,275 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectEqualityJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
+        int rPartitionId = 0;
 
-        TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
-        TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
+        TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> foreignAttributes = new Object2ObjectHashMap<>();
+        TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
+        TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
+
+        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectHashMap<>();
         ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(this.createTestEntry(1, 0));
         fIntegerAttributes.add(this.createTestEntry(3, 1));
         fIntegerAttributes.add(this.createTestEntry(5, 2));
-        foreignAttributes.put("aInteger", fIntegerAttributes);
+        leftSideAttributes.put("aInteger", fIntegerAttributes);
 
-        ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
-
-        ADBPartitionJoinTask task = ADBPartitionJoinTask
-                .builder()
-                .respondTo(supervisor.ref())
-                .foreignAttributes(foreignAttributes)
-                .reversed(false)
-                .localPartition(localPartition.ref())
-                .query(joinQuery)
-                .build();
-
-        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory.createDefault(task);
-        ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
-
-        ADBPartition.RequestJoinAttributes requestJoinAttributes =
-                localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
-
-        assertThat(requestJoinAttributes.getQuery()).isEqualTo(joinQuery);
-
-        Map<String, ObjectList<ADBEntityEntry>> localAttributes = new Object2ObjectHashMap<>();
+        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectHashMap<>();
         ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
         lIntegerAttributes.add(this.createTestEntry(3, 0));
         lIntegerAttributes.add(this.createTestEntry(5, 1));
         lIntegerAttributes.add(this.createTestEntry(9, 2));
-        localAttributes.put("aInteger", lIntegerAttributes);
+        rightSideAttributes.put("aInteger", lIntegerAttributes);
 
-        executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
+        ADBJoinQuery joinQuery = new ADBJoinQuery();
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
 
-        ADBPartitionJoinExecutor.PartitionsJoined response =
+        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory
+                .createDefault(joinQuery, supervisor.ref());
+        ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
+
+        ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
+                                                        .leftPartitionManager(leftPartitionManager.ref())
+                                                        .leftPartitionId(lPartitionId)
+                                                        .rightPartitionManager(rightPartitionManager.ref())
+                                                        .rightPartitionId(rPartitionId)
+                                                        .build();
+
+        executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
+
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
+                leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+
+        assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
+
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
+
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
+                rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+
+        assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
+
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+
+        executor.tell(new ADBPartitionJoinExecutor.Execute());
+
+        ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
+                supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
+
+        assertThat(responsePrepared.getRespondTo()).isEqualTo(executor);
+
+        executor.tell(new ADBPartitionJoinExecutor.Execute());
+
+        ADBPartitionJoinExecutor.PartitionsJoined responseResults =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getJoinTuples().size()).isEqualTo(2);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getKey())).isEqualTo(1);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getValue())).isEqualTo(0);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(1).getKey())).isEqualTo(2);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(1).getValue())).isEqualTo(1);
-        assertThat(response.isReversed()).isFalse();
+        assertThat(responseResults.getJoinTuples().size()).isEqualTo(2);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getKey())).isEqualTo(1);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getValue())).isEqualTo(0);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(1).getKey())).isEqualTo(2);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(1).getValue())).isEqualTo(1);
     }
 
     @Test
     public void expectLessReversedJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
+        int rPartitionId = 0;
 
-        TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
-        TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
+        TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> foreignAttributes = new Object2ObjectHashMap<>();
+        TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
+        TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
+
+        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectHashMap<>();
         ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(this.createTestEntry(1, 0));
         fIntegerAttributes.add(this.createTestEntry(3, 1));
         fIntegerAttributes.add(this.createTestEntry(5, 2));
-        foreignAttributes.put("aInteger", fIntegerAttributes);
+        rightSideAttributes.put("aInteger", fIntegerAttributes);
 
-        ADBJoinQuery joinQuery = new ADBJoinQuery();
-        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
-
-        ADBPartitionJoinTask task = ADBPartitionJoinTask
-                .builder()
-                .respondTo(supervisor.ref())
-                .foreignAttributes(foreignAttributes)
-                .reversed(true)
-                .localPartition(localPartition.ref())
-                .query(joinQuery.getReverse())
-                .build();
-
-        Behavior<ADBPartitionJoinExecutor.Command> behavior =
-                ADBPartitionJoinExecutorFactory.createDefault(task);
-        ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
-
-        localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
-
-        Map<String, ObjectList<ADBEntityEntry>> localAttributes = new Object2ObjectHashMap<>();
+        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectHashMap<>();
         ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
         lIntegerAttributes.add(this.createTestEntry(3, 0));
         lIntegerAttributes.add(this.createTestEntry(5, 1));
         lIntegerAttributes.add(this.createTestEntry(9, 2));
-        localAttributes.put("aInteger", lIntegerAttributes);
+        leftSideAttributes.put("aInteger", lIntegerAttributes);
 
-        executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
+        ADBJoinQuery joinQuery = new ADBJoinQuery();
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
 
-        ADBPartitionJoinExecutor.PartitionsJoined response =
+        ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
+                                                        .leftPartitionManager(leftPartitionManager.ref())
+                                                        .leftPartitionId(lPartitionId)
+                                                        .rightPartitionManager(rightPartitionManager.ref())
+                                                        .rightPartitionId(rPartitionId)
+                                                        .build();
+
+        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory
+                .createDefault(joinQuery, supervisor.ref());
+        ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
+
+        executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
+
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
+                leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+
+        assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
+
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
+                rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+
+        assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
+
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+
+        executor.tell(new ADBPartitionJoinExecutor.Execute());
+
+        ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
+                supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
+
+        assertThat(responsePrepared.getRespondTo()).isEqualTo(executor);
+
+        ADBPartitionJoinExecutor.PartitionsJoined responseResults =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getJoinTuples().size()).isEqualTo(1);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getKey())).isEqualTo(2);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getValue())).isEqualTo(0);
-        assertThat(response.isReversed()).isTrue();
+        assertThat(responseResults.getJoinTuples().size()).isEqualTo(1);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getKey())).isEqualTo(0);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getValue())).isEqualTo(2);
     }
 
     @Test
     public void expectGreaterReversedJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
+        int rPartitionId = 0;
 
-        TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
-        TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
+        TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> foreignAttributes = new Object2ObjectHashMap<>();
+        TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
+        TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
+
+        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
+        lIntegerAttributes.add(this.createTestEntry(3, 0));
+        lIntegerAttributes.add(this.createTestEntry(5, 1));
+        lIntegerAttributes.add(this.createTestEntry(9, 2));
+        rightSideAttributes.put("bInteger", lIntegerAttributes);
+
+        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectHashMap<>();
         ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(this.createTestEntry(3, 0));
-        fIntegerAttributes.add(this.createTestEntry(5, 1));
-        fIntegerAttributes.add(this.createTestEntry(9, 2));
-        foreignAttributes.put("bInteger", fIntegerAttributes);
+        fIntegerAttributes.add(this.createTestEntry(1, 0));
+        fIntegerAttributes.add(this.createTestEntry(3, 1));
+        fIntegerAttributes.add(this.createTestEntry(5, 2));
+        leftSideAttributes.put("aInteger", fIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "bInteger"));
 
-        ADBPartitionJoinTask task = ADBPartitionJoinTask
-                .builder()
-                .respondTo(supervisor.ref())
-                .foreignAttributes(foreignAttributes)
-                .reversed(true)
-                .localPartition(localPartition.ref())
-                .query(joinQuery.getReverse())
-                .build();
-
-        Behavior<ADBPartitionJoinExecutor.Command> behavior =
-                ADBPartitionJoinExecutorFactory.createDefault(task);
+        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory
+                .createDefault(joinQuery, supervisor.ref());
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
-        localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
+        ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
+                                                        .leftPartitionManager(leftPartitionManager.ref())
+                                                        .leftPartitionId(lPartitionId)
+                                                        .rightPartitionManager(rightPartitionManager.ref())
+                                                        .rightPartitionId(rPartitionId)
+                                                        .build();
 
+        executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
 
-        Map<String, ObjectList<ADBEntityEntry>> localAttributes = new Object2ObjectHashMap<>();
-        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(this.createTestEntry(1, 0));
-        lIntegerAttributes.add(this.createTestEntry(3, 1));
-        lIntegerAttributes.add(this.createTestEntry(5, 2));
-        localAttributes.put("aInteger", lIntegerAttributes);
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
+                leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+        assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
 
-        executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
+                rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+        assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
 
-        ADBPartitionJoinExecutor.PartitionsJoined response =
+        ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
+                supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
+
+        assertThat(responsePrepared.getRespondTo()).isEqualTo(executor);
+
+        executor.tell(new ADBPartitionJoinExecutor.Execute());
+
+        ADBPartitionJoinExecutor.PartitionsJoined responseResults =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getJoinTuples().size()).isEqualTo(1);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getKey())).isEqualTo(0);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getValue())).isEqualTo(2);
-        assertThat(response.isReversed()).isTrue();
+        assertThat(responseResults.getJoinTuples().size()).isEqualTo(1);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getKey())).isEqualTo(2);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getValue())).isEqualTo(0);
     }
 
     @Test
     public void expectJoinWithToTermsToBeExecutedSuccessfully() {
         int lPartitionId = 0;
+        int rPartitionId = 0;
 
-        TestProbe<ADBPartition.Command> localPartition = testKit.createTestProbe();
-        TestProbe<ADBPartitionJoinExecutor.PartitionsJoined> supervisor = testKit.createTestProbe();
+        TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> foreignAttributes = new Object2ObjectHashMap<>();
+        TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
+        TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
+
+        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectHashMap<>();
         ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
         fIntegerAttributes.add(this.createTestEntry(1, 0));
         fIntegerAttributes.add(this.createTestEntry(3, 1));
         fIntegerAttributes.add(this.createTestEntry(6, 2));
-        foreignAttributes.put("aInteger", fIntegerAttributes);
+        leftSideAttributes.put("aInteger", fIntegerAttributes);
+
+        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectHashMap<>();
+        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
+        lIntegerAttributes.add(this.createTestEntry(3, 0));
+        lIntegerAttributes.add(this.createTestEntry(5, 1));
+        lIntegerAttributes.add(this.createTestEntry(9, 2));
+        rightSideAttributes.put("aInteger", lIntegerAttributes);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
 
-        ADBPartitionJoinTask task = ADBPartitionJoinTask
-                .builder()
-                .respondTo(supervisor.ref())
-                .foreignAttributes(foreignAttributes)
-                .reversed(false)
-                .localPartition(localPartition.ref())
-                .query(joinQuery)
-                .build();
-
-        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory.createDefault(task);
+        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory
+                .createDefault(joinQuery, supervisor.ref());
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
-        ADBPartition.RequestJoinAttributes requestJoinAttributes =
-                localPartition.expectMessageClass(ADBPartition.RequestJoinAttributes.class);
+        ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
+                                                        .leftPartitionManager(leftPartitionManager.ref())
+                                                        .leftPartitionId(lPartitionId)
+                                                        .rightPartitionManager(rightPartitionManager.ref())
+                                                        .rightPartitionId(rPartitionId)
+                                                        .build();
 
-        assertThat(requestJoinAttributes.getQuery()).isEqualTo(joinQuery);
+        executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
 
-        Map<String, ObjectList<ADBEntityEntry>> localAttributes = new Object2ObjectHashMap<>();
-        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(this.createTestEntry(3, 0));
-        lIntegerAttributes.add(this.createTestEntry(5, 1));
-        lIntegerAttributes.add(this.createTestEntry(9, 2));
-        localAttributes.put("aInteger", lIntegerAttributes);
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
+                leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+        assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
 
-        executor.tell(new ADBPartitionJoinExecutor.PartitionJoinAttributesWrapper(new ADBPartition.JoinAttributes(localAttributes, lPartitionId)));
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
+                rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
-        ADBPartitionJoinExecutor.PartitionsJoined response =
+        assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
+
+        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+
+        ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
+                supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
+
+        assertThat(responsePrepared.getRespondTo()).isEqualTo(executor);
+
+        executor.tell(new ADBPartitionJoinExecutor.Execute());
+
+        ADBPartitionJoinExecutor.PartitionsJoined responseResults =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
 
-        assertThat(response.getJoinTuples().size()).isEqualTo(1);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getKey())).isEqualTo(1);
-        assertThat(ADBInternalIDHelper.getEntityId(response.getJoinTuples().get(0).getValue())).isEqualTo(0);
-        assertThat(response.isReversed()).isFalse();
+        assertThat(responseResults.getJoinTuples().size()).isEqualTo(1);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getKey())).isEqualTo(1);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getValue())).isEqualTo(0);
     }
 
 

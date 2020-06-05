@@ -37,4 +37,12 @@ public class ADBEntityShortEntry extends ADBEntityEntry {
     public Field getValueField() {
         return ADBEntityShortEntry.valueField;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = prime + Integer.hashCode(this.getId());
+        result = prime * result + Short.hashCode(this.value);
+        return result;
+    }
 }

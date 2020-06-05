@@ -28,12 +28,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.val;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -41,7 +37,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Command> {
 
     public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "PartitionManager");
-    private static final int MAX_PARTITIONS = 0x100;
+    private static final int MAX_PARTITIONS = 0x10000;
 
     private static ActorRef<ADBPartitionManager.Command> INSTANCE;
     private final ObjectList<ADBPartitionHeader> partitionHeaders = new ObjectArrayList<>();
@@ -115,21 +111,19 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     @AllArgsConstructor
     @Getter
     public static class RelevantPartitionsJoinQuery implements Response {
-        private final Set<ActorRef<ADBPartition.Command>> partitions;
         private final int fPartitionId;
         private final int[] lPartitionIdsLeft;
         private final int[] lPartitionIdsRight;
     }
 
     @AllArgsConstructor
-    public static class RequestAllPartitionsAndHeaders implements Command {
-        private final ActorRef<AllPartitionsAndHeaders> respondTo;
+    public static class RequestAllPartitionHeaders implements Command {
+        private final ActorRef<AllPartitionsHeaders> respondTo;
     }
 
     @AllArgsConstructor
     @Getter
-    public static class AllPartitionsAndHeaders implements Response {
-        private final ObjectList<ActorRef<ADBPartition.Command>> partitions;
+    public static class AllPartitionsHeaders implements Response {
         private final ObjectList<ADBPartitionHeader> headers;
     }
 
@@ -137,6 +131,14 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     public static class MaterializeToEntities implements Command, CborSerializable {
         ActorRef<ADBPartition.MaterializedEntities> respondTo;
         IntArrayList internalIds;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class RedirectToPartition implements Command, CborSerializable {
+        private int localPartitionId;
+        private ADBPartition.RequestMultipleAttributes message;
     }
 
     public ADBPartitionManager(ActorContext<Command> context) {
@@ -148,12 +150,13 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(PersistEntity.class, this::handlePersistEntity)
+                .onMessage(RedirectToPartition.class, this::handleRedirectToPartition)
                 .onMessage(Register.class, this::handlePartitionRegistration)
                 .onMessage(ConcludeTransfer.class, this::handleConcludeTransfer)
                 .onMessage(PartitionFailed.class, this::handlePartitionFails)
                 .onMessage(RequestPartitionsForSelectionQuery.class, this::handleRequestForSelectionQuery)
                 .onMessage(RequestPartitionsForJoinQuery.class, this::handleRequestForJoinQuery)
-                .onMessage(RequestAllPartitionsAndHeaders.class, this::handleRequestAllPartitionsAndHeaders)
+                .onMessage(RequestAllPartitionHeaders.class, this::handleRequestAllPartitionHeaders)
                 .onMessage(MaterializeToEntities.class, this::handleMaterializeToEntities)
                 .build();
     }
@@ -173,6 +176,12 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         }
     }
 
+    private Behavior<Command> handleRedirectToPartition(RedirectToPartition command) {
+        assert command.localPartitionId >= 0 && command.localPartitionId < partitions.size() : "Partition ID invalid";
+        this.partitions.get(command.localPartitionId).tell(command.message);
+        return Behaviors.same();
+    }
+
     private Behavior<Command> handlePartitionFails(PartitionFailed signal) {
         this.getContext().getLog().error("Partition " + signal.partition + " failed and gets removed from manager.");
         this.partitions.remove(signal.partition);
@@ -183,8 +192,9 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         this.getContext().watchWith(registration.partition, new PartitionFailed(registration.partition));
         this.partitions.add(registration.partition);
         this.partitionHeaders.add(registration.header);
-        assert this.partitions.size() < MAX_PARTITIONS : "Only " + MAX_PARTITIONS + " are supported per node. " +
+        assert this.partitions.size() < MAX_PARTITIONS : "Only " + (MAX_PARTITIONS - 1) + " are supported per node. " +
                 "Currently: " + this.partitions.size();
+        this.getContext().getLog().info("[PARTITIONS MAINTAINED] " + this.partitions.size());
         return Behaviors.same();
     }
 
@@ -192,7 +202,6 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         this.conditionallyCreateNewPartition(true);
         this.entityBuffer = null;
         this.getContext().getLog().info("Distribution concluded.");
-        this.getContext().getLog().info("[PARTITIONS MAINTAINED] " + this.partitions.size());
         System.gc();
         return Behaviors.same();
     }
@@ -207,23 +216,19 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleRequestAllPartitionsAndHeaders(RequestAllPartitionsAndHeaders command) {
-        command.respondTo.tell(new AllPartitionsAndHeaders(this.partitions, this.partitionHeaders));
+    private Behavior<Command> handleRequestAllPartitionHeaders(RequestAllPartitionHeaders command) {
+        command.respondTo.tell(new AllPartitionsHeaders(this.partitionHeaders));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleRequestForJoinQuery(RequestPartitionsForJoinQuery command) {
-        int[] lPartitionIdsLeft = IntStream.range(0, this.partitions.size())
-                                           .filter(id -> this.mightJoin(id, command.externalHeader, command.query))
-                                           .toArray();
-        int[] lPartitionIdsRight = IntStream.range(0, this.partitions.size())
-                                            .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
-                                            .toArray();
-        val relevantPartitions = IntStream.concat(Arrays.stream(lPartitionIdsLeft), Arrays.stream(lPartitionIdsRight))
-                                          .mapToObj(this.partitions::get)
-                                          .collect(Collectors.toSet());
-        command.respondTo.tell(new RelevantPartitionsJoinQuery(relevantPartitions, command.externalHeader.getId(), lPartitionIdsLeft,
-                lPartitionIdsRight));
+        int[] lPartIdsL = IntStream.range(0, this.partitions.size())
+                                   .filter(id -> this.mightJoin(id, command.externalHeader, command.query))
+                                   .toArray();
+        int[] lPartIdsR = IntStream.range(0, this.partitions.size())
+                                   .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
+                                   .toArray();
+        command.respondTo.tell(new RelevantPartitionsJoinQuery(command.externalHeader.getId(), lPartIdsL, lPartIdsR));
         return Behaviors.same();
     }
 
@@ -237,12 +242,10 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
 
     private Behavior<Command> handleMaterializeToEntities(MaterializeToEntities command) {
         assert command.internalIds.stream().filter(id -> ADBInternalIDHelper.getNodeId(id) != ADBSlave.ID).count() < 1 :
-                "Received ids not " +
-                "belonging" +
-                " to this node";
+                "Received ids not belonging to this node";
         command.internalIds.parallelStream()
-                .collect(groupingBy(ADBInternalIDHelper::getPartitionId))
-                .forEach((p, e) -> this.requestMaterializedEntitiesFromPartition(p, e, command.respondTo));
+                           .collect(groupingBy(ADBInternalIDHelper::getPartitionId))
+                           .forEach((p, e) -> this.requestMaterializedEntitiesFromPartition(p, e, command.respondTo));
         return Behaviors.same();
     }
 

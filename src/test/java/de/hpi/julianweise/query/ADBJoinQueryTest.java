@@ -83,13 +83,17 @@ public class ADBJoinQueryTest {
         joinQuery.addPredicate(term2);
         joinQuery.addPredicate(term3);
 
-        Set<String> uniqueFields = joinQuery.getAllFields();
+        Set<String> uniqueLeftFields = joinQuery.getAllLeftHandSideFields();
 
-        assertThat(uniqueFields.size()).isEqualTo(4);
-        assertThat(uniqueFields.contains("test")).isTrue();
-        assertThat(uniqueFields.contains("testTarget1")).isTrue();
-        assertThat(uniqueFields.contains("test2")).isTrue();
-        assertThat(uniqueFields.contains("testTarget2")).isTrue();
+        assertThat(uniqueLeftFields.size()).isEqualTo(2);
+        assertThat(uniqueLeftFields.contains("test")).isTrue();
+        assertThat(uniqueLeftFields.contains("test2")).isTrue();
+
+        Set<String> uniqueRightFields = joinQuery.getAllRightHandSideFields();
+
+        assertThat(uniqueRightFields.size()).isEqualTo(2);
+        assertThat(uniqueRightFields.contains("testTarget1")).isTrue();
+        assertThat(uniqueRightFields.contains("testTarget2")).isTrue();
     }
 
 }

@@ -57,6 +57,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
         private final int requestId;
         private final ADBQuery query;
         private final boolean async;
+        private final boolean timeOnly;
         private final ActorRef<Response> respondTo;
     }
 
@@ -67,6 +68,13 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
         private final int transactionId;
         private final ObjectList results;
         private final boolean isLast;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class TransactionTimeResult implements Command {
+        private final int transactionId;
+        private final double results;
     }
 
     @AllArgsConstructor
@@ -83,6 +91,13 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
         private final int transactionId;
     }
 
+    @AllArgsConstructor
+    @Getter
+    public static class QueryTimeResults implements Response {
+        private final int requestId;
+        private final double queryTime;
+    }
+
     protected ADBPartitionInquirer(ActorContext<Command> context) {
         super(context);
         this.resultWriter = context.spawn(ADBResultWriter.create(), "ResultWriter");
@@ -94,6 +109,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
                 .onMessage(WrappedListing.class, this::handleReceptionistListing)
                 .onMessage(QueryShards.class, this::handleQueryShards)
                 .onMessage(TransactionResultChunk.class, this::handleTransactionResultChunk)
+                .onMessage(TransactionTimeResult.class, this::handleTransactionTimeResult)
                 .build();
     }
 
@@ -118,14 +134,14 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
             command.respondTo.tell(new AsyncQueryResults(command.requestId, transactionID));
         }
 
-        this.createNewQuerySession(transactionID, command.getQuery());
+        this.createNewQuerySession(transactionID, command.getQuery(), command.timeOnly);
         return Behaviors.same();
     }
 
-    private void createNewQuerySession(int transactionID, ADBQuery query) {
+    private void createNewQuerySession(int transactionID, ADBQuery query, boolean timeOnly) {
         this.getContext().spawn(ADBMasterQuerySessionFactory.create(this.queryManagers,
                 this.partitionManager, query, transactionID,
-                this.getContext().getSelf()), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
+                this.getContext().getSelf(), timeOnly), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
     }
 
     @SuppressWarnings("unchecked")
@@ -144,6 +160,13 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
                 this.results.remove(command.getTransactionId());
             }
         }
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleTransactionTimeResult(TransactionTimeResult command) {
+        QueryShards request = this.transactionToRequest.get(command.getTransactionId());
+        this.results.remove(command.getTransactionId());
+        request.respondTo.tell(new QueryTimeResults(request.requestId, command.results));
         return Behaviors.same();
     }
 }

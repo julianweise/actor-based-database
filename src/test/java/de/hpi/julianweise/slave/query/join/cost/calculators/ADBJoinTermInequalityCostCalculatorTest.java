@@ -8,7 +8,6 @@ import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
-import de.hpi.julianweise.slave.query.join.cost.interval.ADBInverseInterval;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -47,7 +46,7 @@ public class ADBJoinTermInequalityCostCalculatorTest {
         ObjectList<ADBEntityEntry> left = new ObjectArrayList<>();
         ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
     }
 
@@ -61,7 +60,7 @@ public class ADBJoinTermInequalityCostCalculatorTest {
         right.add(this.createTestEntry(2, 2));
         right.add(this.createTestEntry(3, 3));
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isZero();
     }
 
@@ -75,11 +74,14 @@ public class ADBJoinTermInequalityCostCalculatorTest {
         left.add(this.createTestEntry(3, 3));
         ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(3);
-        assertThat(result[0]).isEqualTo(ADBInverseInterval.NO_INTERSECTION);
-        assertThat(result[1]).isEqualTo(ADBInverseInterval.NO_INTERSECTION);
-        assertThat(result[2]).isEqualTo(ADBInverseInterval.NO_INTERSECTION);
+        assertThat(result[0][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[0][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[1][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[1][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[2][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[2][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
     }
 
     @Test
@@ -97,12 +99,16 @@ public class ADBJoinTermInequalityCostCalculatorTest {
         right.add(this.createTestEntry(2, 3));
         right.add(this.createTestEntry(3, 4));
 
-        ADBInterval[] result = calculator.calc(left, right);
+        ADBInterval[][] result = calculator.calc(left, right);
         assertThat(result.length).isEqualTo(4);
-        assertThat(result[0]).isEqualTo(new ADBInverseInterval(-1, -1, 3));
-        assertThat(result[1]).isEqualTo(new ADBInverseInterval(0, 0, 3));
-        assertThat(result[2]).isEqualTo(new ADBInverseInterval(1, 2, 3));
-        assertThat(result[3]).isEqualTo(new ADBInverseInterval(3, 3, 3));
+        assertThat(result[0][0]).isEqualTo(new ADBInterval(0, 3));
+        assertThat(result[0][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[1][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[1][1]).isEqualTo(new ADBInterval(1, 3));
+        assertThat(result[2][0]).isEqualTo(new ADBInterval(0, 0));
+        assertThat(result[2][1]).isEqualTo(new ADBInterval(3, 3));
+        assertThat(result[3][0]).isEqualTo(new ADBInterval(0, 2));
+        assertThat(result[3][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
     }
 
 }

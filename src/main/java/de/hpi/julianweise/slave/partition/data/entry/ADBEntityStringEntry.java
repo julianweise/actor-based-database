@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
+import java.util.Objects;
 
 @SuppressWarnings("unused")
 @NoArgsConstructor
@@ -35,5 +36,14 @@ public class ADBEntityStringEntry extends ADBEntityEntry {
     @SneakyThrows
     public Field getValueField() {
         return ADBEntityStringEntry.valueField;
+    }
+
+    @Override
+    public int hashCode() {
+        Objects.hash();
+        final int prime = 31;
+        int result = prime + Integer.hashCode(this.getId());
+        result = prime * result + this.value.hashCode();
+        return result;
     }
 }

@@ -59,7 +59,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class HandleJoinShardResults implements Command, KryoSerializable {
+    public static class JoinPartitionsResults implements Command, KryoSerializable {
         private ObjectList<ADBKeyPair> joinCandidates;
     }
 
@@ -92,7 +92,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
                    .onMessage(Execute.class, this::handleExecute)
                    .onMessage(JoinWithShard.class, this::handleJoinWithShard)
                    .onMessage(OpenInterShardJoinSession.class, this::handleOpenInterShardJoinSession)
-                   .onMessage(HandleJoinShardResults.class, this::handleJoinWithShardResults)
+                   .onMessage(JoinPartitionsResults.class, this::handleJoinWithShardResults)
                    .onMessage(NoMoreShardsToJoinWith.class, this::handleNoMoreShardToJoinWith)
                    .onMessage(InterNodeSessionTerminated.class, this::handleInterNodeSessionTerminated)
                    .onMessage(InterNodeSessionHandlerTerminated.class, this::handleInterNodeSessionHandlerTerminated)
@@ -129,7 +129,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleJoinWithShardResults(HandleJoinShardResults command) {
+    private Behavior<Command> handleJoinWithShardResults(JoinPartitionsResults command) {
         this.sendToSession(ADBMasterJoinSession.JoinQueryResults
                 .builder()
                 .transactionId(queryContext.getTransactionId())

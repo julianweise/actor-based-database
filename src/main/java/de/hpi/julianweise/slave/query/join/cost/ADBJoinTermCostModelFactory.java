@@ -30,18 +30,18 @@ public class ADBJoinTermCostModelFactory {
                 put(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, new ADBJoinTermGreaterOrEqualCostCalculator());
             }};
 
-    public static ADBJoinTermCostModel calc(ADBJoinQueryPredicate predicate,
-                                            int termId,
-                                            ObjectList<ADBEntityEntry> left,
-                                            ObjectList<ADBEntityEntry> right) {
-        ADBInterval[] joinCandidates = ADBJoinTermCostModelFactory.strategies.get(predicate.getOperator()).calc(left, right);
-        return ADBJoinTermCostModel.builder()
-                                   .predicate(predicate)
-                                   .joinCandidates(joinCandidates)
-                                   .sizeLeft(left.size())
-                                   .sizeRight(right.size())
-                                   .termId(termId)
-                                   .build();
+    public static ADBJoinPredicateCostModel calc(ADBJoinQueryPredicate predicate,
+                                                 int termId,
+                                                 ObjectList<ADBEntityEntry> left,
+                                                 ObjectList<ADBEntityEntry> right) {
+        ADBInterval[][] candidates = ADBJoinTermCostModelFactory.strategies.get(predicate.getOperator()).calc(left, right);
+        return ADBJoinPredicateCostModel.builder()
+                                        .predicate(predicate)
+                                        .joinCandidates(candidates)
+                                        .sizeLeft(left.size())
+                                        .sizeRight(right.size())
+                                        .termId(termId)
+                                        .build();
     }
 
 }
