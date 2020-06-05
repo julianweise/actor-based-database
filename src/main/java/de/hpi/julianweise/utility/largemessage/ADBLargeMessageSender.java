@@ -10,7 +10,6 @@ import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
@@ -67,7 +66,6 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     public ADBLargeMessageSender(ActorContext<Command> context, LargeMessage serializableMessage,
                                  akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor) throws NotSerializableException {
         super(context);
-        ADBQueryPerformanceSampler.log(true, "ADBLargeMessageSender", "start", this.hashCode());
         this.serialization = SerializationExtension.get(this.getContext().getSystem());
         this.payload = this.serializePayload(serializableMessage);
         this.chunkSize = ADBLargeMessageSender.getChunkSize(context.getSystem().settings());
@@ -106,7 +104,6 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
         if (this.supervisor != null) {
             this.supervisor.tell(new TransferCompleted());
         }
-        ADBQueryPerformanceSampler.log(false, "ADBLargeMessageSender", "stop", this.hashCode());
         return Behaviors.stopped();
     }
 

@@ -5,7 +5,6 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.slave.ADBSlave;
@@ -49,7 +48,6 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
                                          int remoteShardId) {
         super(context);
         assert ADBPartitionManager.getInstance() != null : "Requiring ADBPartitionManager but not initialized yet";
-        ADBQueryPerformanceSampler.log(true, "ADBJoinWithNodeSessionHandler", "start", this.hashCode());
         session.tell(new ADBJoinWithNodeSession.RegisterHandler(getContext().getSelf(), ADBPartitionManager.getInstance()));
 
         this.session = session;
@@ -91,7 +89,6 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
     private Behavior<Command> handleConcludeSession(ConcludeSession command) {
         if (this.localPartitionsToProvideAttributesFor.get() < 1) {
             this.getContext().getLog().info("Stopping handler ...");
-            ADBQueryPerformanceSampler.log(false, "ADBJoinWithNodeSessionHandler", "stop", this.hashCode());
             return Behaviors.stopped();
         }
         this.getContext().getLog().warn("Unable to stop handler. Still remaining attributes to send for local part.");

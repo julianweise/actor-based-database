@@ -9,7 +9,6 @@ import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
 import akka.serialization.Serializer;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
@@ -53,7 +52,6 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
                                    Class<? extends ADBLargeMessageSender.LargeMessage> messageType,
                                    ActorRef<ADBLargeMessageSender.Command> sender) {
         super(context);
-        ADBQueryPerformanceSampler.log(true, "ADBLargeMessageReceiver", "start", this.hashCode());
         this.serialization = SerializationExtension.get(this.getContext().getSystem());
         this.originalReceiver = originalReceiver;
         this.sender = sender;
@@ -94,7 +92,6 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
         Serializer serializer = serialization.serializerFor(this.messageType);
         Object message = serializer.fromBinary(this.payload, this.messageType);
         this.originalReceiver.tell(this.messageType.cast(message), akka.actor.ActorRef.noSender());
-        ADBQueryPerformanceSampler.log(false, "ADBLargeMessageReceiver", "stop", this.hashCode());
         return Behaviors.stopped();
     }
 }

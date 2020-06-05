@@ -7,10 +7,7 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
-import de.hpi.julianweise.benchmarking.ADBQueryPerformanceSampler;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
-import de.hpi.julianweise.query.ADBQuery;
-import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
@@ -90,7 +87,6 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     private Behavior<Command> handleTerminate(Terminate command) {
         this.getContext().getLog().info("Terminating " + this.getQuerySessionName());
-        ADBQueryPerformanceSampler.concludeSampler(ADBSlave.ID, queryContext.transactionId);
         return Behaviors.stopped();
     }
 
