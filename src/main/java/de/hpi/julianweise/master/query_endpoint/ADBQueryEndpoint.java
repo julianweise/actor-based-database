@@ -60,11 +60,11 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     private void initializeHTTPEndpoint(String hostname, int port) {
         Http http = Http.get(this.getContext().getSystem().classicSystem());
-        Materializer materializer = Materializer.createMaterializer(this.getContext().getSystem());
+        Materializer mat = Materializer.createMaterializer(this.getContext().getSystem());
 
-        Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = this.createRoute().flow(this.getContext().getSystem().classicSystem(),
-                materializer);
-        this.binding = http.bindAndHandle(routeFlow, ConnectHttp.toHost(hostname, port), materializer);
+        Flow<HttpRequest, HttpResponse, NotUsed> routeFlow = createRoute()
+                .flow(getContext().getSystem().classicSystem(), mat);
+        this.binding = http.bindAndHandle(routeFlow, ConnectHttp.toHost(hostname, port), mat);
     }
 
     @Override
@@ -78,13 +78,13 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     private Route createRoute() {
         return Directives.concat(
                 Directives.path("query",
-                () -> Directives.withoutRequestTimeout(
-                        () -> Directives.post(() -> Directives.entity(
-                        Jackson.unmarshaller(ADBQuery.class), this::handleSyncQuery)))),
+                        () -> Directives.withoutRequestTimeout(
+                                () -> Directives.post(() -> Directives.entity(
+                                        Jackson.unmarshaller(ADBQuery.class), this::handleSyncQuery)))),
                 Directives.path("query-async",
                         () -> Directives.withRequestTimeout(Duration.fromNanos(2e9),
                                 () -> Directives.post(() -> Directives.entity(
-                                Jackson.unmarshaller(ADBQuery.class), this::handleAsyncQuery)))),
+                                        Jackson.unmarshaller(ADBQuery.class), this::handleAsyncQuery)))),
                 Directives.path("query-time",
                         () -> Directives.withoutRequestTimeout(
                                 () -> Directives.post(() -> Directives.entity(
@@ -100,7 +100,8 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
         return this.handleQuery(query, false, false);
     }
 
-    private RouteAdapter handleTimeQuery(ADBQuery query) { return this.handleQuery(query, false, true);
+    private RouteAdapter handleTimeQuery(ADBQuery query) {
+        return this.handleQuery(query, false, true);
     }
 
     private RouteAdapter handleQuery(ADBQuery query, boolean async, boolean timeOnly) {
@@ -121,7 +122,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     private String visualize(Object results) {
         StringBuilder builder = new StringBuilder();
         if (results instanceof Object[]) {
-            for(Object element : (Object[]) results) {
+            for (Object element : (Object[]) results) {
                 builder.append(element.toString());
                 builder.append("\n");
             }
