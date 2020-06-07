@@ -18,14 +18,14 @@ import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
-import de.hpi.julianweise.slave.query.join.cost.ADBJoinTermCostModelFactory;
+import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModelFactory;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutorFactory;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -70,7 +70,8 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     @AllArgsConstructor
-    public static class Execute implements Command {}
+    public static class Execute implements Command {
+    }
 
     @AllArgsConstructor
     public static class ADBColumnJoinExecutorWrapper implements Command {
@@ -155,21 +156,23 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
             this.getContext().getLog().warn("Missing attributes - rescheduling execution");
             return Behaviors.same();
         }
-        this.costModels = this.getCostModels();
+        this.costModels = this.getSortedCostModels(this.joinQuery);
         this.execute();
         return Behaviors.same();
     }
 
-    private ObjectList<ADBJoinPredicateCostModel> getCostModels() {
-        ObjectList<ADBJoinPredicateCostModel> costModels = new ObjectArrayList<>(this.joinQuery.getPredicates().size());
-        for (int i = 0; i < this.joinQuery.getPredicates().size(); i++) {
-            ADBJoinQueryPredicate predicate = this.joinQuery.getPredicates().get(i);
-            val left = this.leftAttributes.get(predicate.getLeftHandSideAttribute());
-            val right = this.rightAttributes.get(predicate.getRightHandSideAttribute());
-            costModels.add(ADBJoinTermCostModelFactory.calc(predicate, i, left, right));
-        }
+    private ObjectList<ADBJoinPredicateCostModel> getSortedCostModels(ADBJoinQuery query) {
+        ObjectList<ADBJoinPredicateCostModel> costModels = query.getPredicates().parallelStream()
+                                                                .map(this::getCostModel)
+                                                                .collect(new ObjectArrayListCollector<>());
         costModels.sort((m1, m2) -> Floats.compare(m1.getRelativeCost(), m2.getRelativeCost()));
         return costModels;
+    }
+
+    private ADBJoinPredicateCostModel getCostModel(ADBJoinQueryPredicate predicate) {
+        val leftValues = this.leftAttributes.get(predicate.getLeftHandSideAttribute());
+        val rightValues = this.rightAttributes.get(predicate.getRightHandSideAttribute());
+        return ADBJoinPredicateCostModelFactory.calc(predicate, leftValues, rightValues);
     }
 
     private void execute() {

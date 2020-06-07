@@ -8,24 +8,19 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 public class ADBJoinTermLessCostCalculator implements ADBJoinTermCostCalculator {
 
     @Override
-    public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right) {
+    public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right, ADBComparator comparator) {
         ADBInterval[][] resultSet = new ADBInterval[left.size()][1];
-        ADBComparator comparator = null;
-        int a = 0, b = 0;
-        if (left.size() > 0 && right.size() > 0) {
-            comparator = ADBComparator.getFor(left.get(a).getValueField(), right.get(b).getValueField());
-        }
-        while(a < left.size() && b < right.size()) {
-            resultSet[a][0] = ADBInterval.NO_INTERSECTION;
-            if (comparator.compare(left.get(a), right.get(b)) < 0) {
-                resultSet[a++][0] = new ADBInterval(b, right.size() - 1);
-                continue;
+        int leftIndex = 0, rightIndex = 0;
+        while(leftIndex < left.size() && rightIndex < right.size()) {
+            resultSet[leftIndex][0] = ADBInterval.NO_INTERSECTION;
+            if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) < 0) {
+                resultSet[leftIndex++][0] = new ADBInterval(rightIndex, right.size() - 1);
             }
-            if (comparator.compare(left.get(a), right.get(b)) >= 0) {
-                b++;
+            else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) >= 0) {
+                rightIndex++;
             }
         }
-        while (a < left.size()) resultSet[a++][0] = ADBInterval.NO_INTERSECTION;
+        for (;leftIndex < left.size(); leftIndex++) resultSet[leftIndex][0] = ADBInterval.NO_INTERSECTION;
         return resultSet;
     }
 }

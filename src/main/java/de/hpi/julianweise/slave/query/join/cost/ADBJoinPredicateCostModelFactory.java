@@ -2,6 +2,7 @@ package de.hpi.julianweise.slave.query.join.cost;
 
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermEqualityCostCalculator;
@@ -18,7 +19,7 @@ import org.agrona.collections.Object2ObjectHashMap;
 import java.util.Map;
 
 @AllArgsConstructor
-public class ADBJoinTermCostModelFactory {
+public class ADBJoinPredicateCostModelFactory {
 
     private static final Map<ADBQueryTerm.RelationalOperator, ADBJoinTermCostCalculator> strategies =
             new Object2ObjectHashMap<ADBQueryTerm.RelationalOperator, ADBJoinTermCostCalculator>() {{
@@ -31,16 +32,17 @@ public class ADBJoinTermCostModelFactory {
             }};
 
     public static ADBJoinPredicateCostModel calc(ADBJoinQueryPredicate predicate,
-                                                 int termId,
                                                  ObjectList<ADBEntityEntry> left,
                                                  ObjectList<ADBEntityEntry> right) {
-        ADBInterval[][] candidates = ADBJoinTermCostModelFactory.strategies.get(predicate.getOperator()).calc(left, right);
+        ADBInterval[][] candidates = {};
+        if (left.size() > 0 && right.size() > 0) {
+            ADBComparator comparator = ADBComparator.getFor(left.get(0).getValueField(), right.get(0).getValueField());
+            candidates = ADBJoinPredicateCostModelFactory.strategies.get(predicate.getOperator()).calc(left, right, comparator);
+        }
         return ADBJoinPredicateCostModel.builder()
                                         .predicate(predicate)
                                         .joinCandidates(candidates)
-                                        .sizeLeft(left.size())
                                         .sizeRight(right.size())
-                                        .termId(termId)
                                         .build();
     }
 

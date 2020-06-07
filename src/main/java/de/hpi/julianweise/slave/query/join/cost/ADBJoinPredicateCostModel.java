@@ -19,16 +19,14 @@ import java.util.Map;
 public class ADBJoinPredicateCostModel {
     private final ADBJoinQueryPredicate predicate;
     private final ADBInterval[][] joinCandidates;
-    private final int sizeLeft;
     private final int sizeRight;
-    private final int termId;
 
     public int getCost() {
         return Arrays.stream(this.joinCandidates).flatMap(Arrays::stream).mapToInt(ADBInterval::size).sum();
     }
 
     public float getRelativeCost() {
-        return (float) this.getCost() / (this.sizeLeft * this.sizeRight);
+        return (float) this.getCost() / (this.getSizeLeft() * this.sizeRight);
     }
 
     public ObjectList<ADBKeyPair> getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
@@ -45,20 +43,24 @@ public class ADBJoinPredicateCostModel {
     }
 
     public ObjectList<ADBKeyPair> getJoinCandidatesForRow(ADBInterval interval,
-                                                    ADBEntityEntry left,
-                                                    ObjectList<ADBEntityEntry> right) {
+                                                          ADBEntityEntry left,
+                                                          ObjectList<ADBEntityEntry> right) {
         if (interval.equals(ADBInterval.NO_INTERSECTION)) {
             return new ObjectArrayList<>();
         }
         ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
-        for(int i = interval.getStart(); i <= interval.getEnd(); i++) {
+        for (int i = interval.getStart(); i <= interval.getEnd(); i++) {
             candidates.add(new ADBKeyPair(left.getId(), right.get(i).getId()));
         }
         return candidates;
     }
 
+    public int getSizeLeft() {
+        return this.joinCandidates.length;
+    }
+
     @Override
     public String toString() {
-        return "[Predicate Cost Model] for: " + getPredicate() + " relCost: " + getRelativeCost() + " abs: " + getCost();
+        return "[PredicateCostModel] for: " + getPredicate() + " relCost: " + getRelativeCost() + " abs: " + getCost();
     }
 }

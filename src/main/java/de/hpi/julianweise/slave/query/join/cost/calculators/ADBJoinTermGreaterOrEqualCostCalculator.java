@@ -8,25 +8,20 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 public class ADBJoinTermGreaterOrEqualCostCalculator implements ADBJoinTermCostCalculator {
 
     @Override
-    public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right) {
+    public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right, ADBComparator comparator) {
         ADBInterval[][] resultSet = new ADBInterval[left.size()][1];
-        int a = 0, b = 0;
-        ADBComparator comparator = null;
-        if (left.size() > 0 && right.size() > 0) {
-            comparator = ADBComparator.getFor(left.get(a).getValueField(), right.get(b).getValueField());
-        }
-        while(a < left.size() && b < right.size()) {
-            resultSet[a][0] = ADBInterval.NO_INTERSECTION;
-            if (comparator.compare(left.get(a), right.get(b)) < 0) {
-                a++;
-                continue;
+        int leftIndex = 0, rightIndex = 0;
+        while(leftIndex < left.size() && rightIndex < right.size()) {
+            resultSet[leftIndex][0] = ADBInterval.NO_INTERSECTION;
+            if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) < 0) {
+                leftIndex++;
             }
-            if (comparator.compare(left.get(a), right.get(b)) >= 0) {
-                while(b + 1 < right.size() && comparator.compare(left.get(a), right.get(b + 1)) >= 0) b++;
-                resultSet[a++][0] = new ADBInterval(0, b);
+            else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) >= 0) {
+                while(rightIndex + 1 < right.size() && comparator.compare(left.get(leftIndex), right.get(rightIndex + 1)) >= 0) rightIndex++;
+                resultSet[leftIndex++][0] = new ADBInterval(0, rightIndex);
             }
         }
-        while (a < left.size()) resultSet[a++][0] = ADBInterval.NO_INTERSECTION;
+        for (;leftIndex < left.size(); leftIndex++) resultSet[leftIndex][0] = ADBInterval.NO_INTERSECTION;
         return resultSet;
     }
 }

@@ -14,7 +14,6 @@ public class ADBEntityShortEntry extends ADBEntityEntry {
 
     public short value;
 
-
     private transient static Field valueField;
 
     static {

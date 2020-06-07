@@ -1,6 +1,7 @@
 package de.hpi.julianweise.slave.partition.data.comparator;
 
 import de.hpi.julianweise.utility.data.comparator.ADBTypeComparator;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.reflections.Reflections;
 
@@ -71,7 +72,9 @@ public abstract class ADBComparator {
     private static final Map<Class<?>, Map<Class<?>, Constructor<ADBComparator>>> comparatorConstructors = new HashMap<>();
     private static final Map<Field, Map<Field, ADBComparator>> comparators = new ConcurrentHashMap<>();
 
+    @Getter
     protected final Field leftSideField;
+    @Getter
     protected final Field rightSideField;
 
     public ADBComparator(Field leftSideField, Field rightSideField) {

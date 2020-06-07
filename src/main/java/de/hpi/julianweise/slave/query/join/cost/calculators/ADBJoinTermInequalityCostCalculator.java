@@ -8,52 +8,40 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalculator {
 
     @Override
-    public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left,
-                                ObjectList<ADBEntityEntry> right) {
+    public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right, ADBComparator comparator) {
         ADBInterval[][] resultSet = new ADBInterval[left.size()][2];
 
-        int a = 0, b = 0;
-        ADBComparator comparator = null;
-        ADBComparator comparatorA = null;
-        if (left.size() > 0 && right.size() > 0) {
-            comparator = ADBComparator.getFor(left.get(a).getValueField(), right.get(b).getValueField());
-        }
-        if (left.size() > 0) {
-            comparatorA = ADBComparator.getFor(left.get(a).getValueField(), left.get(a).getValueField());
-        }
-        while(a < left.size() && b < right.size()) {
-            // TODO: Find a more memory-efficient solution as the following condition may often match
-            if (a > 0 && comparatorA.compare(left.get(a - 1), left.get(a)) == 0) {
-                resultSet[a] = resultSet[a-1];
-                a++;
+        int leftIndex = 0, rightIndex = 0;
+        ADBComparator comparatorA = ADBComparator.getFor(comparator.getLeftSideField(), comparator.getLeftSideField());
+        while(leftIndex < left.size() && rightIndex < right.size()) {
+            if (leftIndex > 0 && comparatorA.compare(left.get(leftIndex - 1), left.get(leftIndex)) == 0) {
+                resultSet[leftIndex] = resultSet[leftIndex-1];
+                leftIndex++;
                 continue;
             }
-            resultSet[a][0] = new ADBInterval(0, right.size() - 1);
-            resultSet[a][1] = ADBInterval.NO_INTERSECTION;
-            if (comparator.compare(left.get(a), right.get(b)) < 0) {
-                a++;
-                continue;
+            resultSet[leftIndex][0] = new ADBInterval(0, right.size() - 1);
+            resultSet[leftIndex][1] = ADBInterval.NO_INTERSECTION;
+            if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) < 0) {
+                leftIndex++;
             }
-            if (comparator.compare(left.get(a), right.get(b)) == 0) {
-                int end = b;
-                while(end + 1 < right.size() && comparator.compare(left.get(a), right.get(end + 1)) == 0) end++;
-                resultSet[a][0] = b > 0 ? new ADBInterval(0, b - 1) : ADBInterval.NO_INTERSECTION;
-                resultSet[a++][1] = end < (right.size() - 1) ? new ADBInterval(end + 1, right.size() - 1) : ADBInterval.NO_INTERSECTION;
-                b = end + 1;
-                continue;
+            else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) == 0) {
+                int intervalStart = rightIndex;
+                while(rightIndex + 1 < right.size() && comparator.compare(left.get(leftIndex), right.get(rightIndex + 1)) == 0) rightIndex++;
+                resultSet[leftIndex][0] = rightIndex > 0 ? new ADBInterval(0, intervalStart - 1) : ADBInterval.NO_INTERSECTION;
+                resultSet[leftIndex++][1] = rightIndex < (right.size() - 1) ? new ADBInterval(rightIndex + 1, right.size() - 1) : ADBInterval.NO_INTERSECTION;
+                rightIndex++;
             }
-            if (comparator.compare(left.get(a), right.get(b)) > 0) {
-                b++;
+            else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) > 0) {
+                rightIndex++;
             }
         }
-        while (a < left.size() && left.size() > 0) {
-            if (a > 0 && comparatorA.compare(left.get(a - 1), left.get(a)) == 0) {
-                resultSet[a] = resultSet[a-1];
-                a++;
+        for (;leftIndex < left.size(); leftIndex++) {
+            if (leftIndex > 0 && comparatorA.compare(left.get(leftIndex - 1), left.get(leftIndex)) == 0) {
+                resultSet[leftIndex] = resultSet[leftIndex-1];
                 continue;
             }
-            resultSet[a][0] = right.size() > 0 ? new ADBInterval(0, right.size() - 1) : ADBInterval.NO_INTERSECTION;
-            resultSet[a++][1] = ADBInterval.NO_INTERSECTION;
+            resultSet[leftIndex][0] = right.size() > 0 ? new ADBInterval(0, right.size() - 1) : ADBInterval.NO_INTERSECTION;
+            resultSet[leftIndex][1] = ADBInterval.NO_INTERSECTION;
         }
         return resultSet;
     }

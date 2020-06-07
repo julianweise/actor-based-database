@@ -12,7 +12,7 @@ import java.lang.reflect.Field;
 @ADBEntityTypeEntry(valueType = int.class)
 public class ADBEntityIntEntry extends ADBEntityEntry {
 
-    private transient static Field valueField;
+    public transient static Field valueField;
 
     static {
         try {
