@@ -79,3 +79,4 @@ nb-configuration.xml
 ## Application
 ##############################
 journal/
+*.log
