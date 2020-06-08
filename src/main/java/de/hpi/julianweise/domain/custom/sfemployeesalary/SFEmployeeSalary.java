@@ -15,17 +15,22 @@ public class SFEmployeeSalary extends ADBEntity {
     public String yearType;
     public int year;
     public int organizationGroupCode;
+    public String organizationGroup;
     public String departmentCode;
-    public String unionCode;
+    public String department;
+    public int unionCode;
+    public String union;
     public String jobFamilyCode;
+    public String jobFamily;
     public String jobCode;
+    public String job;
     public int employeeIdentifier;
     public double salaries;
     public double overtime;
     public double otherSalaries;
     public double totalSalary;
     public double retirement;
-    public double health;
+    public double healthAndDental;
     public double otherBenefits;
     public double totalBenefits;
     public double totalCompensation;
@@ -37,12 +42,16 @@ public class SFEmployeeSalary extends ADBEntity {
 
     @Override
     public int getSize() {
-        return 5 * Double.BYTES + 3 * Integer.BYTES
+        return 9 * Double.BYTES + 4 * Integer.BYTES
                 + this.calculateStringMemoryFootprint(this.yearType.length())
+                + this.calculateStringMemoryFootprint(this.organizationGroup.length())
                 + this.calculateStringMemoryFootprint(this.departmentCode.length())
-                + this.calculateStringMemoryFootprint(this.unionCode.length())
+                + this.calculateStringMemoryFootprint(this.department.length())
+                + this.calculateStringMemoryFootprint(this.union.length())
                 + this.calculateStringMemoryFootprint(this.jobFamilyCode.length())
-                + this.calculateStringMemoryFootprint(this.jobCode.length());
+                + this.calculateStringMemoryFootprint(this.jobFamily.length())
+                + this.calculateStringMemoryFootprint(this.jobCode.length())
+                + this.calculateStringMemoryFootprint(this.job.length());
     }
 
     @Override
