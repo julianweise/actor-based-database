@@ -8,7 +8,6 @@ import de.hpi.julianweise.query.selection.constant.ADBPredicateFloatConstant;
 import de.hpi.julianweise.query.selection.constant.ADBPredicateIntConstant;
 import de.hpi.julianweise.query.selection.constant.ADBPredicateStringConstant;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
-import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import org.junit.Before;
 import org.junit.Test;
 

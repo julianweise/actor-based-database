@@ -22,16 +22,15 @@ public class ADBMasterQuerySessionFactory {
     public static Behavior<ADBMasterQuerySession.Command> create(ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                                                  ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                                                  ADBQuery query, int transactionId,
-                                                                 ActorRef<ADBPartitionInquirer.Command> parent,
-                                                                 boolean timeOnly) {
+                                                                 ActorRef<ADBPartitionInquirer.Command> parent) {
         if (query instanceof ADBSelectionQuery) {
             return ADBMasterQuerySessionFactory.createSelectSession(queryManagers, partitionManagers, transactionId,
                     parent,
-                    (ADBSelectionQuery) query, timeOnly);
+                    (ADBSelectionQuery) query);
         } else if (query instanceof ADBJoinQuery) {
             return ADBMasterQuerySessionFactory.createJoinSession(queryManagers, partitionManagers, transactionId,
                     parent,
-                    (ADBJoinQuery) query, timeOnly);
+                    (ADBJoinQuery) query);
         }
         LOG.error("Received unknown query type {}", query.getClass().getSimpleName());
         return Behaviors.same();
@@ -41,20 +40,18 @@ public class ADBMasterQuerySessionFactory {
                                                                                ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                                                                int transactionId,
                                                                                ActorRef<ADBPartitionInquirer.Command> parent,
-                                                                               ADBSelectionQuery query,
-                                                                               boolean timeOnly) {
+                                                                               ADBSelectionQuery query) {
         return Behaviors.setup(context
-                -> new ADBMasterSelectSession(context, queryManagers, partitionManagers, transactionId, parent, query
-                , timeOnly));
+                -> new ADBMasterSelectSession(context, queryManagers, partitionManagers, transactionId, parent, query));
     }
 
     private static Behavior<ADBMasterQuerySession.Command> createJoinSession(ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                                                              ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                                                              int transactionId,
                                                                              ActorRef<ADBPartitionInquirer.Command> parent,
-                                                                             ADBJoinQuery query, boolean timeOnly) {
+                                                                             ADBJoinQuery query) {
         return Behaviors.setup(context
-                -> new ADBMasterJoinSession(context, queryManagers, partitionManagers, transactionId, parent, query, timeOnly));
+                -> new ADBMasterJoinSession(context, queryManagers, partitionManagers, transactionId, parent, query));
     }
 
     public static String sessionName(ADBQuery query, int transactionId) {

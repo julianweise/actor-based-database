@@ -3,15 +3,12 @@ package de.hpi.julianweise.query.join;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;

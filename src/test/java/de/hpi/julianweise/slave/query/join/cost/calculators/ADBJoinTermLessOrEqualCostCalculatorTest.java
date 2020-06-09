@@ -1,7 +1,6 @@
 package de.hpi.julianweise.slave.query.join.cost.calculators;
 
 import de.hpi.julianweise.csv.TestEntity;
-import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;

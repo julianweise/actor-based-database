@@ -3,7 +3,6 @@ package de.hpi.julianweise;
 import de.hpi.julianweise.domain.custom.sfemployeesalary.SFEmployeeFactory;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
-import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 
 public class ADBQuickStart {
     public static void main(String[] args) {

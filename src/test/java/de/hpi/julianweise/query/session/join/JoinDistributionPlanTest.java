@@ -48,9 +48,9 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardA.ref());
     }
 
     @Test
@@ -66,9 +66,9 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardC.ref());
     }
 
     @Test
@@ -84,9 +84,9 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardB.ref());
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardC.ref());
     }
 
     @Test
@@ -102,9 +102,9 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardC.ref());
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardB.ref());
     }
 
     @Test
@@ -120,9 +120,9 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardC.ref());
     }
 
     @Test
@@ -138,9 +138,9 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardB.ref());
     }
 
     @Test
@@ -158,12 +158,12 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref()); // A:1 B:1 C:0 D:0
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref()); // A:1 B:2 C:1 D:0
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardD.ref()); // A:1 B:2 C:2 D:1
-        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardA.ref()); // A:2 B:2 C:2 D:2
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardC.ref()); // A:3 B:2 C:3 D:2
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardD.ref()); // A:3 B:3 C:3 D:3
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardB.ref()); // A:1 B:1 C:0 D:0
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardC.ref()); // A:1 B:2 C:1 D:0
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardD.ref()); // A:1 B:2 C:2 D:1
+        assertThat(plan.getNextJoinNodeFor(shardD.ref())).isEqualTo(shardA.ref()); // A:2 B:2 C:2 D:2
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardC.ref()); // A:3 B:2 C:3 D:2
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardD.ref()); // A:3 B:3 C:3 D:3
     }
 
     @Test
@@ -181,11 +181,11 @@ public class JoinDistributionPlanTest {
 
         JoinDistributionPlan plan = new JoinDistributionPlan(shards);
 
-        assertThat(plan.getNextJoinShardFor(shardA.ref())).isEqualTo(shardB.ref());
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardC.ref());
-        assertThat(plan.getNextJoinShardFor(shardB.ref())).isEqualTo(shardD.ref());
-        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardC.ref())).isEqualTo(shardA.ref());
-        assertThat(plan.getNextJoinShardFor(shardD.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardA.ref())).isEqualTo(shardB.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardC.ref());
+        assertThat(plan.getNextJoinNodeFor(shardB.ref())).isEqualTo(shardD.ref());
+        assertThat(plan.getNextJoinNodeFor(shardD.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardC.ref())).isEqualTo(shardA.ref());
+        assertThat(plan.getNextJoinNodeFor(shardD.ref())).isEqualTo(shardC.ref());
     }
 }

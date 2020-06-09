@@ -14,7 +14,6 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiverFactory;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -36,10 +35,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
     protected final Map<ActorRef<ADBQueryManager.Command>, ActorRef<ADBSlaveQuerySession.Command>> managerToHandlers;
     protected final Map<ActorRef<ADBSlaveQuerySession.Command>, ActorRef<ADBQueryManager.Command>> handlersToManager;
     protected final Set<ActorRef<ADBLargeMessageReceiver.Command>> openReceiverSessions;
-    protected final long startTime;
-    protected final boolean timeOnly;
-    private final Set<ActorRef<ADBSlaveQuerySession.Command>> completedSessions = new ObjectArraySet<>();
-
+    protected final Set<ActorRef<ADBSlaveQuerySession.Command>> completedSessions = new ObjectArraySet<>();
 
     public interface Command {
     }
@@ -82,14 +78,12 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
     public ADBMasterQuerySession(ActorContext<Command> context,
                                  ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                  ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
-                                 int transactionId, ActorRef<ADBPartitionInquirer.Command> parent, boolean timeOnly) {
+                                 int transactionId, ActorRef<ADBPartitionInquirer.Command> parent) {
         super(context);
-        this.startTime = System.nanoTime();
         this.queryManagers = queryManagers;
         this.partitionManagers = partitionManagers;
         this.transactionId = transactionId;
         this.parent = parent;
-        this.timeOnly = timeOnly;
         this.managerToHandlers = new Object2ObjectHashMap<>();
         this.handlersToManager = new Object2ObjectHashMap<>();
         this.openReceiverSessions = new ObjectOpenHashSet<>(queryManagers.size());
@@ -125,12 +119,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
     protected Behavior<ADBMasterQuerySession.Command> concludeSession() {
         this.completedSessions.forEach(session -> session.tell(new ADBSlaveQuerySession.Terminate()));
         this.getContext().getLog().info("Concluding QuerySession  TX#" + transactionId + " handling " + this.getQuerySessionName());
-        this.getContext().getLog().info(String.format("[PERFORMANCE] Time: %s ms", this.calculateElapsedTime()));
         return Behaviors.stopped();
-    }
-
-    private double calculateElapsedTime() {
-        return 1e-6 * (System.nanoTime() - this.startTime);
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
@@ -141,11 +130,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
 
     protected Behavior<ADBMasterQuerySession.Command> conditionallyConcludeTransaction() {
         if (this.queryManagers.size() == this.completedSessions.size() && this.openReceiverSessions.size() < 1 && this.isFinalized()) {
-            if (this.timeOnly) {
-                parent.tell(new ADBPartitionInquirer.TransactionTimeResult(this.transactionId, this.calculateElapsedTime()));
-            } else {
-                this.submitResults();
-            }
+            this.submitResults();
             return this.concludeSession();
         }
         return Behaviors.same();

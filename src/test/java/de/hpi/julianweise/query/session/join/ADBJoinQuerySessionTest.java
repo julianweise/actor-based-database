@@ -68,7 +68,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partition.ref());
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref(), false));
+                        supervisor.ref()));
 
         ADBQueryManager.QueryEntities queryEntities = queryManager.expectMessageClass(ADBQueryManager.QueryEntities.class);
 
@@ -94,7 +94,7 @@ public class ADBJoinQuerySessionTest {
         partitionManagers.add(partition.ref());
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref(), false));
+                        supervisor.ref()));
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager.ref(), joinSessionHandler.ref()));
 
@@ -131,7 +131,7 @@ public class ADBJoinQuerySessionTest {
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref(), false));
+                        supervisor.ref()));
 
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));
@@ -175,9 +175,9 @@ public class ADBJoinQuerySessionTest {
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref(), false));
+                        supervisor.ref()));
 
-        joinSession.tell(new ADBMasterJoinSession.TriggerShardComparison(queryManager2.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterJoinSession.ScheduleNextInterNodeJoin(queryManager2.ref(), joinSessionHandler1.ref()));
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager2.ref(), joinSessionHandler2.ref()));
@@ -212,7 +212,7 @@ public class ADBJoinQuerySessionTest {
 
         ActorRef<ADBMasterJoinSession.Command> joinSession =
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
-                        supervisor.ref(), false));
+                        supervisor.ref()));
 
 
         joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));

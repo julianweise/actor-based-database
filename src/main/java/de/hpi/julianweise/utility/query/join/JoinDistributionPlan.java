@@ -46,7 +46,7 @@ public class JoinDistributionPlan {
         return map;
     }
 
-    public ActorRef<ADBQueryManager.Command> getNextJoinShardFor(ActorRef<ADBQueryManager.Command> queryManager) {
+    public ActorRef<ADBQueryManager.Command> getNextJoinNodeFor(ActorRef<ADBQueryManager.Command> queryManager) {
         int shardIndex = this.getIndexOfShard(queryManager);
         int shardIndexMinimalAccesses = this.getShardIndexWithMinimalAccessesForShard(shardIndex);
         LOG.info(String.format("[DistributionPlan] Shard #%d requested new shard to join. Suggested shard # %d",

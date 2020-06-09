@@ -10,7 +10,6 @@ import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityBooleanEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityDoubleEntry;
-import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityFloatEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityIntEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityStringEntry;

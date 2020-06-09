@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.val;
 import org.agrona.collections.Int2ObjectHashMap;
 
 import java.util.Comparator;
@@ -28,21 +29,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.Command> {
 
-    @SuppressWarnings("rawtypes")
-    private final Int2ObjectHashMap<ObjectList> results = new Int2ObjectHashMap<>();
-    private final Int2ObjectHashMap<QueryShards> transactionToRequest = new Int2ObjectHashMap<>();
-    private final AtomicInteger transactionCounter = new AtomicInteger();
-    private final ActorRef<ADBResultWriter.Command> resultWriter;
+    private final Int2ObjectHashMap<ADBTransactionContext> transactionContext = new Int2ObjectHashMap<>();
     private ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManager = new ObjectArrayList<>();
     private ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArrayList<>();
+    private final AtomicInteger transactionCounter = new AtomicInteger();
 
-    public interface Command extends CborSerializable {
+    public interface Command extends CborSerializable { }
 
-    }
-
-    public interface Response extends CborSerializable {
-
-    }
+    public interface Response extends CborSerializable { }
 
     @AllArgsConstructor
     @Getter
@@ -52,55 +46,40 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
 
     @AllArgsConstructor
     @Getter
+    public static class WrappedResultLocation implements Command {
+        private final ADBResultWriter.ResultLocation response;
+    }
+
+    @AllArgsConstructor
+    @Getter
     @Builder
     public static class QueryShards implements Command {
         private final int requestId;
         private final ADBQuery query;
-        private final boolean async;
-        private final boolean timeOnly;
-        private final ActorRef<Response> respondTo;
+        private final ActorRef<QueryConclusion> respondTo;
     }
 
-    @SuppressWarnings("rawtypes")
     @AllArgsConstructor
     @Getter
     public static class TransactionResultChunk implements Command {
         private final int transactionId;
-        private final ObjectList results;
+        private final ObjectList<?> results;
         private final boolean isLast;
     }
 
     @AllArgsConstructor
     @Getter
-    public static class TransactionTimeResult implements Command {
+    @Builder
+    public static class QueryConclusion implements Response {
         private final int transactionId;
-        private final double results;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class SyncQueryResults implements Response {
         private final int requestId;
-        private final Object[] results;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class AsyncQueryResults implements Response {
-        private final int requestId;
-        private final int transactionId;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class QueryTimeResults implements Response {
-        private final int requestId;
-        private final double queryTime;
+        private final long duration;
+        private final int resultsCount;
+        private final String resultLocation;
     }
 
     protected ADBPartitionInquirer(ActorContext<Command> context) {
         super(context);
-        this.resultWriter = context.spawn(ADBResultWriter.create(), "ResultWriter");
     }
 
     @Override
@@ -109,64 +88,73 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
                 .onMessage(WrappedListing.class, this::handleReceptionistListing)
                 .onMessage(QueryShards.class, this::handleQueryShards)
                 .onMessage(TransactionResultChunk.class, this::handleTransactionResultChunk)
-                .onMessage(TransactionTimeResult.class, this::handleTransactionTimeResult)
+                .onMessage(WrappedResultLocation.class, this::handleResultLocation)
                 .build();
     }
 
     private Behavior<Command> handleReceptionistListing(WrappedListing wrapper) {
         if (wrapper.listing.isForKey(ADBQueryManager.SERVICE_KEY)) {
-            this.queryManagers = wrapper.getListing().getServiceInstances(ADBQueryManager.SERVICE_KEY)
-                                        .stream().sorted(Comparator.comparingInt(ADBMaster::getGlobalIdFor))
-                                        .collect(new ObjectArrayListCollector<>());
-        } else if (wrapper.listing.isForKey(ADBPartitionManager.SERVICE_KEY)) {
-            this.partitionManager = wrapper.getListing().getServiceInstances(ADBPartitionManager.SERVICE_KEY)
-                                           .stream().sorted(Comparator.comparingInt(ADBMaster::getGlobalIdFor))
-                                           .collect(new ObjectArrayListCollector<>());
+            return this.handleQueryManagerListing(wrapper);
         }
+        return this.handlePartitionManagerListing(wrapper);
+    }
+
+    private Behavior<Command> handleQueryManagerListing(WrappedListing wrapper) {
+        this.queryManagers = wrapper.getListing().getServiceInstances(ADBQueryManager.SERVICE_KEY)
+                                    .stream().sorted(Comparator.comparingInt(ADBMaster::getGlobalIdFor))
+                                    .collect(new ObjectArrayListCollector<>());
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handlePartitionManagerListing(WrappedListing wrapper) {
+        this.partitionManager = wrapper.getListing().getServiceInstances(ADBPartitionManager.SERVICE_KEY)
+                                       .stream().sorted(Comparator.comparingInt(ADBMaster::getGlobalIdFor))
+                                       .collect(new ObjectArrayListCollector<>());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleQueryShards(QueryShards command) {
         int transactionID = this.transactionCounter.getAndIncrement();
-        this.transactionToRequest.put(transactionID, command);
-
-        if (command.async) {
-            command.respondTo.tell(new AsyncQueryResults(command.requestId, transactionID));
-        }
-
-        this.createNewQuerySession(transactionID, command.getQuery(), command.timeOnly);
+        val resultWriter = getContext().spawn(ADBResultWriter.create(transactionID), "ResultWriterTX-" + transactionID);
+        this.transactionContext.put(transactionID, ADBTransactionContext.builder()
+                                                                        .initialRequest(command)
+                                                                        .requestId(command.requestId)
+                                                                        .transactionId(transactionID)
+                                                                        .startTime(System.nanoTime())
+                                                                        .resultWriter(resultWriter)
+                                                                        .respondTo(command.respondTo)
+                                                                        .build());
+        this.createNewQuerySession(transactionID, command.getQuery());
         return Behaviors.same();
     }
 
-    private void createNewQuerySession(int transactionID, ADBQuery query, boolean timeOnly) {
+    private void createNewQuerySession(int transactionID, ADBQuery query) {
         this.getContext().spawn(ADBMasterQuerySessionFactory.create(this.queryManagers,
                 this.partitionManager, query, transactionID,
-                this.getContext().getSelf(), timeOnly), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
+                this.getContext().getSelf()), ADBMasterQuerySessionFactory.sessionName(query, transactionID));
     }
 
-    @SuppressWarnings("unchecked")
     private Behavior<Command> handleTransactionResultChunk(TransactionResultChunk command) {
-        QueryShards request = this.transactionToRequest.get(command.getTransactionId());
-        if (request.async) {
-            resultWriter.tell(new ADBResultWriter.Persist(command.transactionId, request.requestId, command.results.toArray()));
-        } else {
-            if (this.results.containsKey(command.getTransactionId())) {
-                this.results.get(command.getTransactionId()).addAll(command.results);
-            } else {
-                this.results.putIfAbsent(command.getTransactionId(), command.results);
-            }
-            if (command.isLast) {
-                request.respondTo.tell(new SyncQueryResults(request.requestId, results.get(command.getTransactionId()).toArray()));
-                this.results.remove(command.getTransactionId());
-            }
+        ADBTransactionContext txContext = this.transactionContext.get(command.getTransactionId());
+        txContext.getResultsCount().getAndAdd(command.results.size());
+        txContext.resultWriter.tell(new ADBResultWriter.Persist(command.results.toArray()));
+        if (command.isLast()) {
+            txContext.setDuration(System.nanoTime() - txContext.startTime);
+            val resp = getContext().messageAdapter(ADBResultWriter.ResultLocation.class, WrappedResultLocation::new);
+            txContext.resultWriter.tell(new ADBResultWriter.FinalizeAndReturnResultLocation(resp));
         }
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleTransactionTimeResult(TransactionTimeResult command) {
-        QueryShards request = this.transactionToRequest.get(command.getTransactionId());
-        this.results.remove(command.getTransactionId());
-        request.respondTo.tell(new QueryTimeResults(request.requestId, command.results));
+    private Behavior<Command> handleResultLocation(WrappedResultLocation wrapper) {
+        ADBTransactionContext txContext = this.transactionContext.remove(wrapper.response.getTransactionId());
+        txContext.respondTo.tell(QueryConclusion.builder()
+                                                .duration(txContext.duration)
+                                                .requestId(txContext.requestId)
+                                                .resultsCount(txContext.getResultsCount().get())
+                                                .resultLocation(wrapper.response.getResultLocation())
+                                                .transactionId(txContext.transactionId)
+                                                .build());
         return Behaviors.same();
     }
 }

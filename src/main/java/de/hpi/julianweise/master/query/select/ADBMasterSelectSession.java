@@ -37,9 +37,8 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
                                   ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManager,
                                   int transactionId,
                                   ActorRef<ADBPartitionInquirer.Command> parent,
-                                  ADBSelectionQuery query,
-                                  boolean timeOnly) {
-        super(context, queryManager, partitionManager, transactionId, parent, timeOnly);
+                                  ADBSelectionQuery query) {
+        super(context, queryManager, partitionManager, transactionId, parent);
         // Send initial query
         this.distributeQuery(query);
     }

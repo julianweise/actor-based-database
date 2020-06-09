@@ -18,7 +18,6 @@ import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
-import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -61,7 +60,7 @@ public class ADBPartitionInquirerTest {
     @Test
     public void testDistributeQuerySuccessfully() {
         int requestId = 1;
-        TestProbe<ADBPartitionInquirer.Response> resultProbe = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.QueryConclusion> resultProbe = testKit.createTestProbe();
 
         TestProbe<Receptionist.Listing> receptionistProbe = testKit.createTestProbe();
         testKit.system().receptionist().tell(Receptionist.subscribe(ADBQueryManager.SERVICE_KEY, receptionistProbe.ref()));
@@ -91,7 +90,7 @@ public class ADBPartitionInquirerTest {
     public void testDistributeQueryToManyShardsSuccessfully() {
         int requestId = 1;
 
-        TestProbe<ADBPartitionInquirer.Response> resultProbe = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.QueryConclusion> resultProbe = testKit.createTestProbe();
 
         TestProbe<Receptionist.Listing> receptionistProbe = testKit.createTestProbe();
         testKit.system().receptionist().tell(Receptionist.subscribe(ADBQueryManager.SERVICE_KEY, receptionistProbe.ref()));
@@ -139,7 +138,7 @@ public class ADBPartitionInquirerTest {
         // Ensure shard is present
         ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132);
 
-        TestProbe<ADBPartitionInquirer.Response> resultProbe = testKit.createTestProbe();
+        TestProbe<ADBPartitionInquirer.QueryConclusion> resultProbe = testKit.createTestProbe();
         ActorRef<ADBPartitionInquirer.Command> inquirer = testKit.spawn(ADBPartitionInquirerFactory.createDefault());
 
         // necessary to ensure receptionist registration propagates successfully before querying shards
@@ -164,10 +163,9 @@ public class ADBPartitionInquirerTest {
                                                       .respondTo(resultProbe.ref())
                                                       .build());
 
-        ADBPartitionInquirer.Response results = resultProbe.receiveMessage();
-        ADBPartitionInquirer.SyncQueryResults typedResults = (ADBPartitionInquirer.SyncQueryResults) results;
+        ADBPartitionInquirer.QueryConclusion results = resultProbe.receiveMessage();
 
-        assertThat(typedResults.getResults().length).isZero();
+        assertThat(results.getResultsCount()).isZero();
     }
 
     @Test

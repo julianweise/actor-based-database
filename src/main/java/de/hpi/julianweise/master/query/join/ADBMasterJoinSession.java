@@ -18,7 +18,7 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver.InitializeTransfer;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
@@ -38,7 +38,6 @@ import org.agrona.collections.Int2ObjectHashMap;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -46,7 +45,6 @@ import static java.util.stream.Collectors.groupingBy;
 public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     private final JoinDistributionPlan distributionPlan;
-    private final AtomicInteger resultCounter = new AtomicInteger(0);
     private final Int2ObjectHashMap<ADBEntity> materializedEntities = new Int2ObjectHashMap<>();
     private final IntSet requestedEntitiesForMaterialization = new IntOpenHashSet();
     private final ObjectArrayFIFOQueue<ADBKeyPair> joinResults = new ObjectArrayFIFOQueue<>();
@@ -63,7 +61,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TriggerShardComparison implements ADBMasterQuerySession.Command, CborSerializable {
+    public static class ScheduleNextInterNodeJoin implements ADBMasterQuerySession.Command, CborSerializable {
         private ActorRef<ADBQueryManager.Command> nextJoinManager;
         private ActorRef<ADBSlaveQuerySession.Command> respondTo;
     }
@@ -86,14 +84,16 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                 ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                                 int transactionId,
                                 ActorRef<ADBPartitionInquirer.Command> parent,
-                                ADBJoinQuery query, boolean timeOnly) {
-        super(context, queryManagers, partitionManagers, transactionId, parent, timeOnly);
+                                ADBJoinQuery query) {
+        super(context, queryManagers, partitionManagers, transactionId, parent);
         this.distributionPlan = new JoinDistributionPlan(this.queryManagers);
         this.query = query;
 
-        // Send initial query
-        val respondTo = this.getContext().messageAdapter(ADBLargeMessageReceiver.InitializeTransfer.class,
-                InitializeTransferWrapper::new);
+        this.distributeQuery();
+    }
+
+    private void distributeQuery() {
+        val respondTo = this.getContext().messageAdapter(InitializeTransfer.class, InitializeTransferWrapper::new);
         this.queryManagers.forEach(manager -> manager.tell(ADBQueryManager.QueryEntities
                 .builder()
                 .transactionId(transactionId)
@@ -108,23 +108,23 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         return this.createReceiveBuilder()
                    .onMessage(RequestNextNodeToJoin.class, this::handleRequestNextShardComparison)
                    .onMessage(JoinQueryResults.class, this::handleJoinQueryResults)
-                   .onMessage(TriggerShardComparison.class, this::handleTriggerNextShardComparison)
+                   .onMessage(ScheduleNextInterNodeJoin.class, this::handleScheduleNextInterNodeJoin)
                    .onMessage(MaterializedEntitiesWrapper.class, this::handleMaterializedEntities)
                    .build();
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleRequestNextShardComparison(RequestNextNodeToJoin command) {
-        val nextManager = this.distributionPlan.getNextJoinShardFor(this.handlersToManager.get(command.getRespondTo()));
+        val nextManager = this.distributionPlan.getNextJoinNodeFor(this.handlersToManager.get(command.getRespondTo()));
 
         if (nextManager == null) {
             command.respondTo.tell(new ADBSlaveJoinSession.NoMoreShardsToJoinWith(this.transactionId));
             return Behaviors.same();
         }
-        this.getContext().getSelf().tell(new TriggerShardComparison(nextManager, command.respondTo));
+        this.getContext().getSelf().tell(new ScheduleNextInterNodeJoin(nextManager, command.respondTo));
         return Behaviors.same();
     }
 
-    private Behavior<ADBMasterQuerySession.Command> handleTriggerNextShardComparison(TriggerShardComparison command) {
+    private Behavior<ADBMasterQuerySession.Command> handleScheduleNextInterNodeJoin(ScheduleNextInterNodeJoin command) {
         if (this.managerToHandlers.containsKey(command.nextJoinManager)) {
             int partnerJoinId = ADBMaster.getGlobalIdFor(command.nextJoinManager);
             this.getContext().getLog().info("Asking " + command.respondTo + " to join with ID " + partnerJoinId);
@@ -138,7 +138,6 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
-        this.resultCounter.set(this.resultCounter.get() + results.joinResults.size());
         if (!this.query.isShouldBeMaterialized()) {
             parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, results.joinResults, false));
             return Behaviors.same();
@@ -173,7 +172,6 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     @Override
     protected void submitResults() {
         parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), true));
-        this.getContext().getLog().info("[FINAL RESULT]: Submitting " + this.resultCounter.get() + " elements.");
     }
 
     private Behavior<Command> handleMaterializedEntities(MaterializedEntitiesWrapper wrapper) {
@@ -192,7 +190,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
             materializedResults.add(this.materializePair(pair));
         }
 
-        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, materializedResults, false));
+        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, materializedResults,
+                false));
         this.conditionallyConcludeTransaction();
         return Behaviors.same();
     }

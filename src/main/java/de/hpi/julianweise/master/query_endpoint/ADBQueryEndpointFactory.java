@@ -12,7 +12,7 @@ public class ADBQueryEndpointFactory {
         return Behaviors.setup(context -> {
             SettingsImpl settings = Settings.SettingsProvider.get(context.getSystem());
             return new ADBQueryEndpoint(context, settings.ENDPOINT_HOSTNAME, settings.ENDPOINT_PORT, shardInquirer,
-                    context.messageAdapter(ADBPartitionInquirer.Response.class,
+                    context.messageAdapter(ADBPartitionInquirer.QueryConclusion.class,
                             ADBQueryEndpoint.ShardInquirerResponseWrapper::new));
         });
     }
