@@ -22,6 +22,7 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver.Initializ
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -34,7 +35,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.val;
-import org.agrona.collections.Int2ObjectHashMap;
 
 import java.time.Duration;
 import java.util.List;
@@ -45,7 +45,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     private final JoinDistributionPlan distributionPlan;
-    private final Int2ObjectHashMap<ADBEntity> materializedEntities = new Int2ObjectHashMap<>();
+    private final Int2ObjectOpenHashMap<ADBEntity> materializedEntities = new Int2ObjectOpenHashMap<>();
     private final IntSet requestedEntitiesForMaterialization = new IntOpenHashSet();
     private final ObjectArrayFIFOQueue<ADBKeyPair> joinResults = new ObjectArrayFIFOQueue<>();
     private final ADBJoinQuery query;

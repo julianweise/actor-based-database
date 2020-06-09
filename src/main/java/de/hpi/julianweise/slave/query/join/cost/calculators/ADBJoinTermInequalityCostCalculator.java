@@ -27,7 +27,7 @@ public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalcu
             else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) == 0) {
                 int intervalStart = rightIndex;
                 while(rightIndex + 1 < right.size() && comparator.compare(left.get(leftIndex), right.get(rightIndex + 1)) == 0) rightIndex++;
-                resultSet[leftIndex][0] = rightIndex > 0 ? new ADBInterval(0, intervalStart - 1) : ADBInterval.NO_INTERSECTION;
+                resultSet[leftIndex][0] = intervalStart > 0 ? new ADBInterval(0, intervalStart - 1) : ADBInterval.NO_INTERSECTION;
                 resultSet[leftIndex++][1] = rightIndex < (right.size() - 1) ? new ADBInterval(rightIndex + 1, right.size() - 1) : ADBInterval.NO_INTERSECTION;
                 rightIndex++;
             }

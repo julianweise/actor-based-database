@@ -116,4 +116,58 @@ public class ADBJoinTermInequalityCostCalculatorTest {
         assertThat(result[3][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
     }
 
+    @Test
+    public void expectValidResultsForBothListsFilledNoInequality() {
+        ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
+
+        ObjectList<ADBEntityEntry> left = new ObjectArrayList<>();
+        left.add(this.createTestEntry(2, 0));
+        ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
+        right.add(this.createTestEntry(2, 0));
+        right.add(this.createTestEntry(2, 1));
+        right.add(this.createTestEntry(2, 2));
+
+        ADBComparator comparator = ADBComparator.getFor(ADBEntityIntEntry.valueField, ADBEntityIntEntry.valueField);
+        ADBInterval[][] result = calculator.calc(left, right, comparator);
+        assertThat(result.length).isEqualTo(1);
+        assertThat(result[0][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[0][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
+    }
+
+    @Test
+    public void expectValidResultsForBothListsFilledLeftSide() {
+        ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
+
+        ObjectList<ADBEntityEntry> left = new ObjectArrayList<>();
+        left.add(this.createTestEntry(2, 0));
+        ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
+        right.add(this.createTestEntry(1, 0));
+        right.add(this.createTestEntry(2, 1));
+        right.add(this.createTestEntry(2, 2));
+
+        ADBComparator comparator = ADBComparator.getFor(ADBEntityIntEntry.valueField, ADBEntityIntEntry.valueField);
+        ADBInterval[][] result = calculator.calc(left, right, comparator);
+        assertThat(result.length).isEqualTo(1);
+        assertThat(result[0][0]).isEqualTo(new ADBInterval(0, 0));
+        assertThat(result[0][1]).isEqualTo(ADBInterval.NO_INTERSECTION);
+    }
+
+    @Test
+    public void expectValidResultsForBothListsFilledRightSide() {
+        ADBJoinTermInequalityCostCalculator calculator = new ADBJoinTermInequalityCostCalculator();
+
+        ObjectList<ADBEntityEntry> left = new ObjectArrayList<>();
+        left.add(this.createTestEntry(2, 0));
+        ObjectList<ADBEntityEntry> right = new ObjectArrayList<>();
+        right.add(this.createTestEntry(2, 0));
+        right.add(this.createTestEntry(2, 1));
+        right.add(this.createTestEntry(1, 2));
+
+        ADBComparator comparator = ADBComparator.getFor(ADBEntityIntEntry.valueField, ADBEntityIntEntry.valueField);
+        ADBInterval[][] result = calculator.calc(left, right, comparator);
+        assertThat(result.length).isEqualTo(1);
+        assertThat(result[0][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result[0][1]).isEqualTo(new ADBInterval(2, 2));
+    }
+
 }

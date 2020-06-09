@@ -1,9 +1,7 @@
 package de.hpi.julianweise.slave.query.join.cost.interval;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-@AllArgsConstructor
 @Getter
 public class ADBInterval {
 
@@ -12,8 +10,13 @@ public class ADBInterval {
     private final int start;
     private final int end;
 
+    public ADBInterval(int start, int end) {
+        assert start <= end : "Start has to be <= compared to end. Interval: [" + start + ", " + end + "]";
+        this.start = start;
+        this.end = end;
+    }
+
     public int size() {
-        assert this.start <= this.end : "Start of an interval has to be <= compared to its end";
         if (this.equals(NO_INTERSECTION)) {
             return 0;
         }
