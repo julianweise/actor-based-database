@@ -24,7 +24,7 @@ public class SFEmployeeSalaryDeserializer extends JsonDeserializer<SFEmployeeSal
                 .organizationGroup(node.get("organizationGroup").asText())
                 .departmentCode(node.get("departmentCode").asText())
                 .department(node.get("department").asText())
-                .unionCode(node.get("unionCode").asInt())
+                .unionCode(node.get("unionCode").asText())
                 .union(node.get("union").asText())
                 .jobFamilyCode(node.get("jobFamilyCode").asText())
                 .jobFamily(node.get("jobFamily").asText())

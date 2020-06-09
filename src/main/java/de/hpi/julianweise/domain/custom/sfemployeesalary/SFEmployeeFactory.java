@@ -20,7 +20,7 @@ public class SFEmployeeFactory implements ADBEntityFactory {
                                .organizationGroup(record.get(3))
                                .departmentCode(record.get(4))
                                .department(record.get(5))
-                               .unionCode(!record.get(6).equals("") ? Integer.parseInt(record.get(6)) : 0)
+                               .unionCode(record.get(6))
                                .union(record.get(7))
                                .jobFamilyCode(record.get(8))
                                .jobFamily(record.get(9))

@@ -18,7 +18,7 @@ public class SFEmployeeSalary extends ADBEntity {
     public String organizationGroup;
     public String departmentCode;
     public String department;
-    public int unionCode;
+    public String unionCode;
     public String union;
     public String jobFamilyCode;
     public String jobFamily;
@@ -42,11 +42,12 @@ public class SFEmployeeSalary extends ADBEntity {
 
     @Override
     public int getSize() {
-        return 9 * Double.BYTES + 4 * Integer.BYTES
+        return 9 * Double.BYTES + 3 * Integer.BYTES
                 + this.calculateStringMemoryFootprint(this.yearType.length())
                 + this.calculateStringMemoryFootprint(this.organizationGroup.length())
                 + this.calculateStringMemoryFootprint(this.departmentCode.length())
                 + this.calculateStringMemoryFootprint(this.department.length())
+                + this.calculateStringMemoryFootprint(this.unionCode.length())
                 + this.calculateStringMemoryFootprint(this.union.length())
                 + this.calculateStringMemoryFootprint(this.jobFamilyCode.length())
                 + this.calculateStringMemoryFootprint(this.jobFamily.length())
