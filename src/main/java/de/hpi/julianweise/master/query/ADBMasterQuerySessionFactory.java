@@ -56,10 +56,10 @@ public class ADBMasterQuerySessionFactory {
 
     public static String sessionName(ADBQuery query, int transactionId) {
         if (query instanceof ADBJoinQuery) {
-            return "ADBJoinQuerySession" + "-for-" + transactionId;
+            return "ADBMasterJoinSession" + "-for-" + transactionId;
         }
         else if (query instanceof ADBSelectionQuery) {
-            return "ADBSelectQuerySession" + "-for-" + transactionId;
+            return "ADBMasterSelectSession" + "-for-" + transactionId;
         }
         return "UnspecifiedQuerySession" + "-for-" + transactionId;
     }
