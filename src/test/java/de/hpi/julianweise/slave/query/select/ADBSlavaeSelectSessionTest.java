@@ -30,7 +30,7 @@ import org.junit.Test;
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ADBSelectQuerySessionHandlerTest {
+public class ADBSlavaeSelectSessionTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
@@ -64,7 +64,6 @@ public class ADBSelectQuerySessionHandlerTest {
         int transactionId = 1;
 
         TestProbe<ADBMasterQuerySession.Command> responseProbe = testKit.createTestProbe();
-        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
@@ -75,8 +74,7 @@ public class ADBSelectQuerySessionHandlerTest {
                 .build();
         query.addPredicate(predicate);
 
-        ADBQueryManager.QueryEntities message = new ADBQueryManager.QueryEntities(transactionId, responseProbe.ref(),
-                initializeTransferTestProbe.ref(), query);
+        ADBQueryManager.QueryEntities message = new ADBQueryManager.QueryEntities(transactionId, responseProbe.ref(), query);
 
         Behavior<ADBSlaveQuerySession.Command> selectBehavior = ADBSlaveQuerySessionFactory.create(message);
 
@@ -103,7 +101,6 @@ public class ADBSelectQuerySessionHandlerTest {
 
         int transactionId = 1;
         TestProbe<ADBMasterQuerySession.Command> responseProbe = testKit.createTestProbe();
-        TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 
         testKit.system().receptionist().tell(Receptionist.subscribe(ADBPartitionManager.SERVICE_KEY,
                 receptionistProbe.ref()));
@@ -129,8 +126,7 @@ public class ADBSelectQuerySessionHandlerTest {
         query.addPredicate(predicate);
 
 
-        ADBQueryManager.QueryEntities message = new ADBQueryManager.QueryEntities(transactionId, responseProbe.ref(),
-                initializeTransferTestProbe.ref(), query);
+        ADBQueryManager.QueryEntities message = new ADBQueryManager.QueryEntities(transactionId, responseProbe.ref(), query);
 
         Behavior<ADBSlaveQuerySession.Command> selectBehavior = ADBSlaveQuerySessionFactory.create(message);
 
@@ -143,7 +139,7 @@ public class ADBSelectQuerySessionHandlerTest {
         assertThat(handlerRegistration.getSessionHandler()).isEqualTo(selectHandler);
 
         ADBLargeMessageReceiver.InitializeTransfer initializeTransfer =
-                initializeTransferTestProbe.expectMessageClass(ADBLargeMessageReceiver.InitializeTransfer.class);
+                responseProbe.expectMessageClass(ADBLargeMessageReceiver.InitializeTransfer.class);
 
         assertThat(initializeTransfer.getType()).isEqualTo(ADBMasterSelectSession.SelectQueryResults.class);
         assertThat(initializeTransfer.getTotalSize()).isGreaterThan(0);

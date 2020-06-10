@@ -58,7 +58,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
 
     @Override
     public Receive<Command> createReceive() {
-        return this.createReceiveBuilder()
+        return this.newReceiveBuilder()
                    .onMessage(ProvideRelevantJoinPartitions.class, this::handleRequestJoinAttributes)
                    .onMessage(RelevantPartitionsWrapper.class, this::handleRelevantPartitions)
                    .onMessage(ConcludeSession.class, this::handleConcludeSession)
@@ -95,4 +95,6 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
         this.getContext().scheduleOnce(Duration.ofMillis(50), this.getContext().getSelf(), command);
         return Behaviors.same();
     }
+
+    protected void handleSenderTerminated() {}
 }

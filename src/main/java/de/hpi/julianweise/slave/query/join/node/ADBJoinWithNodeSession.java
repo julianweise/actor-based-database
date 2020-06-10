@@ -44,6 +44,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private final AtomicInteger activeExecutors = new AtomicInteger(0);
     private int expectedNumberOfRemotePartitionHeaderResponses = 0;
     private int actualNumberOfRemotePartitionHeaderResponses = 0;
+    private boolean requestedNextNodeComparison = false;
 
     private ActorRef<ADBPartitionManager.Command> foreignPartitionManager;
     private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
@@ -55,12 +56,10 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         private ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
         private ActorRef<ADBPartitionManager.Command> foreignPartitionManager;
     }
-
     @AllArgsConstructor
     public static class AllPartitionsHeaderWrapper implements Command {
         private final AllPartitionsHeaders response;
     }
-
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
@@ -70,16 +69,13 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         private int[] fPartitionIdLeft;
         private int[] fPartitionIdRight;
     }
-
     @AllArgsConstructor
     public static class ExecutorResponseWrapper implements Command {
         ADBPartitionJoinExecutor.Response response;
     }
-
     @AllArgsConstructor
     private static class Conclude implements Command {
     }
-
     public ADBJoinWithNodeSession(ActorContext<Command> context,
                                   ADBJoinQueryContext joinQueryContext,
                                   ActorRef<ADBSlaveQuerySession.Command> supervisor,
@@ -97,7 +93,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
 
     @Override
     public Receive<Command> createReceive() {
-        return this.createReceiveBuilder()
+        return this.newReceiveBuilder()
                    .onMessage(RegisterHandler.class, this::handleRegisterHandler)
                    .onMessage(AllPartitionsHeaderWrapper.class, this::handleAllPartitionHeaders)
                    .onMessage(RelevantJoinPartitions.class, this::handleRelevantForeignPartitions)
@@ -202,6 +198,10 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         if (this.isReadyToConclude()) {
             this.getContext().getSelf().tell(new Conclude());
         }
+        if (this.isReadyToPrepareNextNodeComparison() && !requestedNextNodeComparison) {
+            this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
+            this.requestedNextNodeComparison = true;
+        }
     }
 
     private void executeNextTask() {
@@ -219,7 +219,6 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private Behavior<Command> handleConclude(Conclude command) {
         this.getContext().getLog().info("Concluding session.");
         this.sessionHandler.tell(new ADBJoinWithNodeSessionHandler.ConcludeSession());
-        this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
         return Behaviors.stopped();
     }
 
@@ -228,6 +227,18 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
                 executorsPrepared.isEmpty() &&
                 joinTasks.isEmpty() &&
                 this.activeExecutors.get() == 0 &&
-                actualNumberOfRemotePartitionHeaderResponses == expectedNumberOfRemotePartitionHeaderResponses;
+                this.isAllRelevantHeadersProcessed();
+    }
+
+    private boolean isAllRelevantHeadersProcessed() {
+        return this.actualNumberOfRemotePartitionHeaderResponses == this.expectedNumberOfRemotePartitionHeaderResponses;
+    }
+
+    private boolean isReadyToPrepareNextNodeComparison() {
+        return this.isAllRelevantHeadersProcessed() && this.joinTasks.size() <= settings.THRESHOLD_NEXT_NODE_COMPARISON;
+    }
+
+    @Override
+    protected void handleSenderTerminated() {
     }
 }

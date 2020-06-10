@@ -18,7 +18,6 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver.InitializeTransfer;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
@@ -93,12 +92,10 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private void distributeQuery() {
-        val respondTo = this.getContext().messageAdapter(InitializeTransfer.class, InitializeTransferWrapper::new);
         this.queryManagers.forEach(manager -> manager.tell(ADBQueryManager.QueryEntities
                 .builder()
                 .transactionId(transactionId)
                 .query(query)
-                .clientLargeMessageReceiver(respondTo)
                 .respondTo(this.getContext().getSelf())
                 .build()));
     }

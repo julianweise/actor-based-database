@@ -26,7 +26,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     private int dataSent = 0;
     private final byte[] payload;
     private final int chunkSize;
-    private final akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor;
+    private final akka.actor.typed.ActorRef<Response> supervisor;
 
     public interface LargeMessage extends KryoSerializable, ADBLargeMessageActor.Command {
     }
@@ -54,17 +54,16 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
     }
     @NoArgsConstructor
     @Getter
-    public static class TransferCompleted implements Response {
-
-    }
+    public static class TransferCompleted implements Response {}
 
     public static int getChunkSize(Settings settings) {
         long maxMessageSize = settings.config().getBytes("akka.remote.artery.advanced.maximum-frame-size");
-        return Math.round(maxMessageSize * 0.6f);
+        return Math.round(maxMessageSize * 0.8f);
     }
 
-    public ADBLargeMessageSender(ActorContext<Command> context, LargeMessage serializableMessage,
-                                 akka.actor.typed.ActorRef<ADBLargeMessageSender.Response> supervisor) throws NotSerializableException {
+    public ADBLargeMessageSender(ActorContext<Command> context,
+                                 LargeMessage serializableMessage,
+                                 akka.actor.typed.ActorRef<Response> supervisor) throws NotSerializableException {
         super(context);
         this.serialization = SerializationExtension.get(this.getContext().getSystem());
         this.payload = this.serializePayload(serializableMessage);

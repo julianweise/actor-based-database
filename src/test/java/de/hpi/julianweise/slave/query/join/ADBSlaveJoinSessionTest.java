@@ -67,7 +67,6 @@ public class ADBSlaveJoinSessionTest {
         ADBQueryManager.QueryEntities queryCommand = ADBQueryManager.QueryEntities.builder()
                                                                            .query(joinQuery)
                                                                            .respondTo(querySession.ref())
-                                                                           .clientLargeMessageReceiver(initializeTransferTestProbe.ref())
                                                                            .transactionId(TRANSACTION_ID)
                                                                            .build();
 

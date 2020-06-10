@@ -14,7 +14,6 @@ import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionFactory;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandler;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandlerFactory;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -31,7 +30,6 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     private final Set<ActorRef<ADBJoinWithNodeSession.Command>> activeJoinSessions = new ObjectOpenHashSet<>();
     private final Set<ActorRef<ADBJoinWithNodeSessionHandler.Command>> activeJoinSessionHandlers = new ObjectOpenHashSet<>();
-    private boolean delayLogged = false;
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -81,9 +79,8 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     public ADBSlaveJoinSession(ActorContext<Command> context,
                                ActorRef<ADBMasterQuerySession.Command> client,
-                               ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
                                ADBJoinQueryContext joinQueryContext) {
-        super(context, client, clientLargeMessageReceiver, joinQueryContext);
+        super(context, client, joinQueryContext);
     }
 
     @Override
@@ -130,6 +127,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleJoinWithShardResults(JoinPartitionsResults command) {
+        this.getContext().getLog().info("Retuning " + command.joinCandidates.size() + " join tuples to master");
         this.sendToSession(ADBMasterJoinSession.JoinQueryResults
                 .builder()
                 .transactionId(queryContext.getTransactionId())
@@ -168,16 +166,15 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
             return Behaviors.same();
         }
         this.getContext().scheduleOnce(Duration.ofMillis(50), this.getContext().getSelf(), command);
-        if (!this.delayLogged && this.activeJoinSessions.size() > 0) {
+        if (this.activeJoinSessions.size() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for active inter-node join sessions");
         }
-        if (!this.delayLogged && this.activeJoinSessionHandlers.size() > 0) {
+        if (this.activeJoinSessionHandlers.size() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for active inter-node join session handlers");
         }
-        if (!this.delayLogged && this.openTransferSessions.get() > 0) {
+        if (this.openTransferSessions.get() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for open transfer sessions");
         }
-        this.delayLogged = true;
         return Behaviors.same();
     }
 

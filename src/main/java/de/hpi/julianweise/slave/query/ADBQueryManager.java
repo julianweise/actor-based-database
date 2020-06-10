@@ -8,10 +8,9 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
-import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.query.ADBQuery;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -58,8 +57,7 @@ public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
     @Builder
     public static class QueryEntities implements Command, CborSerializable {
         private int transactionId;
-        private ActorRef<ADBMasterQuerySession.Command> respondTo;
-        private ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver;
+        private ActorRef<ADBLargeMessageActor.Command> respondTo;
         private ADBQuery query;
     }
 

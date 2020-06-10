@@ -121,14 +121,6 @@ public class ADBLargeMessageSenderTest {
 
         assertThat(chunk.getChunk().length)
                 .isLessThan(3 * ADBLargeMessageSender.getChunkSize(testKit.system().settings()));
-        assertThat(chunk.isLastChunk()).isFalse();
-
-        largeMessageSender.tell(new ADBLargeMessageSender.SendNextChunk(receiver.ref()));
-
-        chunk = receiver.expectMessageClass(ADBLargeMessageReceiver.ReceiveChunk.class);
-
-        assertThat(chunk.getChunk().length)
-                .isLessThan(3 * ADBLargeMessageSender.getChunkSize(testKit.system().settings()));
         assertThat(chunk.isLastChunk()).isTrue();
 
         largeMessageSenderProbe.expectTerminated(largeMessageSender);

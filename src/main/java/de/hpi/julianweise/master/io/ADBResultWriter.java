@@ -71,6 +71,8 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
         for (Object element : command.results) {
             this.writeElement(bufferedWriter, element);
         }
+        this.bufferedWriter.flush();
+        this.outputStream.flush();
         return Behaviors.same();
     }
 

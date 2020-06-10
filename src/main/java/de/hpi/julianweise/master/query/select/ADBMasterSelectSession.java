@@ -12,14 +12,12 @@ import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import lombok.val;
 
 public class ADBMasterSelectSession extends ADBMasterQuerySession {
 
@@ -44,13 +42,10 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
     }
 
     private void distributeQuery(ADBQuery query) {
-        val respondTo = this.getContext().messageAdapter(ADBLargeMessageReceiver.InitializeTransfer.class,
-                InitializeTransferWrapper::new);
         for (ActorRef<ADBQueryManager.Command> manager : this.queryManagers) {
             manager.tell(ADBQueryManager.QueryEntities
                     .builder()
                     .transactionId(transactionId)
-                    .clientLargeMessageReceiver(respondTo)
                     .query(query)
                     .respondTo(this.getContext().getSelf())
                     .build());

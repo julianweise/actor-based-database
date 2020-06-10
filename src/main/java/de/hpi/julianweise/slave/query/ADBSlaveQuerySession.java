@@ -8,9 +8,8 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSenderFactory;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
@@ -24,7 +23,6 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     protected final ActorRef<ADBMasterQuerySession.Command> session;
     protected final ADBQueryContext queryContext;
-    protected final ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientResultReceiver;
     protected final AtomicInteger openTransferSessions = new AtomicInteger(0);
 
     public interface Command {
@@ -44,18 +42,15 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     public ADBSlaveQuerySession(ActorContext<ADBSlaveQuerySession.Command> context,
                                 ActorRef<ADBMasterQuerySession.Command> session,
-                                ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientResultReceiver,
                                 ADBQueryContext queryContext) {
         super(context);
         this.session = session;
         this.queryContext = queryContext;
-        this.clientResultReceiver = clientResultReceiver;
 
         this.session.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(ADBQueryManager.getInstance(),
                 getContext().getSelf()));
 
         this.getContext().getLog().info("Started QuerySession " + queryContext.transactionId  + " for " + this.getQuerySessionName());
-
     }
 
     protected ReceiveBuilder<ADBSlaveQuerySession.Command> createReceiveBuilder() {
@@ -76,13 +71,8 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     protected void sendToSession(ADBLargeMessageSender.LargeMessage message) {
         this.openTransferSessions.incrementAndGet();
-        String receiverName = ADBLargeMessageSenderFactory.name(this.getContext().getSelf(),
-                this.clientResultReceiver, message.getClass(), "TX-" + queryContext.transactionId + "-results");
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
-        val receiver = this.getContext().spawn(ADBLargeMessageSenderFactory
-                .createDefault(message, respondTo), receiverName);
-        receiver.tell(new ADBLargeMessageSender.StartTransfer(Adapter.toClassic(this.clientResultReceiver),
-                message.getClass()));
+        ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(this.session), respondTo, message);
     }
 
     private Behavior<Command> handleTerminate(Terminate command) {

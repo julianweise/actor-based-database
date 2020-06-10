@@ -4,6 +4,7 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
+import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.settings.Settings;
@@ -14,6 +15,8 @@ import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
@@ -58,14 +61,14 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @NoArgsConstructor
     @Getter
     public static class RequestMultipleAttributes implements Command, CborSerializable {
-        private ActorRef<MultipleAttributes> respondTo;
+        private ActorRef<ADBLargeMessageActor.Command> respondTo;
         private Set<String> attributes;
     }
 
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
-    public static class MultipleAttributes implements Response, KryoSerializable {
+    public static class MultipleAttributes implements Response, ADBLargeMessageSender.LargeMessage {
         private Map<String, ObjectList<ADBEntityEntry>> attributes;
     }
 
@@ -80,6 +83,12 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @Getter
     public static class MaterializedEntities implements Command, KryoSerializable {
         private ObjectList<ADBEntity> results;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class MessageSenderResponse implements Command, CborSerializable {
+        private final ADBLargeMessageSender.Response response;
     }
 
     public ADBPartition(ActorContext<Command> context, int id, ObjectList<ADBEntity> data) {
@@ -105,6 +114,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
                 .onMessage(RequestData.class, this::handleProvideData)
                 .onMessage(RequestMultipleAttributes.class, this::handleRequestMultipleAttributes)
                 .onMessage(MaterializeToEntities.class, this::handleMaterialize)
+                .onMessage(MessageSenderResponse.class, (cmd) -> this)
                 .build();
     }
 
@@ -118,7 +128,9 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
                 .stream()
                 .map(this.sortedAttributes::get)
                 .collect(Collectors.toMap(s -> s.getField().getName(), s -> s.getMaterialized(this.data)));
-        command.respondTo.tell(new MultipleAttributes(attributes));
+        val message = new MultipleAttributes(attributes);
+        val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
+        ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(command.respondTo), respondTo, message);
         return Behaviors.same();
     }
 

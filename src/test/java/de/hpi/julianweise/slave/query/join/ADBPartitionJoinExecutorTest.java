@@ -122,14 +122,14 @@ public class ADBPartitionJoinExecutorTest {
 
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
 
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
 
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes));
 
         executor.tell(new ADBPartitionJoinExecutor.Execute());
 
@@ -194,14 +194,14 @@ public class ADBPartitionJoinExecutorTest {
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
 
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes));
 
         executor.tell(new ADBPartitionJoinExecutor.Execute());
 
@@ -261,12 +261,12 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes));
 
         ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
@@ -327,14 +327,14 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(joinQuery.getAllLeftHandSideFields());
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(leftSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(joinQuery.getAllRightHandSideFields());
 
-        executor.tell(new ADBPartitionJoinExecutor.MultipleAttributesWrapper(new ADBPartition.MultipleAttributes(rightSideAttributes)));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes));
 
         ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);

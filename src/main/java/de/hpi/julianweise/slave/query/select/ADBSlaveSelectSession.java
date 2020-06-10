@@ -18,7 +18,6 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.SelectionQueryWorkload;
 import de.hpi.julianweise.slave.worker_pool.workload.Workload;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -52,9 +51,8 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
 
     public ADBSlaveSelectSession(ActorContext<ADBSlaveQuerySession.Command> context,
                                  ActorRef<ADBMasterQuerySession.Command> client,
-                                 ActorRef<ADBLargeMessageReceiver.InitializeTransfer> clientLargeMessageReceiver,
                                  ADBQueryContext queryContext) {
-        super(context, client, clientLargeMessageReceiver, queryContext);
+        super(context, client, queryContext);
     }
 
     @Override

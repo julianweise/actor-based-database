@@ -2,7 +2,6 @@ package de.hpi.julianweise.master.query;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
@@ -10,13 +9,11 @@ import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
-import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiverFactory;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,7 +23,7 @@ import org.agrona.collections.Object2ObjectHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQuerySession.Command> {
+public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
 
     protected final int transactionId;
     protected final ActorRef<ADBPartitionInquirer.Command> parent;
@@ -34,11 +31,7 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
     protected final ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers;
     protected final Map<ActorRef<ADBQueryManager.Command>, ActorRef<ADBSlaveQuerySession.Command>> managerToHandlers;
     protected final Map<ActorRef<ADBSlaveQuerySession.Command>, ActorRef<ADBQueryManager.Command>> handlersToManager;
-    protected final Set<ActorRef<ADBLargeMessageReceiver.Command>> openReceiverSessions;
     protected final Set<ActorRef<ADBSlaveQuerySession.Command>> completedSessions = new ObjectArraySet<>();
-
-    public interface Command {
-    }
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -63,18 +56,6 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
         private int nodeId;
     }
 
-    @AllArgsConstructor
-    private static class ReceiverTerminated implements Command {
-        ActorRef<ADBLargeMessageReceiver.Command> receiver;
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    public static class InitializeTransferWrapper implements Command, CborSerializable {
-        private ADBLargeMessageReceiver.InitializeTransfer initializeTransfer;
-    }
-
     public ADBMasterQuerySession(ActorContext<Command> context,
                                  ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                  ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
@@ -86,33 +67,18 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
         this.parent = parent;
         this.managerToHandlers = new Object2ObjectHashMap<>();
         this.handlersToManager = new Object2ObjectHashMap<>();
-        this.openReceiverSessions = new ObjectOpenHashSet<>(queryManagers.size());
         this.getContext().getLog().info("Started QuerySession " + transactionId  + " for " + this.getQuerySessionName());
     }
 
     protected ReceiveBuilder<Command> createReceiveBuilder() {
         return newReceiveBuilder()
                 .onMessage(RegisterQuerySessionHandler.class, this::handleRegisterQuerySessionHandler)
-                .onMessage(InitializeTransferWrapper.class, this::handleInitializeTransfer)
-                .onMessage(ReceiverTerminated.class, this::handleReceiverTerminated)
                 .onMessage(ConcludeTransaction.class, this::handleConcludeTransaction);
     }
 
     protected Behavior<ADBMasterQuerySession.Command> handleRegisterQuerySessionHandler(RegisterQuerySessionHandler command) {
         this.managerToHandlers.put(command.queryManager, command.sessionHandler);
         this.handlersToManager.put(command.sessionHandler, command.queryManager);
-        return Behaviors.same();
-    }
-
-    protected Behavior<ADBMasterQuerySession.Command> handleInitializeTransfer(InitializeTransferWrapper wrapper) {
-        ActorRef<ADBLargeMessageReceiver.Command> receiver = this.getContext().spawn(ADBLargeMessageReceiverFactory
-                        .createDefault(this.getContext().classicActorContext().self(),
-                wrapper.getInitializeTransfer().getType(), wrapper.getInitializeTransfer().getRespondTo()),
-                ADBLargeMessageReceiverFactory.receiverName(this.getContext().getSelf(),
-                        wrapper.getInitializeTransfer().getType()));
-        this.openReceiverSessions.add(receiver);
-        this.getContext().watchWith(receiver, new ReceiverTerminated(receiver));
-        receiver.tell(wrapper.getInitializeTransfer());
         return Behaviors.same();
     }
 
@@ -136,10 +102,8 @@ public abstract class ADBMasterQuerySession extends AbstractBehavior<ADBMasterQu
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleReceiverTerminated(ReceiverTerminated command) {
-        this.openReceiverSessions.remove(command.receiver);
+    protected void handleSenderTerminated() {
         this.conditionallyConcludeTransaction();
-        return Behaviors.same();
     }
 
     protected abstract String getQuerySessionName();

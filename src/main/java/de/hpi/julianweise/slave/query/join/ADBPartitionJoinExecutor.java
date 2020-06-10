@@ -2,7 +2,6 @@ package de.hpi.julianweise.slave.query.join;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
@@ -12,7 +11,6 @@ import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartition;
-import de.hpi.julianweise.slave.partition.ADBPartition.MultipleAttributes;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
@@ -25,6 +23,7 @@ import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutorFactor
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -35,7 +34,7 @@ import lombok.val;
 import java.time.Duration;
 import java.util.Map;
 
-public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinExecutor.Command> {
+public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final ADBJoinQuery joinQuery;
@@ -46,9 +45,6 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     private Map<String, ObjectList<ADBEntityEntry>> rightAttributes;
     private ObjectList<ADBJoinPredicateCostModel> costModels;
     private int costModelsProcessed = 0;
-
-    public interface Command {
-    }
 
     public interface Response {
     }
@@ -92,11 +88,6 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         private final ActorRef<ADBPartitionJoinExecutor.Command> respondTo;
     }
 
-    @AllArgsConstructor
-    public static class MultipleAttributesWrapper implements Command {
-        private final ADBPartition.MultipleAttributes response;
-    }
-
     public ADBPartitionJoinExecutor(ActorContext<Command> context, ADBJoinQuery query, ActorRef<Response> res) {
         super(context);
         this.joinQuery = query;
@@ -105,13 +96,13 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
 
     @Override
     public Receive<Command> createReceive() {
-        return newReceiveBuilder()
-                .onMessage(Prepare.class, this::handlePrepare)
-                .onMessage(GenericWorkerResponseWrapper.class, this::handleGenericWorkerResponse)
-                .onMessage(ADBColumnJoinExecutorWrapper.class, this::handleADBColumnJoinExecutorWrapper)
-                .onMessage(Execute.class, this::handleExecute)
-                .onMessage(MultipleAttributesWrapper.class, this::handleMultipleAttributes)
-                .build();
+        return super.newReceiveBuilder()
+                    .onMessage(Prepare.class, this::handlePrepare)
+                    .onMessage(GenericWorkerResponseWrapper.class, this::handleGenericWorkerResponse)
+                    .onMessage(ADBColumnJoinExecutorWrapper.class, this::handleADBColumnJoinExecutorWrapper)
+                    .onMessage(Execute.class, this::handleExecute)
+                    .onMessage(ADBPartition.MultipleAttributes.class, this::handleMultipleAttributes)
+                    .build();
     }
 
     private Behavior<Command> handlePrepare(Prepare command) {
@@ -122,25 +113,25 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
     }
 
     private void requestLeftSideAttributes() {
-        val respondTo = getContext().messageAdapter(MultipleAttributes.class, MultipleAttributesWrapper::new);
-        val leftCommand = new ADBPartition.RequestMultipleAttributes(respondTo, joinQuery.getAllLeftHandSideFields());
+        val leftCommand = new ADBPartition.RequestMultipleAttributes(getContext().getSelf(),
+                joinQuery.getAllLeftHandSideFields());
         joinTask.getLeftPartitionManager()
                 .tell(new ADBPartitionManager.RedirectToPartition(joinTask.getLeftPartitionId(), leftCommand));
     }
 
     private void requestRightSideAttributes() {
-        val respondTo = getContext().messageAdapter(MultipleAttributes.class, MultipleAttributesWrapper::new);
-        val rightCommand = new ADBPartition.RequestMultipleAttributes(respondTo, joinQuery.getAllRightHandSideFields());
+        val rightCommand = new ADBPartition.RequestMultipleAttributes(getContext().getSelf(),
+                joinQuery.getAllRightHandSideFields());
         joinTask.getRightPartitionManager()
                 .tell(new ADBPartitionManager.RedirectToPartition(joinTask.getRightPartitionId(), rightCommand));
     }
 
-    private Behavior<Command> handleMultipleAttributes(MultipleAttributesWrapper wrapper) {
+    private Behavior<Command> handleMultipleAttributes(ADBPartition.MultipleAttributes response) {
         if (this.leftAttributes == null) {
-            this.leftAttributes = wrapper.response.getAttributes();
+            this.leftAttributes = response.getAttributes();
             this.requestRightSideAttributes();
         } else {
-            this.rightAttributes = wrapper.response.getAttributes();
+            this.rightAttributes = response.getAttributes();
             this.respondTo.tell(new JoinTaskPrepared(this.getContext().getSelf()));
         }
         return Behaviors.same();
@@ -243,5 +234,10 @@ public class ADBPartitionJoinExecutor extends AbstractBehavior<ADBPartitionJoinE
         this.rightAttributes = null;
         this.costModels = null;
         this.joinTask = null;
+    }
+
+    @Override
+    protected void handleSenderTerminated() {
+
     }
 }

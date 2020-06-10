@@ -56,8 +56,7 @@ public class ADBLargeMessageReceiverTest {
         TestProbe<ADBLargeMessageSender.Command> sender = testKit.createTestProbe();
 
         ActorRef<ADBLargeMessageReceiver.Command> receiver =
-                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref()),
-                        LargeTestMessage.class, sender.ref()));
+                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref())));
 
         receiver.tell(new ADBLargeMessageReceiver.InitializeTransfer(sender.ref(), 500, LargeTestMessage.class));
 
@@ -81,8 +80,7 @@ public class ADBLargeMessageReceiverTest {
         byte[] payload = serializer.toBinary(typedPayload);
 
         ActorRef<ADBLargeMessageReceiver.Command> receiver =
-                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref()),
-                        LargeTestMessage.class, sender.ref()));
+                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref())));
 
         receiver.tell(new ADBLargeMessageReceiver.InitializeTransfer(sender.ref(), payload.length,
                 LargeTestMessage.class));
@@ -113,8 +111,7 @@ public class ADBLargeMessageReceiverTest {
         byte[] payload = serializer.toBinary(typedPayload);
 
         ActorRef<ADBLargeMessageReceiver.Command> receiver =
-                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref()),
-                        LargeTestMessage.class, sender.ref()));
+                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref())));
 
         receiver.tell(new ADBLargeMessageReceiver.InitializeTransfer(sender.ref(), payload.length,
                 LargeTestMessage.class));
@@ -144,8 +141,7 @@ public class ADBLargeMessageReceiverTest {
         byte[] payload = serializer.toBinary(typedPayload);
 
         ActorRef<ADBLargeMessageReceiver.Command> receiver =
-                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref()),
-                        LargeTestMessage.class, sender.ref()));
+                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref())));
 
         receiver.tell(new ADBLargeMessageReceiver.InitializeTransfer(sender.ref(), payload.length,
                 LargeTestMessage.class));
@@ -179,8 +175,7 @@ public class ADBLargeMessageReceiverTest {
         byte[] payload = serializer.toBinary(typedPayload);
 
         ActorRef<ADBLargeMessageReceiver.Command> receiver =
-                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref()),
-                        LargeTestMessage.class, sender.ref()));
+                testKit.spawn(ADBLargeMessageReceiverFactory.createDefault(Adapter.toClassic(originalReceiver.ref())));
 
         receiver.tell(new ADBLargeMessageReceiver.InitializeTransfer(sender.ref(), payload.length,
                 LargeTestMessage.class));

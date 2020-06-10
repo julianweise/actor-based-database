@@ -8,11 +8,8 @@ import java.util.UUID;
 
 public class ADBLargeMessageReceiverFactory {
 
-    public static Behavior<ADBLargeMessageReceiver.Command> createDefault(
-            akka.actor.ActorRef originalReceiver,
-            Class<? extends ADBLargeMessageSender.LargeMessage> messageType,
-            ActorRef<ADBLargeMessageSender.Command> sender) {
-        return Behaviors.setup(context -> new ADBLargeMessageReceiver(context, originalReceiver, messageType, sender));
+    public static Behavior<ADBLargeMessageReceiver.Command> createDefault(akka.actor.ActorRef originalReceiver) {
+        return Behaviors.setup(context -> new ADBLargeMessageReceiver(context, originalReceiver));
     }
 
     public static String receiverName(ActorRef<?> receiver, Class<? extends ADBLargeMessageSender.LargeMessage> payLoad) {

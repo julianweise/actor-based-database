@@ -13,11 +13,10 @@ public class ADBLargeMessageSenderFactory {
         return Behaviors.setup(context -> new ADBLargeMessageSender(context, message, respondTo));
     }
 
-    public static String name(ActorRef<?> sender,
-                              ActorRef<?> receiver,
-                              Class<? extends ADBLargeMessageSender.LargeMessage> payLoadMessage,
-                              String payload) {
-        return "ADBLargeMessageSender@" + sender.path().name() + "-::" + payLoadMessage.getSimpleName() + ":" + payload +
+    public static String name(akka.actor.ActorRef sender,
+                              akka.actor.ActorRef receiver,
+                              Class<? extends ADBLargeMessageSender.LargeMessage> payLoadMessage) {
+        return "ADBLargeMessageSender@" + sender.path().name() + "-::" + payLoadMessage.getSimpleName() + ":" +
                 "::-" + receiver.path().name() + "-" + UUID.randomUUID().toString();
     }
 }

@@ -29,13 +29,13 @@ public class ADBSlaveQuerySessionFactory {
     public static Behavior<ADBSlaveQuerySession.Command> createSelectionQuery(ADBQueryManager.QueryEntities cmd) {
         ADBSelectQueryContext queryContext = new ADBSelectQueryContext(cmd.getQuery(), cmd.getTransactionId());
         return Behaviors.setup(ctx ->
-                new ADBSlaveSelectSession(ctx, cmd.getRespondTo(), cmd.getClientLargeMessageReceiver(), queryContext));
+                new ADBSlaveSelectSession(ctx, cmd.getRespondTo(), queryContext));
     }
 
     public static Behavior<ADBSlaveQuerySession.Command> createForJoinQuery(ADBQueryManager.QueryEntities cmd) {
         ADBJoinQueryContext queryContext = new ADBJoinQueryContext(cmd.getQuery(), cmd.getTransactionId());
         return Behaviors.setup(context ->
-                new ADBSlaveJoinSession(context, cmd.getRespondTo(), cmd.getClientLargeMessageReceiver(), queryContext));
+                new ADBSlaveJoinSession(context, cmd.getRespondTo(), queryContext));
     }
 
     public static String getName(ADBQueryManager.QueryEntities command) {
