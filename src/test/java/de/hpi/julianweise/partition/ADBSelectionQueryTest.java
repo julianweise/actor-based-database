@@ -1,4 +1,4 @@
-package de.hpi.julianweise.shard;
+package de.hpi.julianweise.partition;
 
 import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;

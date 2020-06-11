@@ -12,9 +12,8 @@ import lombok.Getter;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -25,8 +24,6 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
     public interface Response {}
 
     private final int transactionId;
-    private final String writerId = UUID.randomUUID().toString();
-    private final FileOutputStream outputStream;
     private final BufferedWriter bufferedWriter;
     private final File resultFile;
 
@@ -36,7 +33,7 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
 
     @AllArgsConstructor
     public static class Persist implements Command {
-        private final Object[] results;
+        private final Iterable<?> results;
     }
 
     @AllArgsConstructor
@@ -55,8 +52,7 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
         super(context);
         this.transactionId = transactionId;
         this.resultFile = this.getResultFile();
-        this.outputStream = new FileOutputStream(this.resultFile);
-        this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
+        this.bufferedWriter = Files.newBufferedWriter(this.resultFile.toPath());
     }
 
     @Override
@@ -69,16 +65,10 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
 
     private Behavior<Command> handlePersist(Persist command) throws IOException {
         for (Object element : command.results) {
-            this.writeElement(bufferedWriter, element);
+            this.bufferedWriter.write(element.toString().toCharArray());
+            this.bufferedWriter.newLine();
         }
-        this.bufferedWriter.flush();
-        this.outputStream.flush();
         return Behaviors.same();
-    }
-
-    public void writeElement(BufferedWriter bufferedWriter, Object element) throws IOException {
-        bufferedWriter.write(element.toString());
-        bufferedWriter.newLine();
     }
 
     public File getResultFile() throws IOException {
@@ -86,7 +76,7 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
             this.getContext().getLog().error("Unable to create result directory!");
             return new File(System.getProperty("userDir"));
         }
-        String resultFileName = String.format("TX#%s_%s", this.transactionId, this.writerId);
+        String resultFileName = String.format("TX#%s_%s.csv", this.transactionId, UUID.randomUUID().toString());
         Path filePath = Paths.get(Settings.SettingsProvider.get(getContext().getSystem()).RESULT_BASE_DIR, resultFileName);
         File resultFile = filePath.toFile();
         if (!resultFile.exists()){
@@ -108,7 +98,6 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
     private Behavior<Command> handleFinalize(FinalizeAndReturnResultLocation command) throws IOException {
         command.respondTo.tell(new ResultLocation(this.transactionId, this.resultFile.getAbsolutePath()));
         this.bufferedWriter.close();
-        this.outputStream.close();
         return Behaviors.stopped();
     }
 

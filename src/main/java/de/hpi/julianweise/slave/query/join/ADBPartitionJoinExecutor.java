@@ -22,7 +22,6 @@ import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutorFactory;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
-import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -84,7 +83,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     @Builder
     @Getter
     public static class PartitionsJoined implements Response {
-        private final ObjectList<ADBKeyPair> joinTuples;
+        private final ADBPartialJoinResult joinTuples;
         private final ActorRef<ADBPartitionJoinExecutor.Command> respondTo;
     }
 
@@ -169,26 +168,26 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private void execute() {
         this.getContext().getLog().debug("[JOIN COST MODEL] Cheapest predicate: " + this.costModels.get(0));
         if (this.costModels.size() < 2) {
-            ObjectList<ADBKeyPair> results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
+            ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.returnResults(results);
             return;
         }
         if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
-            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
+            ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
         } else if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
             this.costModelsProcessed = this.costModels.size();
             this.joinColumnBased(this.costModels);
         } else {
-            ObjectList<ADBKeyPair> candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
+            ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
             this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
         }
     }
 
-    private void joinRowBased(ObjectList<ADBKeyPair> joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
+    private void joinRowBased(ADBPartialJoinResult joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
         val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.leftAttributes, costModels);
         val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.rightAttributes, costModels);
         val workload = new JoinQueryRowWorkload(joinCandidates, leftAttributes, rightAttributes, costModels);
@@ -206,7 +205,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private Behavior<Command> handleGenericWorkerResponse(GenericWorkerResponseWrapper wrapper) {
         if (wrapper.response instanceof JoinQueryRowWorkload.Results) {
-            ObjectList<ADBKeyPair> results = ((JoinQueryRowWorkload.Results) wrapper.response).getResults();
+            ADBPartialJoinResult results = ((JoinQueryRowWorkload.Results) wrapper.response).getResults();
             this.returnResults(results);
             return Behaviors.same();
         }
@@ -214,7 +213,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleADBColumnJoinExecutorWrapper(ADBColumnJoinExecutorWrapper wrapper) {
-        ObjectList<ADBKeyPair> results = wrapper.response.getResults();
+        ADBPartialJoinResult results = wrapper.response.getResults();
         if (this.costModelsProcessed == this.costModels.size()) {
             this.returnResults(results);
             return Behaviors.same();
@@ -224,7 +223,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         return Behaviors.same();
     }
 
-    private void returnResults(ObjectList<ADBKeyPair> results) {
+    private void returnResults(ADBPartialJoinResult results) {
         this.resetExecutor();
         this.respondTo.tell(new PartitionsJoined(results, this.getContext().getSelf()));
     }

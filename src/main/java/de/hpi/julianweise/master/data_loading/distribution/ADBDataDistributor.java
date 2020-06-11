@@ -82,8 +82,8 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     public Receive<ADBDataDistributor.Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(WrappedListing.class, this::handleWrappedReceptionistListing)
-                .onMessage(Distribute.class, this::handleDistributeToShards)
-                .onMessage(DistributeBatch.class, this::handleDistributeBatchToShards)
+                .onMessage(Distribute.class, this::handleDistributeToNodess)
+                .onMessage(DistributeBatch.class, this::handleDistributeBatchToNodes)
                 .onMessage(ConfirmEntityPersisted.class, this::handleConfirmEntityPersisted)
                 .onMessage(ConcludeDistribution.class, this::handleConcludeDistribution)
                 .build();
@@ -96,12 +96,12 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleDistributeToShards(Distribute command) {
-        this.sendToShard(new ADBPartitionManager.PersistEntity(this.getContext().getSelf(), command.getEntity()));
+    private Behavior<Command> handleDistributeToNodess(Distribute command) {
+        this.sendToNode(new ADBPartitionManager.PersistEntity(this.getContext().getSelf(), command.getEntity()));
         return Behaviors.same();
     }
 
-    public void sendToShard(ADBPartitionManager.PersistEntity command) {
+    public void sendToNode(ADBPartitionManager.PersistEntity command) {
         this.pendingDistributions.incrementAndGet();
         this.consistentHash.nodeFor(command.getEntity().getPrimaryKey().toString()).tell(command);
     }
@@ -123,7 +123,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
         this.client.tell(new BatchDistributed());
     }
 
-    private Behavior<Command> handleDistributeBatchToShards(DistributeBatch command) {
+    private Behavior<Command> handleDistributeBatchToNodes(DistributeBatch command) {
         if (this.consistentHash == null || this.consistentHash.isEmpty() || this.partitionManagers.size() < this.minNumberOfPartitions) {
             this.getContext().scheduleOnce(Duration.ofMillis(500), this.getContext().getSelf(), command);
             return Behaviors.same();

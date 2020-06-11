@@ -13,16 +13,15 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager.AllPartitionsHeade
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBJoinQueryContext;
+import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor.PartitionsJoined;
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutorFactory;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
-import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -172,7 +171,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private void handleJoinResults(ActorRef<ADBPartitionJoinExecutor.Command> executor,
-                                   ObjectList<ADBKeyPair> joinTuples) {
+                                   ADBPartialJoinResult joinTuples) {
         getContext().getLog().debug("Received " + joinTuples.size() + " results from task");
         this.executorsIdle.enqueue(executor);
         this.activeExecutors.decrementAndGet();

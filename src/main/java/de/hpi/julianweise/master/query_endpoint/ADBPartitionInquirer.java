@@ -53,7 +53,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     @AllArgsConstructor
     @Getter
     @Builder
-    public static class QueryShards implements Command {
+    public static class QueryNodes implements Command {
         private final int requestId;
         private final ADBQuery query;
         private final ActorRef<QueryConclusion> respondTo;
@@ -63,7 +63,8 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     @Getter
     public static class TransactionResultChunk implements Command {
         private final int transactionId;
-        private final ObjectList<?> results;
+        private final Iterable<?> results;
+        private final int size;
         private final boolean isLast;
     }
 
@@ -86,7 +87,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(WrappedListing.class, this::handleReceptionistListing)
-                .onMessage(QueryShards.class, this::handleQueryShards)
+                .onMessage(QueryNodes.class, this::handleQueryNodes)
                 .onMessage(TransactionResultChunk.class, this::handleTransactionResultChunk)
                 .onMessage(WrappedResultLocation.class, this::handleResultLocation)
                 .build();
@@ -113,7 +114,7 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleQueryShards(QueryShards command) {
+    private Behavior<Command> handleQueryNodes(QueryNodes command) {
         int transactionID = this.transactionCounter.getAndIncrement();
         val resultWriter = getContext().spawn(ADBResultWriter.create(transactionID), "ResultWriterTX-" + transactionID);
         this.transactionContext.put(transactionID, ADBTransactionContext.builder()
@@ -136,8 +137,8 @@ public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.
 
     private Behavior<Command> handleTransactionResultChunk(TransactionResultChunk command) {
         ADBTransactionContext txContext = this.transactionContext.get(command.getTransactionId());
-        txContext.getResultsCount().getAndAdd(command.results.size());
-        txContext.resultWriter.tell(new ADBResultWriter.Persist(command.results.toArray()));
+        txContext.getResultsCount().getAndAdd(command.size);
+        txContext.resultWriter.tell(new ADBResultWriter.Persist(command.results));
         if (command.isLast()) {
             txContext.setDuration(System.nanoTime() - txContext.startTime);
             val resp = getContext().messageAdapter(ADBResultWriter.ResultLocation.class, WrappedResultLocation::new);

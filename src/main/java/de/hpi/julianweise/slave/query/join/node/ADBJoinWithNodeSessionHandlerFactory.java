@@ -9,12 +9,12 @@ import de.hpi.julianweise.slave.ADBSlave;
 public class ADBJoinWithNodeSessionHandlerFactory {
 
     public static Behavior<ADBJoinWithNodeSessionHandler.Command> createDefault(
-            ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query, int remoteShardId) {
+            ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query, int remoteNodeId) {
         return Behaviors.setup(actorContext ->
-                new ADBJoinWithNodeSessionHandler(actorContext, session, query, remoteShardId));
+                new ADBJoinWithNodeSessionHandler(actorContext, session, query, remoteNodeId));
     }
 
-    public static String name(int transactionId, int targetShardId) {
-        return  "ADBJoinWithNodeSessionHandler-tx:" + transactionId + "-local:" + ADBSlave.ID + "-remote:" + targetShardId;
+    public static String name(int transactionId, int targetNodeID) {
+        return  "ADBJoinWithNodeSessionHandler-tx:" + transactionId + "-local:" + ADBSlave.ID + "-remote:" + targetNodeID;
     }
 }

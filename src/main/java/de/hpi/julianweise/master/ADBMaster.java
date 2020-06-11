@@ -67,9 +67,9 @@ public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
     }
 
     private Behavior<Command> handleStartOperationalService(StartOperationalService command) {
-        ActorRef<ADBPartitionInquirer.Command> shardInquirer =
-                this.getContext().spawn(ADBPartitionInquirerFactory.createDefault(), "shardInquirer");
-        this.getContext().spawn(ADBQueryEndpointFactory.createDefault(shardInquirer), "endpoint");
+        ActorRef<ADBPartitionInquirer.Command> nodeInquirer =
+                this.getContext().spawn(ADBPartitionInquirerFactory.createDefault(), "nodeInquirer");
+        this.getContext().spawn(ADBQueryEndpointFactory.createDefault(nodeInquirer), "endpoint");
         return Behaviors.same();
     }
 

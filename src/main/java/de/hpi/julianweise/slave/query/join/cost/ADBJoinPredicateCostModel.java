@@ -2,9 +2,8 @@ package de.hpi.julianweise.slave.query.join.cost;
 
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
+import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
-import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,28 +28,28 @@ public class ADBJoinPredicateCostModel {
         return (float) this.getCost() / (this.getSizeLeft() * this.sizeRight);
     }
 
-    public ObjectList<ADBKeyPair> getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
+    public ADBPartialJoinResult getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
                                                     Map<String, ObjectList<ADBEntityEntry>> right) {
         ObjectList<ADBEntityEntry> leftValues = left.get(this.predicate.getLeftHandSideAttribute());
         ObjectList<ADBEntityEntry> rightValues = right.get(this.predicate.getRightHandSideAttribute());
-        ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(this.getCost());
+        ADBPartialJoinResult candidates = new ADBPartialJoinResult(this.getCost());
         for (int i = 0; i < this.joinCandidates.length; i++) {
             for (ADBInterval interval : this.joinCandidates[i]) {
-                candidates.addAll(getJoinCandidatesForRow(interval, leftValues.get(i), rightValues));
+                candidates.addAllResults(getJoinCandidatesForRow(interval, leftValues.get(i), rightValues));
             }
         }
         return candidates;
     }
 
-    public ObjectList<ADBKeyPair> getJoinCandidatesForRow(ADBInterval interval,
+    public ADBPartialJoinResult getJoinCandidatesForRow(ADBInterval interval,
                                                           ADBEntityEntry left,
                                                           ObjectList<ADBEntityEntry> right) {
         if (interval.equals(ADBInterval.NO_INTERSECTION)) {
-            return new ObjectArrayList<>();
+            return new ADBPartialJoinResult();
         }
-        ObjectList<ADBKeyPair> candidates = new ObjectArrayList<>(interval.size());
+        ADBPartialJoinResult candidates = new ADBPartialJoinResult(interval.size());
         for (int i = interval.getStart(); i <= interval.getEnd(); i++) {
-            candidates.add(new ADBKeyPair(left.getId(), right.get(i).getId()));
+            candidates.addResult(left.getId(), right.get(i).getId());
         }
         return candidates;
     }

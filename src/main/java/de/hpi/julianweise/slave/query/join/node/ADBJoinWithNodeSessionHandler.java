@@ -45,7 +45,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
 
     public ADBJoinWithNodeSessionHandler(ActorContext<Command> context,
                                          ActorRef<ADBJoinWithNodeSession.Command> session, ADBQuery query,
-                                         int remoteShardId) {
+                                         int remoteNodeId) {
         super(context);
         assert ADBPartitionManager.getInstance() != null : "Requiring ADBPartitionManager but not initialized yet";
         session.tell(new ADBJoinWithNodeSession.RegisterHandler(getContext().getSelf(), ADBPartitionManager.getInstance()));
@@ -53,7 +53,7 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
         this.session = session;
         this.query = (ADBJoinQuery) query;
 
-        this.getContext().getLog().info("[CREATE] on shard #" + ADBSlave.ID + " for join with shard #" + remoteShardId);
+        this.getContext().getLog().info("[CREATE] on Node #" + ADBSlave.ID + " for join with Node #" + remoteNodeId);
     }
 
     @Override

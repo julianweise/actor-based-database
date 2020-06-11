@@ -13,10 +13,8 @@ import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSession;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionFactory;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandler;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandlerFactory;
-import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,7 +32,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class JoinWithShard implements ADBSlaveQuerySession.Command, CborSerializable {
+    public static class JoinWithNode implements ADBSlaveQuerySession.Command, CborSerializable {
         private ActorRef<ADBSlaveQuerySession.Command> counterpart;
         private int foreignNodeId;
     }
@@ -42,14 +40,14 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class NoMoreShardsToJoinWith implements ADBSlaveQuerySession.Command, CborSerializable {
+    public static class NoMoreNodesToJoinWith implements ADBSlaveQuerySession.Command, CborSerializable {
         private int transactionId;
     }
 
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
-    public static class OpenInterShardJoinSession implements ADBSlaveQuerySession.Command, CborSerializable {
+    public static class OpenInterNodeJoinSession implements ADBSlaveQuerySession.Command, CborSerializable {
         private ActorRef<ADBJoinWithNodeSession.Command> initiatingSession;
         private int initializingPartitionId;
     }
@@ -58,7 +56,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @AllArgsConstructor
     @Getter
     public static class JoinPartitionsResults implements Command, KryoSerializable {
-        private ObjectList<ADBKeyPair> joinCandidates;
+        private ADBPartialJoinResult joinCandidates;
     }
 
     @AllArgsConstructor
@@ -87,10 +85,10 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     public Receive<Command> createReceive() {
         return this.createReceiveBuilder()
                    .onMessage(Execute.class, this::handleExecute)
-                   .onMessage(JoinWithShard.class, this::handleJoinWithShard)
-                   .onMessage(OpenInterShardJoinSession.class, this::handleOpenInterShardJoinSession)
-                   .onMessage(JoinPartitionsResults.class, this::handleJoinWithShardResults)
-                   .onMessage(NoMoreShardsToJoinWith.class, this::handleNoMoreShardToJoinWith)
+                   .onMessage(JoinWithNode.class, this::handleJoinWithNode)
+                   .onMessage(OpenInterNodeJoinSession.class, this::handleOpenInterNodeJoinSession)
+                   .onMessage(JoinPartitionsResults.class, this::handleJoinWithNodeResults)
+                   .onMessage(NoMoreNodesToJoinWith.class, this::handleNoMoreNodeToJoinWith)
                    .onMessage(InterNodeSessionTerminated.class, this::handleInterNodeSessionTerminated)
                    .onMessage(InterNodeSessionHandlerTerminated.class, this::handleInterNodeSessionHandlerTerminated)
                    .onMessage(RequestNextPartitions.class, this::handleRequestNextPartition)
@@ -99,11 +97,11 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleExecute(Execute command) {
-        this.getContext().getSelf().tell(new JoinWithShard(this.getContext().getSelf(), ADBSlave.ID));
+        this.getContext().getSelf().tell(new JoinWithNode(this.getContext().getSelf(), ADBSlave.ID));
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleJoinWithShard(JoinWithShard message) {
+    private Behavior<Command> handleJoinWithNode(JoinWithNode message) {
         this.getContext().getLog().info("Received request to join with " + message.getForeignNodeId());
         String sessionName = ADBJoinWithNodeSessionFactory.sessionName(queryContext.getTransactionId(), message.getForeignNodeId());
         val behavior = ADBJoinWithNodeSessionFactory.createDefault((ADBJoinQueryContext) this.queryContext,
@@ -112,11 +110,11 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         ActorRef<ADBJoinWithNodeSession.Command> session = this.getContext().spawn(behavior, sessionName);
         this.getContext().watchWith(session, new InterNodeSessionTerminated(session));
         this.activeJoinSessions.add(session);
-        message.getCounterpart().tell(new OpenInterShardJoinSession(session, ADBSlave.ID));
+        message.getCounterpart().tell(new OpenInterNodeJoinSession(session, ADBSlave.ID));
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleOpenInterShardJoinSession(OpenInterShardJoinSession command) {
+    private Behavior<Command> handleOpenInterNodeJoinSession(OpenInterNodeJoinSession command) {
         String name = ADBJoinWithNodeSessionHandlerFactory.name(queryContext.getTransactionId(), command.initializingPartitionId);
         val behavior = ADBJoinWithNodeSessionHandlerFactory.createDefault(command.getInitiatingSession(),
                 queryContext.getQuery(), command.getInitializingPartitionId());
@@ -126,7 +124,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleJoinWithShardResults(JoinPartitionsResults command) {
+    private Behavior<Command> handleJoinWithNodeResults(JoinPartitionsResults command) {
         this.getContext().getLog().info("Retuning " + command.joinCandidates.size() + " join tuples to master");
         this.sendToSession(ADBMasterJoinSession.JoinQueryResults
                 .builder()
@@ -138,9 +136,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
 
-    private Behavior<Command> handleNoMoreShardToJoinWith(NoMoreShardsToJoinWith command) {
+    private Behavior<Command> handleNoMoreNodeToJoinWith(NoMoreNodesToJoinWith command) {
         this.getContext().getSelf().tell(new Conclude());
-        this.getContext().getLog().info("No more shards to join with this shard for TX #" + command.getTransactionId());
+        this.getContext().getLog().info("No more nodes to join with this node for TX #" + command.getTransactionId());
         return Behaviors.same();
     }
 

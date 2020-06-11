@@ -57,7 +57,7 @@ public class ADBSlaveJoinSessionTest {
     }
 
     @Test
-    public void expectRequestForNextShardComparisonAfterExecuteCommand() {
+    public void expectRequestForNextNodeComparisonAfterExecuteCommand() {
         TestProbe<ADBMasterQuerySession.Command> querySession = testKit.createTestProbe();
         TestProbe<ADBLargeMessageReceiver.InitializeTransfer> initializeTransferTestProbe = testKit.createTestProbe();
 

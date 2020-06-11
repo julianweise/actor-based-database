@@ -1,4 +1,4 @@
-package de.hpi.julianweise.shard;
+package de.hpi.julianweise.partition;
 
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
@@ -69,25 +69,25 @@ public class ADBPartitionInquirerTest {
         testKit.system().receptionist().tell(Receptionist.register(ADBQueryManager.SERVICE_KEY, testProbe.ref()));
         ActorRef<ADBPartitionInquirer.Command> inquirer = testKit.spawn(ADBPartitionInquirerFactory.createDefault());
 
-        // necessary to ensure receptionist registration propagates successfully before querying shards
+        // necessary to ensure receptionist registration propagates successfully before querying nodes
         receptionistProbe.receiveSeveralMessages(2);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
 
-        inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
-                                                      .requestId(requestId)
-                                                      .query(query)
-                                                      .respondTo(resultProbe.ref())
-                                                      .build());
+        inquirer.tell(ADBPartitionInquirer.QueryNodes.builder()
+                                                     .requestId(requestId)
+                                                     .query(query)
+                                                     .respondTo(resultProbe.ref())
+                                                     .build());
 
         ADBQueryManager.Command queryCommand = testProbe.receiveMessage();
-        ADBQueryManager.QueryEntities queryForShards = (ADBQueryManager.QueryEntities) queryCommand;
+        ADBQueryManager.QueryEntities queryForNodes = (ADBQueryManager.QueryEntities) queryCommand;
 
-        assertThat(queryForShards.getQuery()).isEqualTo(query);
+        assertThat(queryForNodes.getQuery()).isEqualTo(query);
     }
 
     @Test
-    public void testDistributeQueryToManyShardsSuccessfully() {
+    public void testDistributeQueryToManyNodesSuccessfully() {
         int requestId = 1;
 
         TestProbe<ADBPartitionInquirer.QueryConclusion> resultProbe = testKit.createTestProbe();
@@ -101,25 +101,25 @@ public class ADBPartitionInquirerTest {
         testKit.system().receptionist().tell(Receptionist.register(ADBQueryManager.SERVICE_KEY, testProbe2.ref()));
         ActorRef<ADBPartitionInquirer.Command> inquirer = testKit.spawn(ADBPartitionInquirerFactory.createDefault());
 
-        // necessary to ensure receptionist registration propagates successfully before querying shards
+        // necessary to ensure receptionist registration propagates successfully before querying nodes
         receptionistProbe.receiveSeveralMessages(2);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
 
-        inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
-                                                      .requestId(requestId)
-                                                      .query(query)
-                                                      .respondTo(resultProbe.ref())
-                                                      .build());
+        inquirer.tell(ADBPartitionInquirer.QueryNodes.builder()
+                                                     .requestId(requestId)
+                                                     .query(query)
+                                                     .respondTo(resultProbe.ref())
+                                                     .build());
 
         ADBQueryManager.Command queryCommand1 = testProbe1.receiveMessage();
-        ADBQueryManager.QueryEntities queryForShards1 = (ADBQueryManager.QueryEntities) queryCommand1;
+        ADBQueryManager.QueryEntities queryForNodes1 = (ADBQueryManager.QueryEntities) queryCommand1;
 
         ADBQueryManager.Command queryCommand2 = testProbe2.receiveMessage();
-        ADBQueryManager.QueryEntities queryForShards2 = (ADBQueryManager.QueryEntities) queryCommand2;
+        ADBQueryManager.QueryEntities queryForNodes2 = (ADBQueryManager.QueryEntities) queryCommand2;
 
-        assertThat(queryForShards1.getQuery()).isEqualTo(query);
-        assertThat(queryForShards2.getQuery()).isEqualTo(query);
+        assertThat(queryForNodes1.getQuery()).isEqualTo(query);
+        assertThat(queryForNodes2.getQuery()).isEqualTo(query);
     }
 
     @Test
@@ -135,13 +135,13 @@ public class ADBPartitionInquirerTest {
         testKit.system().receptionist().tell(Receptionist.subscribe(ADBPartitionManager.SERVICE_KEY,
                 receptionistProbe2.ref()));
 
-        // Ensure shard is present
+        // Ensure node is present
         ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132);
 
         TestProbe<ADBPartitionInquirer.QueryConclusion> resultProbe = testKit.createTestProbe();
         ActorRef<ADBPartitionInquirer.Command> inquirer = testKit.spawn(ADBPartitionInquirerFactory.createDefault());
 
-        // necessary to ensure receptionist registration propagates successfully before querying shards
+        // necessary to ensure receptionist registration propagates successfully before querying nodes
         receptionistProbe.receiveSeveralMessages(2);
 
         Receptionist.Listing listing2 = receptionistProbe2.expectMessageClass(Receptionist.Listing.class);
@@ -157,11 +157,11 @@ public class ADBPartitionInquirerTest {
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         query.addPredicate(new ADBSelectionQueryPredicate(new ADBPredicateIntConstant(11212), "aInteger", EQUALITY));
-        inquirer.tell(ADBPartitionInquirer.QueryShards.builder()
-                                                      .requestId(requestId)
-                                                      .query(query)
-                                                      .respondTo(resultProbe.ref())
-                                                      .build());
+        inquirer.tell(ADBPartitionInquirer.QueryNodes.builder()
+                                                     .requestId(requestId)
+                                                     .query(query)
+                                                     .respondTo(resultProbe.ref())
+                                                     .build());
 
         ADBPartitionInquirer.QueryConclusion results = resultProbe.receiveMessage();
 

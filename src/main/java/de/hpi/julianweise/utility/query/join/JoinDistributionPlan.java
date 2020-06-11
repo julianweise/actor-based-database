@@ -35,10 +35,10 @@ public class JoinDistributionPlan {
         IntStream.range(0, this.queryManagers.size()).forEach(index -> this.dataRequests.put(index, new AtomicInteger()));
     }
 
-    private BitSet[] initializeDistributionMap(int numberOfShards) {
-        BitSet[] map = new BitSet[numberOfShards];
-        for (int i = 0; i < numberOfShards; i++) {
-            map[i] = new BitSet(numberOfShards);
+    private BitSet[] initializeDistributionMap(int numberOfNodes) {
+        BitSet[] map = new BitSet[numberOfNodes];
+        for (int i = 0; i < numberOfNodes; i++) {
+            map[i] = new BitSet(numberOfNodes);
             for (int j = 0; j <= i; j++) {
                 map[i].set(j);
             }
@@ -47,28 +47,28 @@ public class JoinDistributionPlan {
     }
 
     public ActorRef<ADBQueryManager.Command> getNextJoinNodeFor(ActorRef<ADBQueryManager.Command> queryManager) {
-        int shardIndex = this.getIndexOfShard(queryManager);
-        int shardIndexMinimalAccesses = this.getShardIndexWithMinimalAccessesForShard(shardIndex);
-        LOG.info(String.format("[DistributionPlan] Shard #%d requested new shard to join. Suggested shard # %d",
-                shardIndex, shardIndexMinimalAccesses));
+        int nodeIndex = this.getIndexOfNode(queryManager);
+        int nodeIndexMinimalAccesses = this.getNodeIndexWithMinimalAccessesForNode(nodeIndex);
+        LOG.info(String.format("[DistributionPlan] Node #%d requested new Node to join. Suggested Node # %d",
+                nodeIndex, nodeIndexMinimalAccesses));
         LOG.info("[Overall Process]: {}/{}", this.finalizedComparisons.incrementAndGet(),
                 this.queryManagers.size() * (this.queryManagers.size() + 1) / 2);
-        if (shardIndexMinimalAccesses < 0) {
+        if (nodeIndexMinimalAccesses < 0) {
             return null;
         }
-        this.distributionMap[shardIndex].set(shardIndexMinimalAccesses);
-        this.distributionMap[shardIndexMinimalAccesses].set(shardIndex);
-        this.dataAccesses.get(shardIndex).incrementAndGet();
-        this.dataAccesses.get(shardIndexMinimalAccesses).incrementAndGet();
-        this.dataRequests.get(shardIndex).incrementAndGet();
-        return this.queryManagers.get(shardIndexMinimalAccesses);
+        this.distributionMap[nodeIndex].set(nodeIndexMinimalAccesses);
+        this.distributionMap[nodeIndexMinimalAccesses].set(nodeIndex);
+        this.dataAccesses.get(nodeIndex).incrementAndGet();
+        this.dataAccesses.get(nodeIndexMinimalAccesses).incrementAndGet();
+        this.dataRequests.get(nodeIndex).incrementAndGet();
+        return this.queryManagers.get(nodeIndexMinimalAccesses);
     }
 
-    private int getIndexOfShard(ActorRef<ADBQueryManager.Command> shard) {
-        return this.queryManagers.indexOf(shard);
+    private int getIndexOfNode(ActorRef<ADBQueryManager.Command> node) {
+        return this.queryManagers.indexOf(node);
     }
 
-    private int getShardIndexWithMinimalAccessesForShard(int index) {
+    private int getNodeIndexWithMinimalAccessesForNode(int index) {
         IntList relevantAccesses = this.dataAccesses
                 .int2ObjectEntrySet().stream().filter(eS -> this.notCompared(eS.getIntKey(), index)).map(eS -> eS.getValue().get()).collect(Collectors.toCollection(IntArrayList::new));
         int minDataAccesses = relevantAccesses.size() > 0 ? Collections.min(relevantAccesses) : Integer.MAX_VALUE;

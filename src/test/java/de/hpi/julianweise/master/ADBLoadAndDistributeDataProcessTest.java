@@ -141,7 +141,7 @@ public class ADBLoadAndDistributeDataProcessTest {
 
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.Start(respondToProbe.ref()));
 
-        processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
+        processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedNodeDistributorResponse(distResponse));
 
         CSVParsingActor.Command csvCommand = parserTestProbe.receiveMessage();
 
@@ -174,7 +174,7 @@ public class ADBLoadAndDistributeDataProcessTest {
         processUnderTest.tell(new ADBLoadAndDistributeDataProcess.Start(respondToProbe.ref()));
 
 
-        processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedShardDistributorResponse(distResponse));
+        processUnderTest.tell(new ADBLoadAndDistributeDataProcess.WrappedNodeDistributorResponse(distResponse));
 
         distributorTestProbe.expectNoMessage();
         processUnderTestProbe.expectTerminated(processUnderTest);

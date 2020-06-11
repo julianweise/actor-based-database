@@ -22,7 +22,6 @@ public class JoinQueryColumnWorkload extends Workload {
     @Getter
     public static class Results implements GenericWorker.Response {
         private final SparseBitSet[] results;
-
     }
 
     @SuppressWarnings("unused")

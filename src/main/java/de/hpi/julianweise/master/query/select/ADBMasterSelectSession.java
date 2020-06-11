@@ -60,7 +60,8 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleQueryResults(SelectQueryResults response) {
-        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, response.results, false));
+        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, response.results,
+                response.results.size(), false));
         this.conditionallyConcludeTransaction();
         return Behaviors.same();
     }
@@ -72,7 +73,8 @@ public class ADBMasterSelectSession extends ADBMasterQuerySession {
 
     @Override
     protected void submitResults() {
-        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), true));
+        this.parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(),
+         0, true));
     }
 
     @Override

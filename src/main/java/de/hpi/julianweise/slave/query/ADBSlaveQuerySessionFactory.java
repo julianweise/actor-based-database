@@ -40,10 +40,10 @@ public class ADBSlaveQuerySessionFactory {
 
     public static String getName(ADBQueryManager.QueryEntities command) {
         if (command.getQuery() instanceof ADBJoinQuery) {
-            return "ADBSlaveJoinSession" + "-for-" + command.getTransactionId() + "-on-shard-" + ADBSlave.ID;
+            return "ADBSlaveJoinSession" + "-for-" + command.getTransactionId() + "-on-node-" + ADBSlave.ID;
         } else if (command.getQuery() instanceof ADBSelectionQuery) {
-            return "ADBSlaveSelectSession" + "-for-" + command.getTransactionId() + "-on-shard-" + ADBSlave.ID;
+            return "ADBSlaveSelectSession" + "-for-" + command.getTransactionId() + "-on-node-" + ADBSlave.ID;
         }
-        return "UnspecifiedQuerySessionHandler" + "-for-" + command.getTransactionId() + "-on-shard-" + ADBSlave.ID;
+        return "UnspecifiedQuerySessionHandler" + "-for-" + command.getTransactionId() + "-on-node-" + ADBSlave.ID;
     }
 }

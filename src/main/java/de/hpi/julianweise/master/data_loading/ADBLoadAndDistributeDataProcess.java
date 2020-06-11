@@ -15,9 +15,9 @@ import lombok.Getter;
 public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAndDistributeDataProcess.Command> {
 
     private final ActorRef<CSVParsingActor.Command> csvParser;
-    private final ActorRef<ADBDataDistributor.Command> shardDistributor;
+    private final ActorRef<ADBDataDistributor.Command> dataDistributor;
     private final ActorRef<CSVParsingActor.Response> csvResponseWrapper;
-    private final ActorRef<ADBDataDistributor.Response> shardDistributorWrapper;
+    private final ActorRef<ADBDataDistributor.Response> dataDistributorWrapper;
     private ActorRef<ADBMaster.Command> client;
 
     public interface Command {
@@ -31,7 +31,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
     @AllArgsConstructor
     @Getter
-    public static class WrappedShardDistributorResponse implements Command {
+    public static class WrappedNodeDistributorResponse implements Command {
         private final ADBDataDistributor.Response response;
 
     }
@@ -45,14 +45,14 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
 
     protected ADBLoadAndDistributeDataProcess(ActorContext<Command> context,
                                               Behavior<CSVParsingActor.Command> csvParser,
-                                              Behavior<ADBDataDistributor.Command> shardDistributor) {
+                                              Behavior<ADBDataDistributor.Command> dataDistributor) {
         super(context);
         this.csvParser = context.spawn(csvParser, "CSVParser");
-        this.shardDistributor = context.spawn(shardDistributor, "ShardDistributor");
+        this.dataDistributor = context.spawn(dataDistributor, "DataDistributor");
         this.csvResponseWrapper = this.getContext().messageAdapter(CSVParsingActor.Response.class,
                 WrappedCSVParserResponse::new);
-        this.shardDistributorWrapper = this.getContext().messageAdapter(ADBDataDistributor.Response.class,
-                WrappedShardDistributorResponse::new);
+        this.dataDistributorWrapper = this.getContext().messageAdapter(ADBDataDistributor.Response.class,
+                WrappedNodeDistributorResponse::new);
     }
 
 
@@ -61,7 +61,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         return newReceiveBuilder()
                 .onMessage(Start.class, this::handleStart)
                 .onMessage(WrappedCSVParserResponse.class, this::handleCSVParserResponse)
-                .onMessage(WrappedShardDistributorResponse.class, this::handleShardDistributorResponse)
+                .onMessage(WrappedNodeDistributorResponse.class, this::handleDataDistributorResponse)
                 .build();
     }
 
@@ -80,7 +80,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleShardDistributorResponse(WrappedShardDistributorResponse response) {
+    private Behavior<Command> handleDataDistributorResponse(WrappedNodeDistributorResponse response) {
         if (response.getResponse() instanceof ADBDataDistributor.BatchDistributed) {
             return this.handleBatchDistributed();
         }
@@ -91,7 +91,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleCSVChunk(CSVParsingActor.DomainDataChunk chunk) {
-        this.shardDistributor.tell(new ADBDataDistributor.DistributeBatch(this.shardDistributorWrapper,
+        this.dataDistributor.tell(new ADBDataDistributor.DistributeBatch(this.dataDistributorWrapper,
                 chunk.getChunk()));
         return Behaviors.same();
     }
@@ -102,7 +102,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleCSVFullyParsed() {
-        this.shardDistributor.tell(new ADBDataDistributor.ConcludeDistribution());
+        this.dataDistributor.tell(new ADBDataDistributor.ConcludeDistribution());
         this.getContext().stop(this.csvParser);
         return Behaviors.same();
     }
@@ -110,7 +110,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     private Behavior<Command> handleDataFullyDistributed() {
         this.getContext().getLog().info("### Data have been fully loaded into the database ###");
         this.client.tell(new ADBMaster.StartOperationalService());
-        this.getContext().stop(this.shardDistributor);
+        this.getContext().stop(this.dataDistributor);
         System.gc();
         return Behaviors.stopped();
     }

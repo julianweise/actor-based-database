@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ADBTransactionContext {
     int transactionId;
     int requestId;
-    ADBPartitionInquirer.QueryShards initialRequest;
+    ADBPartitionInquirer.QueryNodes initialRequest;
     long startTime;
     long duration;
     ActorRef<ADBResultWriter.Command> resultWriter;

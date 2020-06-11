@@ -16,6 +16,6 @@ public class ADBJoinWithNodeSessionFactory {
     }
 
     public static String sessionName(int transactionId, int remoteNodeId) {
-        return "ADBJoinWithShardSession-tx:" + transactionId + "-local:" + ADBSlave.ID + "-remote:" + remoteNodeId;
+        return "ADBJoinWithNodeSession-tx:" + transactionId + "-local:" + ADBSlave.ID + "-remote:" + remoteNodeId;
     }
 }

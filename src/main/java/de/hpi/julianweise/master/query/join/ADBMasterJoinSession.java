@@ -15,6 +15,7 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
+import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
@@ -38,6 +39,7 @@ import lombok.val;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.stream.StreamSupport;
 
 import static java.util.stream.Collectors.groupingBy;
 
@@ -70,7 +72,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     @SuperBuilder
     @Getter
     public static class JoinQueryResults extends ADBMasterQuerySession.QueryResults {
-        private ObjectList<ADBKeyPair> joinResults;
+        private ADBPartialJoinResult joinResults;
     }
 
     @AllArgsConstructor
@@ -103,18 +105,18 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     @Override
     public Receive<ADBMasterQuerySession.Command> createReceive() {
         return this.createReceiveBuilder()
-                   .onMessage(RequestNextNodeToJoin.class, this::handleRequestNextShardComparison)
+                   .onMessage(RequestNextNodeToJoin.class, this::handleRequestNextNodeComparison)
                    .onMessage(JoinQueryResults.class, this::handleJoinQueryResults)
                    .onMessage(ScheduleNextInterNodeJoin.class, this::handleScheduleNextInterNodeJoin)
                    .onMessage(MaterializedEntitiesWrapper.class, this::handleMaterializedEntities)
                    .build();
     }
 
-    private Behavior<ADBMasterQuerySession.Command> handleRequestNextShardComparison(RequestNextNodeToJoin command) {
+    private Behavior<ADBMasterQuerySession.Command> handleRequestNextNodeComparison(RequestNextNodeToJoin command) {
         val nextManager = this.distributionPlan.getNextJoinNodeFor(this.handlersToManager.get(command.getRespondTo()));
 
         if (nextManager == null) {
-            command.respondTo.tell(new ADBSlaveJoinSession.NoMoreShardsToJoinWith(this.transactionId));
+            command.respondTo.tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
             return Behaviors.same();
         }
         this.getContext().getSelf().tell(new ScheduleNextInterNodeJoin(nextManager, command.respondTo));
@@ -125,10 +127,10 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         if (this.managerToHandlers.containsKey(command.nextJoinManager)) {
             int partnerJoinId = ADBMaster.getGlobalIdFor(command.nextJoinManager);
             this.getContext().getLog().info("Asking " + command.respondTo + " to join with ID " + partnerJoinId);
-            command.respondTo.tell(new ADBSlaveJoinSession.JoinWithShard(
+            command.respondTo.tell(new ADBSlaveJoinSession.JoinWithNode(
                     this.managerToHandlers.get(command.nextJoinManager), partnerJoinId));
         } else {
-            this.getContext().getLog().warn("No Shard-to-Session mapping present for " + command.nextJoinManager);
+            this.getContext().getLog().warn("No Node-to-Session mapping present for " + command.nextJoinManager);
             this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), command);
         }
         return Behaviors.same();
@@ -136,7 +138,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
         if (!this.query.isShouldBeMaterialized()) {
-            parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, results.joinResults, false));
+            parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, results.joinResults,
+                    results.joinResults.size(), false));
             return Behaviors.same();
         }
         results.joinResults.forEach(this.joinResults::enqueue);
@@ -144,8 +147,10 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         return Behaviors.same();
     }
 
-    private void requestResultMaterialization(ObjectList<ADBKeyPair> tuples) {
-        Streams.concat(tuples.stream().map(ADBKeyPair::getKey), tuples.stream().map(ADBKeyPair::getValue))
+    private void requestResultMaterialization(Iterable<ADBKeyPair> tuples) {
+        Streams.concat(
+                StreamSupport.stream(tuples.spliterator(), false).map(ADBKeyPair::getKey),
+                StreamSupport.stream(tuples.spliterator(), false).map(ADBKeyPair::getValue))
                .collect(groupingBy(ADBInternalIDHelper::getNodeId))
                .forEach(this::requestMaterializedEntitiesFromNode);
     }
@@ -168,7 +173,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @Override
     protected void submitResults() {
-        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), true));
+        parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, new ObjectArrayList<>(), 0, true));
     }
 
     private Behavior<Command> handleMaterializedEntities(MaterializedEntitiesWrapper wrapper) {
@@ -188,7 +193,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         }
 
         parent.tell(new ADBPartitionInquirer.TransactionResultChunk(transactionId, materializedResults,
-                false));
+                materializedResults.size(), false));
         this.conditionallyConcludeTransaction();
         return Behaviors.same();
     }

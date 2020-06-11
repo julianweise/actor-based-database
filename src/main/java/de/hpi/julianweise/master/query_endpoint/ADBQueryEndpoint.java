@@ -36,8 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command> {
 
-    private final ActorRef<ADBPartitionInquirer.Command> shardInquirer;
-    private final ActorRef<ADBPartitionInquirer.QueryConclusion> shardInquirerResponseWrapper;
+    private final ActorRef<ADBPartitionInquirer.Command> nodeInquirer;
+    private final ActorRef<ADBPartitionInquirer.QueryConclusion> nodeInquirerResponseWrapper;
     private final Int2ObjectMap<CompletableFuture<Object>> requests = new Int2ObjectOpenHashMap<>();
     private final AtomicInteger requestCounter = new AtomicInteger();
     private final ObjectMapper jsonMapper = new ObjectMapper();
@@ -48,17 +48,17 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
 
     @AllArgsConstructor
     @Getter
-    public static class ShardInquirerResponseWrapper implements Command {
+    public static class NodeInquirerResponseWrapper implements Command {
         private final ADBPartitionInquirer.QueryConclusion response;
 
     }
 
     public ADBQueryEndpoint(ActorContext<Command> context, String hostname, int port,
-                            ActorRef<ADBPartitionInquirer.Command> shardInquirer,
-                            ActorRef<ADBPartitionInquirer.QueryConclusion> shardInquirerResponseWrapper) {
+                            ActorRef<ADBPartitionInquirer.Command> nodeInquirer,
+                            ActorRef<ADBPartitionInquirer.QueryConclusion> nodeInquirerResponseWrapper) {
         super(context);
-        this.shardInquirer = shardInquirer;
-        this.shardInquirerResponseWrapper = shardInquirerResponseWrapper;
+        this.nodeInquirer = nodeInquirer;
+        this.nodeInquirerResponseWrapper = nodeInquirerResponseWrapper;
         this.initializeHTTPEndpoint(hostname, port);
     }
 
@@ -75,7 +75,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onSignal(PostStop.class, this::handlePostStop)
-                .onMessage(ShardInquirerResponseWrapper.class, this::handleShardInquirerResponseWrapper)
+                .onMessage(NodeInquirerResponseWrapper.class, this::handleNodeInquirerResponseWrapper)
                 .build();
     }
 
@@ -95,11 +95,11 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
         CompletableFuture<Object> future = new CompletableFuture<>();
         int requestId = this.requestCounter.getAndIncrement();
         this.requests.put(requestId, future);
-        this.shardInquirer.tell(ADBPartitionInquirer.QueryShards.builder()
-                                                                .query(query)
-                                                                .requestId(requestId)
-                                                                .respondTo(this.shardInquirerResponseWrapper)
-                                                                .build());
+        this.nodeInquirer.tell(ADBPartitionInquirer.QueryNodes.builder()
+                                                              .query(query)
+                                                              .requestId(requestId)
+                                                              .respondTo(this.nodeInquirerResponseWrapper)
+                                                              .build());
         return Directives.onSuccess(future, extracted -> Directives.complete(this.buildResponse(extracted)));
     }
 
@@ -123,7 +123,7 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleShardInquirerResponseWrapper(ShardInquirerResponseWrapper wrapper) {
+    private Behavior<Command> handleNodeInquirerResponseWrapper(NodeInquirerResponseWrapper wrapper) {
         this.requests.get(wrapper.response.getRequestId()).complete(ADBQueryEndpointResponse
                 .builder()
                 .duration(wrapper.response.getDuration())
