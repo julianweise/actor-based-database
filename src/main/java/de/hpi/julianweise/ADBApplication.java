@@ -1,5 +1,7 @@
 package de.hpi.julianweise;
 
+import akka.actor.ExtendedActorSystem;
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -26,6 +28,7 @@ import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.config.SlaveConfiguration;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
+import de.hpi.julianweise.utility.ActorRefDeserializer;
 import de.hpi.julianweise.utility.config.ConfigurationBase;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 

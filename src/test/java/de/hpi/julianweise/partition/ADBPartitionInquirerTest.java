@@ -3,6 +3,7 @@ package de.hpi.julianweise.partition;
 import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
+import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.csv.TestEntityFactory;
@@ -19,11 +20,15 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import java.util.Collection;
+import java.util.Collections;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -151,7 +156,8 @@ public class ADBPartitionInquirerTest {
         assertThat(listing2.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).size()).isOne();
 
         listing2.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
-                manager.tell(new ADBPartitionManager.PersistEntity(persistProbe.ref(), testEntity)));
+                manager.tell(new ADBPartitionManager.PersistEntities(Adapter.toClassic(persistProbe.ref()),
+                        new ObjectArrayList<>(Collections.singletonList(testEntity)))));
         listing2.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
                 manager.tell(new ADBPartitionManager.ConcludeTransfer()));
 

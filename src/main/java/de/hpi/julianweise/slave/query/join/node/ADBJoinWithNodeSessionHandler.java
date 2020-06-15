@@ -96,5 +96,5 @@ public class ADBJoinWithNodeSessionHandler extends ADBLargeMessageActor {
         return Behaviors.same();
     }
 
-    protected void handleSenderTerminated() {}
+    protected void handleReceiverTerminated() {}
 }

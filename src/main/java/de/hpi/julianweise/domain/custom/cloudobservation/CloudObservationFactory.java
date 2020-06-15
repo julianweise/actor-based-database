@@ -20,7 +20,7 @@ public class CloudObservationFactory implements ADBEntityFactory {
                                ._timestamp(parseInt(record.get(0), 10))
                                .skyBrightnessIndicator(record.get(1).equals("1"))
                                .latitude(Short.parseShort(record.get(2)))
-                               .longitude(Short.parseShort(record.get(3)))
+                               .longitude(Integer.parseInt(record.get(3)))
                                .stationNumber(Integer.parseInt(record.get(4), 10))
                                .landIndicator(record.get(5).equals("1"))
                                .presentWeather(Byte.parseByte(record.get(6)))
@@ -50,6 +50,6 @@ public class CloudObservationFactory implements ADBEntityFactory {
 
     @Override
     public JsonDeserializer<? extends ADBEntity> buildDeserializer() {
-        return null;
+        return new CloudObservationDeserializer();
     }
 }

@@ -3,14 +3,15 @@ package de.hpi.julianweise.slave.partition.data;
 import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
-import de.hpi.julianweise.utility.serialization.CborSerializable;
+import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
 
-public abstract class ADBEntity implements CborSerializable {
+
+public abstract class ADBEntity implements KryoSerializable {
 
     @Setter
     @Getter

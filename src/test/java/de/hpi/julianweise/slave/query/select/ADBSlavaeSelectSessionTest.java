@@ -4,6 +4,7 @@ import akka.actor.testkit.typed.javadsl.TestKitJunitResource;
 import akka.actor.testkit.typed.javadsl.TestProbe;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
@@ -21,11 +22,14 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySessionFactory;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageReceiver;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import java.util.Collections;
 
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,7 +116,8 @@ public class ADBSlavaeSelectSessionTest {
 
         ADBEntity testEntity = new TestEntity(1, "Test", 2f, true, 12.02132);
         validListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
-                manager.tell(new ADBPartitionManager.PersistEntity(persistProbe.ref(), testEntity)));
+                manager.tell(new ADBPartitionManager.PersistEntities(Adapter.toClassic(persistProbe.ref()),
+                        new ObjectArrayList<>(Collections.singletonList(testEntity)))));
         validListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
                 manager.tell(new ADBPartitionManager.ConcludeTransfer()));
 

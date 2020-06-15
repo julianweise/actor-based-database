@@ -238,6 +238,6 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     @Override
-    protected void handleSenderTerminated() {
+    protected void handleReceiverTerminated() {
     }
 }

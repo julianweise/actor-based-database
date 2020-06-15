@@ -2,7 +2,6 @@ package de.hpi.julianweise.slave.partition;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
@@ -17,11 +16,14 @@ import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -34,7 +36,7 @@ import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.groupingBy;
 
-public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Command> {
+public class ADBPartitionManager extends ADBLargeMessageActor {
 
     public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "PartitionManager");
     private static final int MAX_PARTITIONS = 0x10000;
@@ -45,11 +47,8 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private ADBEntityBuffer entityBuffer = new ADBEntityBuffer(this.settings.MAX_SIZE_PARTITION);
 
-    public interface Command {
-    }
 
-    public interface Response {
-    }
+    public interface Response {}
 
     public static void setInstance(ActorRef<ADBPartitionManager.Command> manager) {
         assert INSTANCE == null : "Instance has already been created";
@@ -67,9 +66,9 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class PersistEntity implements Command, CborSerializable {
-        private ActorRef<ADBDataDistributor.Command> respondTo;
-        private ADBEntity entity;
+    public static class PersistEntities implements Command, ADBLargeMessageSender.LargeMessage {
+        private akka.actor.ActorRef respondTo;
+        private ObjectList<ADBEntity> entities;
     }
 
     @AllArgsConstructor
@@ -130,7 +129,7 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     @AllArgsConstructor
     public static class MaterializeToEntities implements Command, CborSerializable {
         ActorRef<ADBPartition.MaterializedEntities> respondTo;
-        IntArrayList internalIds;
+        IntList internalIds;
     }
 
     @AllArgsConstructor
@@ -149,7 +148,7 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
     @Override
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
-                .onMessage(PersistEntity.class, this::handlePersistEntity)
+                .onMessage(PersistEntities.class, this::handlePersistEntity)
                 .onMessage(RedirectToPartition.class, this::handleRedirectToPartition)
                 .onMessage(Register.class, this::handlePartitionRegistration)
                 .onMessage(ConcludeTransfer.class, this::handleConcludeTransfer)
@@ -161,9 +160,9 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
                 .build();
     }
 
-    private Behavior<Command> handlePersistEntity(PersistEntity command) {
-        this.entityBuffer.add(command.getEntity());
-        command.respondTo.tell(new ADBDataDistributor.ConfirmEntityPersisted());
+    private Behavior<Command> handlePersistEntity(PersistEntities command) {
+        this.entityBuffer.addAll(command.getEntities());
+        command.respondTo.tell(new ADBDataDistributor.ConfirmEntitiesPersisted(), akka.actor.ActorRef.noSender());
         this.conditionallyCreateNewPartition(false);
         return Behaviors.same();
     }
@@ -253,5 +252,9 @@ public class ADBPartitionManager extends AbstractBehavior<ADBPartitionManager.Co
                                                           ActorRef<ADBPartition.MaterializedEntities> respond) {
         this.partitions.get(partitionId)
                        .tell(new ADBPartition.MaterializeToEntities(new IntArrayList(entityIds), respond));
+    }
+
+    @Override
+    protected void handleReceiverTerminated() {
     }
 }

@@ -88,7 +88,7 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
         return Behaviors.stopped();
     }
 
-    private Behavior<ADBMasterQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
+    protected Behavior<ADBMasterQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
         this.getContext().getLog().info(command.slaveQuerySession + " concludes session");
         this.completedSessions.add(command.getSlaveQuerySession());
         return this.conditionallyConcludeTransaction();
@@ -102,7 +102,7 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
         return Behaviors.same();
     }
 
-    protected void handleSenderTerminated() {
+    protected void handleReceiverTerminated() {
         this.conditionallyConcludeTransaction();
     }
 

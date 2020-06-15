@@ -20,6 +20,12 @@ public class ADBEntityBuffer {
         this.maxPartitionSize = maxPartitionSize;
     }
 
+    public void addAll(ObjectList<ADBEntity> entities) {
+        for (ADBEntity entity : entities) {
+            this.add(entity);
+        }
+    }
+
     public void add(ADBEntity entity) {
         this.dataPartitionBuffer.enqueue(entity);
         this.bufferSize += entity.getSize();

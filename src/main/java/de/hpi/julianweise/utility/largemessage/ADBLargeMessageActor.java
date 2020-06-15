@@ -56,9 +56,9 @@ public abstract class ADBLargeMessageActor extends AbstractBehavior<ADBLargeMess
 
     protected Behavior<Command> handleReceiverTerminated(ReceiverTerminated command) {
         this.openReceiverSessions.remove(command.receiver);
-        this.handleSenderTerminated();
+        this.handleReceiverTerminated();
         return Behaviors.same();
     }
 
-    protected abstract void handleSenderTerminated();
+    protected abstract void handleReceiverTerminated();
 }

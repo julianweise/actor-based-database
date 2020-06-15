@@ -33,11 +33,6 @@ public class ADBPartialJoinResult implements KryoSerializable, Iterable<ADBKeyPa
         this.right.addAll(otherResults.right);
     }
 
-    public void trim() {
-        this.left.trim();
-        this.right.trim();
-    }
-
     public ADBKeyPair get(int index) {
         return new ADBKeyPair(this.left.getInt(index), this.right.getInt(index));
     }

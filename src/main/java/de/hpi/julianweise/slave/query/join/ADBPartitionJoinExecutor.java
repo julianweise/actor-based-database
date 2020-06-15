@@ -236,7 +236,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     @Override
-    protected void handleSenderTerminated() {
+    protected void handleReceiverTerminated() {
 
     }
 }
