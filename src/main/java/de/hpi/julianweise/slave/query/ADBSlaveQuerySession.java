@@ -8,6 +8,7 @@ import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.ReceiveBuilder;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
@@ -47,7 +48,7 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
         this.session = session;
         this.queryContext = queryContext;
 
-        this.session.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(ADBQueryManager.getInstance(),
+        this.session.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(ADBPartitionManager.getInstance(),
                 getContext().getSelf()));
 
         this.getContext().getLog().info("Started QuerySession " + queryContext.transactionId  + " for " + this.getQuerySessionName());

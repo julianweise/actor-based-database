@@ -29,15 +29,15 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
     protected final ActorRef<ADBPartitionInquirer.Command> parent;
     protected final ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers;
     protected final ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers;
-    protected final Map<ActorRef<ADBQueryManager.Command>, ActorRef<ADBSlaveQuerySession.Command>> managerToHandlers;
-    protected final Map<ActorRef<ADBSlaveQuerySession.Command>, ActorRef<ADBQueryManager.Command>> handlersToManager;
+    protected final Map<ActorRef<ADBPartitionManager.Command>, ActorRef<ADBSlaveQuerySession.Command>> managerToHandlers;
+    protected final Map<ActorRef<ADBSlaveQuerySession.Command>, ActorRef<ADBPartitionManager.Command>> handlersToManager;
     protected final Set<ActorRef<ADBSlaveQuerySession.Command>> completedSessions = new ObjectArraySet<>();
 
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
     public static class RegisterQuerySessionHandler implements ADBMasterQuerySession.Command, CborSerializable {
-        private ActorRef<ADBQueryManager.Command> queryManager;
+        private ActorRef<ADBPartitionManager.Command> partitionManager;
         private ActorRef<ADBSlaveQuerySession.Command> sessionHandler;
     }
 
@@ -77,8 +77,8 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
     }
 
     protected Behavior<ADBMasterQuerySession.Command> handleRegisterQuerySessionHandler(RegisterQuerySessionHandler command) {
-        this.managerToHandlers.put(command.queryManager, command.sessionHandler);
-        this.handlersToManager.put(command.sessionHandler, command.queryManager);
+        this.managerToHandlers.put(command.partitionManager, command.sessionHandler);
+        this.handlersToManager.put(command.sessionHandler, command.partitionManager);
         return Behaviors.same();
     }
 

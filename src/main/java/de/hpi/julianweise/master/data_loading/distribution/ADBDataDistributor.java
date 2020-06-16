@@ -44,6 +44,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     private final int minNumberOfPartitions;
     private final Map<ActorRef<ADBPartitionManager.Command>, ObjectList<ADBEntity>> batches = new Object2ObjectHashMap<>();
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+    private final AtomicInteger distributedEntities = new AtomicInteger(0);
 
 
     public interface Command {}
@@ -119,6 +120,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
         this.batches.put(command.getTargetPartitionManager(), new ObjectArrayList<>());
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
         val message  = new ADBPartitionManager.PersistEntities(Adapter.toClassic(getContext().getSelf()), entities);
+        this.distributedEntities.addAndGet(entities.size());
         ADBLargeMessageActor.sendMessage(getContext(), Adapter.toClassic(command.targetPartitionManager), respondTo, message);
         this.pendingDistributions.incrementAndGet();
         return Behaviors.same();
@@ -126,6 +128,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     public void concludeTransfer() {
         this.concluding = true;
+        this.getContext().getLog().info("Distributed " + this.distributedEntities.get() + " elements.");
         this.partitionManagers.forEach(manager -> manager.tell(new ADBPartitionManager.ConcludeTransfer()));
     }
 
@@ -167,8 +170,8 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     }
 
     private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
-        this.triggerDistribution(true);
         if (batches.entrySet().stream().anyMatch(set -> set.getValue().size() > 0) || pendingDistributions.get() > 0) {
+            this.triggerDistribution(true);
             this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
             return Behaviors.same();
         }

@@ -17,6 +17,7 @@ import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
+import de.hpi.julianweise.utility.query.join.JoinExecutionPlan;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.After;
@@ -27,7 +28,7 @@ import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ADBJoinQuerySessionTest {
+public class ADBMasterJoinSessionTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
@@ -96,7 +97,7 @@ public class ADBJoinQuerySessionTest {
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
                         supervisor.ref()));
 
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager.ref(), joinSessionHandler.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(partition.ref(), joinSessionHandler.ref()));
 
 
         joinSession.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(joinSessionHandler.ref()));
@@ -134,8 +135,10 @@ public class ADBJoinQuerySessionTest {
                         supervisor.ref()));
 
 
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(partitionManager1.ref(),
+                joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(partitionManager2.ref(),
+                joinSessionHandler2.ref()));
 
         joinSession.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(joinSessionHandler1.ref()));
 
@@ -147,7 +150,8 @@ public class ADBJoinQuerySessionTest {
         ADBSlaveJoinSession.NoMoreNodesToJoinWith response2 = joinSessionHandler2
                 .expectMessageClass(ADBSlaveJoinSession.NoMoreNodesToJoinWith.class);
 
-        assertThat(response1.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
+        assertThat(response1.getContext().getRight()).isEqualTo(partitionManager2.ref());
+        assertThat(response1.getContext().getLeft()).isEqualTo(partitionManager1.ref());
         assertThat(response2.getTransactionId()).isEqualTo(1);
     }
 
@@ -177,15 +181,19 @@ public class ADBJoinQuerySessionTest {
                 testKit.spawn(ADBMasterQuerySessionFactory.create(queryManagers, partitionManagers, query, 1,
                         supervisor.ref()));
 
-        joinSession.tell(new ADBMasterJoinSession.ScheduleNextInterNodeJoin(queryManager2.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterJoinSession.JoinExecutionPlanWrapper(new JoinExecutionPlan
+                .NextNodeToJoinWith(partitionManager1.ref(), partitionManager2.ref(), partitionManager1.ref(), true)));
 
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterQuerySession
+                .RegisterQuerySessionHandler(partitionManager1.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession
+                .RegisterQuerySessionHandler(partitionManager2.ref(), joinSessionHandler2.ref()));
 
         ADBSlaveJoinSession.JoinWithNode response1 = joinSessionHandler1
                 .expectMessageClass(ADBSlaveJoinSession.JoinWithNode.class);
 
-        assertThat(response1.getCounterpart()).isEqualTo(joinSessionHandler2.ref());
+        assertThat(response1.getContext().getRight()).isEqualTo(partitionManager1.ref());
+        assertThat(response1.getContext().getLeft()).isEqualTo(partitionManager2.ref());
     }
 
     @Test
@@ -215,8 +223,9 @@ public class ADBJoinQuerySessionTest {
                         supervisor.ref()));
 
 
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager1.ref(), joinSessionHandler1.ref()));
-        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(queryManager2.ref(), joinSessionHandler2.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(partitionManager1.ref(), joinSessionHandler1.ref()));
+        joinSession.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(partitionManager2.ref(),
+                joinSessionHandler2.ref()));
 
         ADBPartialJoinResult results = new ADBPartialJoinResult();
         results.addResult(1,2 );

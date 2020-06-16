@@ -8,11 +8,11 @@ import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.slave.ADBSlave;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
+import de.hpi.julianweise.slave.query.join.node.ADBJoinNodesContext;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSession;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionFactory;
-import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandler;
-import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionHandlerFactory;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -27,14 +27,12 @@ import java.util.Set;
 public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     private final Set<ActorRef<ADBJoinWithNodeSession.Command>> activeJoinSessions = new ObjectOpenHashSet<>();
-    private final Set<ActorRef<ADBJoinWithNodeSessionHandler.Command>> activeJoinSessionHandlers = new ObjectOpenHashSet<>();
 
     @NoArgsConstructor
-    @AllArgsConstructor
     @Getter
+    @AllArgsConstructor
     public static class JoinWithNode implements ADBSlaveQuerySession.Command, CborSerializable {
-        private ActorRef<ADBSlaveQuerySession.Command> counterpart;
-        private int foreignNodeId;
+        private ADBJoinNodesContext context;
     }
 
     @NoArgsConstructor
@@ -42,14 +40,6 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @Getter
     public static class NoMoreNodesToJoinWith implements ADBSlaveQuerySession.Command, CborSerializable {
         private int transactionId;
-    }
-
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Getter
-    public static class OpenInterNodeJoinSession implements ADBSlaveQuerySession.Command, CborSerializable {
-        private ActorRef<ADBJoinWithNodeSession.Command> initiatingSession;
-        private int initializingPartitionId;
     }
 
     @NoArgsConstructor
@@ -65,15 +55,12 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     @AllArgsConstructor
-    public static class InterNodeSessionHandlerTerminated implements Command {
-        ActorRef<ADBJoinWithNodeSessionHandler.Command> sessionHandler;
+    public static class RequestNextPartitions implements Command {
     }
 
     @AllArgsConstructor
-    public static class RequestNextPartitions implements Command {}
-
-    @AllArgsConstructor
-    public static class Conclude implements Command {}
+    public static class Conclude implements Command {
+    }
 
     public ADBSlaveJoinSession(ActorContext<Command> context,
                                ActorRef<ADBMasterQuerySession.Command> client,
@@ -86,46 +73,37 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         return this.createReceiveBuilder()
                    .onMessage(Execute.class, this::handleExecute)
                    .onMessage(JoinWithNode.class, this::handleJoinWithNode)
-                   .onMessage(OpenInterNodeJoinSession.class, this::handleOpenInterNodeJoinSession)
                    .onMessage(JoinPartitionsResults.class, this::handleJoinWithNodeResults)
                    .onMessage(NoMoreNodesToJoinWith.class, this::handleNoMoreNodeToJoinWith)
                    .onMessage(InterNodeSessionTerminated.class, this::handleInterNodeSessionTerminated)
-                   .onMessage(InterNodeSessionHandlerTerminated.class, this::handleInterNodeSessionHandlerTerminated)
                    .onMessage(RequestNextPartitions.class, this::handleRequestNextPartition)
                    .onMessage(Conclude.class, this::handleConclude)
                    .build();
     }
 
     private Behavior<Command> handleExecute(Execute command) {
-        this.getContext().getSelf().tell(new JoinWithNode(this.getContext().getSelf(), ADBSlave.ID));
+        this.getContext().getSelf().tell(new JoinWithNode(ADBJoinNodesContext.builder()
+                                                                             .left(ADBPartitionManager.getInstance())
+                                                                             .leftNodeId(ADBSlave.ID)
+                                                                             .right(ADBPartitionManager.getInstance())
+                                                                             .rightNodeId(ADBSlave.ID)
+                                                                             .build()));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleJoinWithNode(JoinWithNode message) {
-        this.getContext().getLog().info("Received request to join with " + message.getForeignNodeId());
-        String sessionName = ADBJoinWithNodeSessionFactory.sessionName(queryContext.getTransactionId(), message.getForeignNodeId());
+        ADBJoinNodesContext context = message.getContext();
+        this.getContext().getLog().info("Requested to execute "  + context.toString());
+        String sessionName = ADBJoinWithNodeSessionFactory.sessionName(queryContext.getTransactionId(), context);
         val behavior = ADBJoinWithNodeSessionFactory.createDefault((ADBJoinQueryContext) this.queryContext,
-                this.getContext().getSelf(),
-                message.foreignNodeId);
+                this.getContext().getSelf(), context);
         ActorRef<ADBJoinWithNodeSession.Command> session = this.getContext().spawn(behavior, sessionName);
         this.getContext().watchWith(session, new InterNodeSessionTerminated(session));
         this.activeJoinSessions.add(session);
-        message.getCounterpart().tell(new OpenInterNodeJoinSession(session, ADBSlave.ID));
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handleOpenInterNodeJoinSession(OpenInterNodeJoinSession command) {
-        String name = ADBJoinWithNodeSessionHandlerFactory.name(queryContext.getTransactionId(), command.initializingPartitionId);
-        val behavior = ADBJoinWithNodeSessionHandlerFactory.createDefault(command.getInitiatingSession(),
-                queryContext.getQuery(), command.getInitializingPartitionId());
-        ActorRef<ADBJoinWithNodeSessionHandler.Command> handler = this.getContext().spawn(behavior, name);
-        this.getContext().watchWith(handler, new InterNodeSessionHandlerTerminated(handler));
-        this.activeJoinSessionHandlers.add(handler);
         return Behaviors.same();
     }
 
     private Behavior<Command> handleJoinWithNodeResults(JoinPartitionsResults command) {
-        this.getContext().getLog().info("Retuning " + command.joinCandidates.size() + " join tuples to master");
         this.sendToSession(ADBMasterJoinSession.JoinQueryResults
                 .builder()
                 .transactionId(queryContext.getTransactionId())
@@ -153,22 +131,14 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleInterNodeSessionHandlerTerminated(InterNodeSessionHandlerTerminated command) {
-        this.activeJoinSessionHandlers.remove(command.sessionHandler);
-        return Behaviors.same();
-    }
-
     private Behavior<Command> handleConclude(Conclude command) {
-        if (this.activeJoinSessionHandlers.size() < 1 && this.activeJoinSessions.size() < 1 && this.openTransferSessions.get() < 1) {
+        if (this.activeJoinSessions.size() < 1 && this.openTransferSessions.get() < 1) {
             this.concludeTransaction();
             return Behaviors.same();
         }
         this.getContext().scheduleOnce(Duration.ofMillis(50), this.getContext().getSelf(), command);
         if (this.activeJoinSessions.size() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for active inter-node join sessions");
-        }
-        if (this.activeJoinSessionHandlers.size() > 0) {
-            this.getContext().getLog().info("Unable to conclude - waiting for active inter-node join session handlers");
         }
         if (this.openTransferSessions.get() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for open transfer sessions");

@@ -79,7 +79,7 @@ public class ADBSlaveJoinSessionTest {
                 querySession.expectMessageClass(ADBMasterQuerySession.RegisterQuerySessionHandler.class);
 
         assertThat(handlerRegistration.getSessionHandler()).isEqualTo(joinHandler);
-        assertThat(handlerRegistration.getQueryManager()).isEqualTo(ADBQueryManager.getInstance());
+        assertThat(handlerRegistration.getPartitionManager()).isEqualTo(ADBPartitionManager.getInstance());
 
         joinHandler.tell(new ADBSlaveJoinSession.RequestNextPartitions());
 

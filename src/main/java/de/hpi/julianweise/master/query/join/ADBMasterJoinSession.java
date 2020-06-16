@@ -16,7 +16,10 @@ import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
-import de.hpi.julianweise.utility.query.join.JoinDistributionPlan;
+import de.hpi.julianweise.slave.query.join.node.ADBJoinNodesContext;
+import de.hpi.julianweise.utility.query.join.JoinExecutionPlan;
+import de.hpi.julianweise.utility.query.join.JoinExecutionPlan.GetNextNodeJoinPair;
+import de.hpi.julianweise.utility.query.join.JoinExecutionPlan.NextNodeToJoinWith;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -30,10 +33,14 @@ import java.time.Duration;
 
 public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
-    private final JoinDistributionPlan distributionPlan;
+    private final ActorRef<JoinExecutionPlan.Command> joinExecutionPlan;
     private final ADBJoinQuery query;
     private final ActorRef<ADBJoinResultMaterializer.Command> materializer;
     private boolean materializationCompleted;
+
+    @Override protected void handleReceiverTerminated() {
+
+    }
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -42,12 +49,6 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         private ActorRef<ADBSlaveQuerySession.Command> respondTo;
     }
 
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ScheduleNextInterNodeJoin implements ADBMasterQuerySession.Command, CborSerializable {
-        private ActorRef<ADBQueryManager.Command> nextJoinManager;
-        private ActorRef<ADBSlaveQuerySession.Command> respondTo;
-    }
 
     @NoArgsConstructor
     @AllArgsConstructor
@@ -62,6 +63,11 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         ADBJoinResultMaterializer.Response response;
     }
 
+    @AllArgsConstructor
+    public static class JoinExecutionPlanWrapper implements Command {
+        NextNodeToJoinWith response;
+    }
+
     public ADBMasterJoinSession(ActorContext<ADBMasterQuerySession.Command> context,
                                 ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers,
                                 ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
@@ -69,7 +75,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                 ActorRef<ADBPartitionInquirer.Command> parent,
                                 ADBJoinQuery query) {
         super(context, queryManagers, partitionManagers, transactionId, parent);
-        this.distributionPlan = new JoinDistributionPlan(this.queryManagers);
+        this.joinExecutionPlan = getContext().spawn(JoinExecutionPlan.createDefault(partitionManagers), "JoinExecPlan");
         this.materializer = this.initializeMaterializer();
         this.query = query;
 
@@ -95,33 +101,47 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         return this.createReceiveBuilder()
                    .onMessage(RequestNextNodeToJoin.class, this::handleRequestNextNodeComparison)
                    .onMessage(JoinQueryResults.class, this::handleJoinQueryResults)
-                   .onMessage(ScheduleNextInterNodeJoin.class, this::handleScheduleNextInterNodeJoin)
                    .onMessage(MaterializedJoinResultsWrapper.class, this::handleMaterializedResults)
+                   .onMessage(JoinExecutionPlanWrapper.class, this::handleJoinExecutionPlanResponse)
                    .build();
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleRequestNextNodeComparison(RequestNextNodeToJoin command) {
-        val nextManager = this.distributionPlan.getNextJoinNodeFor(this.handlersToManager.get(command.getRespondTo()));
-
-        if (nextManager == null) {
-            command.respondTo.tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
-            return Behaviors.same();
-        }
-        this.getContext().getSelf().tell(new ScheduleNextInterNodeJoin(nextManager, command.respondTo));
+        val respondTo = getContext().messageAdapter(NextNodeToJoinWith.class, JoinExecutionPlanWrapper::new);
+        this.joinExecutionPlan.tell(new GetNextNodeJoinPair(this.handlersToManager.get(command.respondTo), respondTo));
         return Behaviors.same();
     }
 
-    private Behavior<ADBMasterQuerySession.Command> handleScheduleNextInterNodeJoin(ScheduleNextInterNodeJoin command) {
-        if (this.managerToHandlers.containsKey(command.nextJoinManager)) {
-            int partnerJoinId = ADBMaster.getGlobalIdFor(command.nextJoinManager);
-            this.getContext().getLog().info("Asking " + command.respondTo + " to join with ID " + partnerJoinId);
-            command.respondTo.tell(new ADBSlaveJoinSession.JoinWithNode(
-                    this.managerToHandlers.get(command.nextJoinManager), partnerJoinId));
-        } else {
-            this.getContext().getLog().warn("No Node-to-Session mapping present for " + command.nextJoinManager);
-            this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), command);
+    private Behavior<ADBMasterQuerySession.Command> handleJoinExecutionPlanResponse(JoinExecutionPlanWrapper wrapper) {
+        NextNodeToJoinWith response = wrapper.response;
+        if (!response.isHasNode()) {
+            this.managerToHandlers.get(response.getRequestingPartitionManager()).tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
+            return Behaviors.same();
         }
+        if (!this.managerToHandlers.containsKey(response.getRequestingPartitionManager())) {
+            this.getContext().getLog().warn("No Node-Session mapping for " + response.getRightQueryManager());
+            this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), wrapper);
+            return Behaviors.same();
+        }
+        this.scheduleNextInterNodeJoin(this.managerToHandlers.get(response.getRequestingPartitionManager()),
+                response.getLeftQueryManager(),
+                response.getRightQueryManager());
         return Behaviors.same();
+    }
+
+    private void scheduleNextInterNodeJoin(ActorRef<ADBSlaveQuerySession.Command> requestingSession,
+                                           ActorRef<ADBPartitionManager.Command> leftPartitionManager,
+                                           ActorRef<ADBPartitionManager.Command> rightPartitionManager) {
+        int leftNodeId = ADBMaster.getGlobalIdFor(leftPartitionManager);
+        int rightNodeId = ADBMaster.getGlobalIdFor(rightPartitionManager);
+        this.getContext().getLog().info("Asking Node#" + leftNodeId + " to join with Node#" + rightNodeId);
+        requestingSession.tell(new ADBSlaveJoinSession.JoinWithNode(ADBJoinNodesContext
+                .builder()
+                .leftNodeId(leftNodeId)
+                .rightNodeId(rightNodeId)
+                .left(leftPartitionManager)
+                .right(rightPartitionManager)
+                .build()));
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinQueryResults(JoinQueryResults results) {
@@ -149,7 +169,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @Override
     protected Behavior<ADBMasterQuerySession.Command> handleConcludeTransaction(ConcludeTransaction command) {
-        super.handleConcludeTransaction(command);
+        this.getContext().getLog().info(command.getSlaveQuerySession() + " concludes session");
+        this.completedSessions.add(command.getSlaveQuerySession());
         if (this.completedSessions.size() == this.queryManagers.size()) {
             this.materializer.tell(new ADBJoinResultMaterializer.Conclude());
         }

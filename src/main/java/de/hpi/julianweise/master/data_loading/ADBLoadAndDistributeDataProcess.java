@@ -19,6 +19,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     private final ActorRef<CSVParsingActor.Response> csvResponseWrapper;
     private final ActorRef<ADBDataDistributor.Response> dataDistributorWrapper;
     private ActorRef<ADBMaster.Command> client;
+    private boolean isAllDataDistributes = false;
 
     public interface Command {
     }
@@ -97,11 +98,14 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleBatchDistributed() {
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
+        if (!this.isAllDataDistributes) {
+            this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
+        }
         return Behaviors.same();
     }
 
     private Behavior<Command> handleCSVFullyParsed() {
+        this.isAllDataDistributes = true;
         this.dataDistributor.tell(new ADBDataDistributor.ConcludeDistribution());
         this.getContext().stop(this.csvParser);
         return Behaviors.same();

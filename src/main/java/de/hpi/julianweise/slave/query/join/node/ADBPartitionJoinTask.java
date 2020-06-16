@@ -10,6 +10,6 @@ import lombok.Getter;
 public class ADBPartitionJoinTask {
     private final int leftPartitionId;
     private final int rightPartitionId;
-    private ActorRef<ADBPartitionManager.Command> leftPartitionManager;
-    private ActorRef<ADBPartitionManager.Command> rightPartitionManager;
+    private final ActorRef<ADBPartitionManager.Command> leftPartitionManager;
+    private final ActorRef<ADBPartitionManager.Command> rightPartitionManager;
 }

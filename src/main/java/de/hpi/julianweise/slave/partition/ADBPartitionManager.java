@@ -95,10 +95,12 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
 
     @AllArgsConstructor
     @Builder
-    public static class RequestPartitionsForJoinQuery implements Command {
-        private final ActorRef<ADBPartitionManager.RelevantPartitionsJoinQuery> respondTo;
-        private final ADBPartitionHeader externalHeader;
-        private final ADBJoinQuery query;
+    @Getter
+    @NoArgsConstructor
+    public static class RequestPartitionsForJoinQuery implements Command, KryoSerializable {
+        private akka.actor.ActorRef respondTo;
+        private ADBPartitionHeader externalHeader;
+        private ADBJoinQuery query;
     }
 
     @AllArgsConstructor
@@ -109,10 +111,11 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
 
     @AllArgsConstructor
     @Getter
-    public static class RelevantPartitionsJoinQuery implements Response {
-        private final int fPartitionId;
-        private final int[] lPartitionIdsLeft;
-        private final int[] lPartitionIdsRight;
+    @NoArgsConstructor
+    public static class RelevantPartitionsJoinQuery implements Response, KryoSerializable {
+        private int fPartitionId;
+        private int[] lPartitionIdsLeft;
+        private int[] lPartitionIdsRight;
     }
 
     @AllArgsConstructor
@@ -168,7 +171,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private void conditionallyCreateNewPartition(boolean forceCreation) {
-        if (forceCreation && this.entityBuffer.getBufferSize() > 0 || this.entityBuffer.isNewPartitionReady()) {
+        while (forceCreation && this.entityBuffer.getBufferSize() > 0 || this.entityBuffer.isNewPartitionReady()) {
             int partId = ADBPartitionFactory.getNewPartitionId();
             this.getContext().spawn(ADBPartitionFactory.createDefault(entityBuffer.getPayloadForPartition(), partId),
                     "Partition-" + partId);
@@ -227,7 +230,8 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         int[] lPartIdsR = IntStream.range(0, this.partitions.size())
                                    .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
                                    .toArray();
-        command.respondTo.tell(new RelevantPartitionsJoinQuery(command.externalHeader.getId(), lPartIdsL, lPartIdsR));
+        command.respondTo.tell(new RelevantPartitionsJoinQuery(command.externalHeader.getId(), lPartIdsL, lPartIdsR),
+                akka.actor.ActorRef.noSender());
         return Behaviors.same();
     }
 
