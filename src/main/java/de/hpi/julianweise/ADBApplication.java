@@ -18,8 +18,6 @@ import de.hpi.julianweise.master.ADBMasterFactory;
 import de.hpi.julianweise.master.config.MasterConfiguration;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcess;
 import de.hpi.julianweise.master.data_loading.ADBLoadAndDistributeDataProcessFactory;
-import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
-import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributorFactory;
 import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicateDeserializer;
 import de.hpi.julianweise.slave.ADBSlave;
@@ -42,9 +40,8 @@ public class ADBApplication {
                 MasterConfiguration masterConfiguration = (MasterConfiguration) configuration;
                 Behavior<CSVParsingActor.Command> csvParser =
                         CSVParsingActorFactory.createForFile(masterConfiguration.getInputFile().toAbsolutePath().toString());
-                Behavior<ADBDataDistributor.Command> distributor = ADBDataDistributorFactory.createDefault();
                 Behavior<ADBLoadAndDistributeDataProcess.Command> loadAndDistributeProcess =
-                        ADBLoadAndDistributeDataProcessFactory.createDefault(csvParser, distributor);
+                        ADBLoadAndDistributeDataProcessFactory.createDefault(csvParser);
                 context.spawn(ADBMasterFactory.createDefault(loadAndDistributeProcess), "DBMasterSupervisor");
             } else if (configuration.role().equals(ConfigurationBase.OperationRole.SLAVE)) {
                 context.spawn(ADBSlave.create(), "DBSlaveSupervisor");

@@ -6,10 +6,8 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -24,7 +22,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
@@ -32,29 +29,25 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     private final Iterator<CSVRecord> csvIterator;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
 
-    public interface Command {
+    public interface Command {}
 
-    }
-    public interface Response {
+    public interface Response {}
 
-    }
     @AllArgsConstructor
     @Getter
     public static class ParseNextCSVChunk implements CSVParsingActor.Command {
         private final ActorRef<Response> client;
-
     }
+
     @Getter
     @AllArgsConstructor
-    public static class DomainDataChunk implements Response {
-        private final ObjectList<ADBEntity> chunk;
-
+    public static class CSVDataChunk implements Response {
+        private final ObjectList<CSVRecord> chunk;
     }
+
     @Getter
     @AllArgsConstructor
-    public static class CSVFullyParsed implements Response {
-
-    }
+    public static class CSVFullyParsed implements Response {}
 
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);
@@ -86,14 +79,14 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
             command.getClient().tell(new CSVFullyParsed());
             return Behaviors.same();
         }
-        final AtomicInteger counter = new AtomicInteger();
-        ObjectList<ADBEntity> chunk = new ObjectArrayList<>();
+        int counter = 0;
+        ObjectList<CSVRecord> chunk = new ObjectArrayList<>(this.settings.CSV_CHUNK_SIZE);
 
-        while (csvIterator.hasNext() && counter.getAndIncrement() < this.settings.CSV_CHUNK_SIZE) {
-            chunk.add(ADBEntityFactoryProvider.getInstance().build(this.csvIterator.next()));
+        while (csvIterator.hasNext() && counter < this.settings.CSV_CHUNK_SIZE) {
+            chunk.add(this.csvIterator.next());
         }
 
-        command.getClient().tell(new DomainDataChunk(chunk));
+        command.getClient().tell(new CSVDataChunk(chunk));
         return Behaviors.same();
     }
 }

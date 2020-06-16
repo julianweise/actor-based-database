@@ -201,6 +201,9 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleConcludeTransfer(ConcludeTransfer command) {
+        if (this.entityBuffer == null) {
+            return Behaviors.same();
+        }
         this.conditionallyCreateNewPartition(true);
         this.entityBuffer = null;
         this.getContext().getLog().info("Distribution concluded.");

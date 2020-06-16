@@ -51,15 +51,13 @@ public class CSVParsingActorTest {
         TestProbe<CSVParsingActor.Response> probe = testKit.createTestProbe();
 
         parser.tell(new CSVParsingActor.ParseNextCSVChunk(probe.ref()));
-        CSVParsingActor.DomainDataChunk chunk = probe.expectMessageClass(CSVParsingActor.DomainDataChunk.class);
+        CSVParsingActor.CSVDataChunk result = probe.expectMessageClass(CSVParsingActor.CSVDataChunk.class);
 
-        TestEntity results = (TestEntity) chunk.getChunk().get(0);
+        assertThat(result.getChunk().size()).isEqualTo(1);
 
-        assertThat(chunk.getChunk().size()).isEqualTo(1);
-
-        assertThat(results.aInteger).isEqualTo(200);
-        assertThat(results.bString).isEqualTo("TestString");
-        assertThat(results.cFloat).isEqualTo(1.02f);
+        assertThat(result.getChunk().get(0).get("headerA")).isEqualTo("200");
+        assertThat(result.getChunk().get(0).get("headerB")).isEqualTo("TestString");
+        assertThat(result.getChunk().get(0).get("headerC")).isEqualTo("1.02");
 
         testKit.stop(parser);
     }
