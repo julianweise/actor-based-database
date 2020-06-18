@@ -49,6 +49,10 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);
         CsvParserSettings settings = new CsvParserSettings();
+        settings.getFormat().setDelimiter(',');
+        settings.getFormat().setLineSeparator("\n");
+        settings.getFormat().setQuoteEscape('\\');
+        settings.setHeaderExtractionEnabled(true);
         this.csvParser = new CsvParser(settings);
         this.csvParser.beginParsing(this.locateCSVFile(filePath));
     }
