@@ -50,6 +50,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
         super(context);
         CsvParserSettings settings = new CsvParserSettings();
         settings.detectFormatAutomatically();
+        settings.setNullValue(" ");
         this.csvParser = new CsvParser(settings);
         this.csvParser.beginParsing(this.locateCSVFile(filePath));
     }
