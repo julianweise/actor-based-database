@@ -118,6 +118,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
             this.batches.get(this.consistentHash.nodeFor(entity.getPrimaryKey().toString())).add(entity);
         }
         this.getContext().getSelf().tell(new Distribute());
+        this.lastClient.tell(new BatchDistributed());
         return Behaviors.same();
     }
 
@@ -133,7 +134,6 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
             this.pendingDistributions.incrementAndGet();
             this.batches.replace(entry.getKey(), new ObjectArrayList<>());
         }
-        this.lastClient.tell(new BatchDistributed());
         return Behaviors.same();
     }
 
