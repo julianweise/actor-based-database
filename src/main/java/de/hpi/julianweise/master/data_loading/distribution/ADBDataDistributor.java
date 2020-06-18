@@ -110,7 +110,8 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     private Behavior<Command> handleDistributeBatchToNodes(DistributeBatch command) {
         if (this.consistentHash == null  || this.partitionManagers.size() < this.minNumberOfNodes) {
-            this.getContext().scheduleOnce(Duration.ofMillis(100), this.getContext().getSelf(), command);
+            this.getContext().getLog().warn("Unable to distribute batches to nodes. Missing partitions");
+            this.getContext().scheduleOnce(Duration.ofMillis(500), this.getContext().getSelf(), command);
             return Behaviors.same();
         }
         this.lastClient = command.client;
@@ -124,9 +125,14 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     private Behavior<Command> handleDistribute(Distribute command) {
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, LargeMessageSenderResponse::new);
         for (Map.Entry<ActorRef<ADBLargeMessageActor.Command>, ObjectList<ADBEntity>> entry : batches.entrySet()) {
-            val message = new ADBPartitionManager.PersistEntities(Adapter.toClassic(getContext().getSelf()), entry.getValue());
+            if (entry.getValue().size() < 1) {
+                continue;
+            }
+            ADBPartitionManager.PersistEntities message = new ADBPartitionManager.PersistEntities(
+                    Adapter.toClassic(getContext().getSelf()), entry.getValue());
             ADBLargeMessageActor.sendMessage(getContext(), Adapter.toClassic(entry.getKey()), respondTo, message);
             this.pendingDistributions.incrementAndGet();
+            this.batches.replace(entry.getKey(), new ObjectArrayList<>());
         }
         return Behaviors.same();
     }

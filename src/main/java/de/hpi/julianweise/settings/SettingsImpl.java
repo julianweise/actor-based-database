@@ -15,7 +15,6 @@ public class SettingsImpl implements Extension {
     public final int PARALLEL_PARTITION_JOINS;
     public final String RESULT_BASE_DIR;
     public final int THRESHOLD_NEXT_NODE_COMPARISON;
-    public final int DISTRIBUTION_CHUNK_SIZE;
 
     public SettingsImpl(Config config) {
         CSV_CHUNK_SIZE = config.getInt("actor-db.csv.chunk-size");
@@ -28,6 +27,5 @@ public class SettingsImpl implements Extension {
         PARALLEL_PARTITION_JOINS = config.getInt("actor-db.number-of-parallel-partition-joins");
         RESULT_BASE_DIR = config.getString("actor-db.results.dir");
         THRESHOLD_NEXT_NODE_COMPARISON = config.getInt("actor-db.join.strategy.threshold-request-next-node");
-        DISTRIBUTION_CHUNK_SIZE = config.getInt("actor-db.distribution.chunk-size");
     }
 }

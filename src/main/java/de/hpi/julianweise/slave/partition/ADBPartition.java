@@ -98,7 +98,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         assert data.size() < MAX_ELEMENTS : "Maximum 2^20 - 1 elements allowed per partition";
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
 
-        this.getContext().getLog().info("Partition maintains " + data.size() + " entities.");
+        this.getContext().getLog().info("Partition #" + id + " maintains " + data.size() + " entities.");
 
         this.id = id;
         this.data = data;

@@ -8,14 +8,12 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
-import akka.serialization.Serializer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.io.NotSerializableException;
 
 public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageReceiver.Command> {
 
@@ -76,21 +74,19 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
         return Behaviors.same();
     }
 
-    private Behavior<Command> handleReceiveNextChunk(ReceiveChunk command) throws NotSerializableException {
+    private Behavior<Command> handleReceiveNextChunk(ReceiveChunk command) {
         System.arraycopy(command.getChunk(), 0, this.payload, this.payloadPointer, command.getChunk().length);
         this.payloadPointer += command.getChunk().length;
         return this.concludeTransfer(command);
     }
 
-    private Behavior<Command> concludeTransfer(ReceiveChunk command) throws NotSerializableException {
+    private Behavior<Command> concludeTransfer(ReceiveChunk command) {
         if (!command.isLastChunk()) {
             this.sender.tell(new ADBLargeMessageSender.SendNextChunk(this.getContext().getSelf()));
             return Behaviors.same();
         }
-        Serializer serializer = serialization.serializerFor(this.messageType);
-        Object message = serializer.fromBinary(this.payload, this.messageType);
-        this.payload = null;
-        this.originalReceiver.tell(this.messageType.cast(message), akka.actor.ActorRef.noSender());
+        Object message = serialization.deserialize(this.payload, this.messageType).get();
+        this.originalReceiver.tell(message, akka.actor.ActorRef.noSender());
         return Behaviors.stopped();
     }
 }

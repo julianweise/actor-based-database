@@ -66,7 +66,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     @Getter
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class PersistEntities implements Command, ADBLargeMessageSender.LargeMessage {
+    public static class PersistEntities implements ADBLargeMessageSender.LargeMessage {
         private akka.actor.ActorRef respondTo;
         private ObjectList<ADBEntity> entities;
     }

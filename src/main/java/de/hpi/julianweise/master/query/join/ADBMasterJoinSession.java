@@ -75,7 +75,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                 ActorRef<ADBPartitionInquirer.Command> parent,
                                 ADBJoinQuery query) {
         super(context, queryManagers, partitionManagers, transactionId, parent);
-        this.joinExecutionPlan = getContext().spawn(JoinExecutionPlan.createDefault(partitionManagers), "JoinExecPlan");
+        this.joinExecutionPlan = getContext().spawn(JoinExecutionPlan.createDefault(partitionManagers, transactionId),
+                "JoinExecPlan");
         this.materializer = this.initializeMaterializer();
         this.query = query;
 

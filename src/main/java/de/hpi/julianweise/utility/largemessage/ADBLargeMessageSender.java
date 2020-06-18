@@ -9,14 +9,12 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.serialization.Serialization;
 import akka.serialization.SerializationExtension;
-import akka.serialization.Serializer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.io.NotSerializableException;
 import java.util.Arrays;
 
 
@@ -58,12 +56,12 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
 
     public static int getChunkSize(Settings settings) {
         long maxMessageSize = settings.config().getBytes("akka.remote.artery.advanced.maximum-frame-size");
-        return Math.round(maxMessageSize * 0.8f);
+        return Math.round(maxMessageSize * 0.9f);
     }
 
     public ADBLargeMessageSender(ActorContext<Command> context,
                                  LargeMessage serializableMessage,
-                                 akka.actor.typed.ActorRef<Response> supervisor) throws NotSerializableException {
+                                 akka.actor.typed.ActorRef<Response> supervisor) {
         super(context);
         this.serialization = SerializationExtension.get(this.getContext().getSystem());
         this.payload = this.serializePayload(serializableMessage);
@@ -106,8 +104,7 @@ public class ADBLargeMessageSender extends AbstractBehavior<ADBLargeMessageSende
         return Behaviors.stopped();
     }
 
-    private byte[] serializePayload(LargeMessage payload) throws NotSerializableException {
-        Serializer serializer = serialization.serializerFor(payload.getClass());
-        return serializer.toBinary(payload);
+    private byte[] serializePayload(LargeMessage payload) {
+        return serialization.serialize(payload).get();
     }
 }

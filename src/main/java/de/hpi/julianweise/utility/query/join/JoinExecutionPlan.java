@@ -51,8 +51,10 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
         private boolean hasNode;
     }
 
-    public static Behavior<JoinExecutionPlan.Command> createDefault(ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers) {
-        return Behaviors.setup(context -> new JoinExecutionPlan(context, partitionManagers));
+    public static Behavior<JoinExecutionPlan.Command> createDefault(
+            ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
+            int transactionId) {
+        return Behaviors.setup(context -> new JoinExecutionPlan(context, partitionManagers, transactionId));
     }
 
 
@@ -62,11 +64,14 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     private final Int2ObjectMap<AtomicInteger> dataAccesses = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<AtomicInteger> dataRequests = new Int2ObjectOpenHashMap<>();
     private final AtomicInteger finalizedComparisons = new AtomicInteger(0);
+    private final JoinExecutionPlanHistory history;
 
     public JoinExecutionPlan(ActorContext<Command> context,
-                             ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers) {
+                             ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
+                             int transactionId) {
         super(context);
         this.partitionManagers = partitionManagers;
+        this.history = new JoinExecutionPlanHistory(transactionId);
         this.distributionMap = this.initializeDistributionMap(this.partitionManagers.size());
         IntStream.range(0, partitionManagers.size()).forEach(index -> dataAccesses.put(index, new AtomicInteger()));
         IntStream.range(0, partitionManagers.size()).forEach(index -> dataRequests.put(index, new AtomicInteger()));
@@ -92,6 +97,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
 
     public Behavior<Command> handleGetNextNodeJoinPair(GetNextNodeJoinPair command) {
         int nodeIndex = this.getIndexOfNode(command.requestingPartitionManager);
+        this.history.logFinalizedNodeJoin(nodeIndex);
         int nodeIndexMinimalAccesses = this.getNodeIndexWithMinimalAccessesForNode(nodeIndex);
         getContext().getLog().info(String.format("[DistributionPlan] Node #%d requested new Node to join. Suggested " +
                         "Node # %d",
@@ -102,6 +108,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
             command.responseTo.tell(NextNodeToJoinWith.builder().hasNode(false).requestingPartitionManager(command.requestingPartitionManager).build());
             return Behaviors.same();
         }
+        this.history.logNodeJoin(nodeIndex, nodeIndexMinimalAccesses);
         this.distributionMap[nodeIndex].set(nodeIndexMinimalAccesses);
         this.distributionMap[nodeIndexMinimalAccesses].set(nodeIndex);
         this.dataAccesses.get(nodeIndex).incrementAndGet();

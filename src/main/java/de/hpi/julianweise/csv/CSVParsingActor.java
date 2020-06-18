@@ -84,6 +84,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
         while (csvIterator.hasNext() && counter < this.settings.CSV_CHUNK_SIZE) {
             chunk.add(this.csvIterator.next());
+            counter++;
         }
 
         command.getClient().tell(new CSVDataChunk(chunk));

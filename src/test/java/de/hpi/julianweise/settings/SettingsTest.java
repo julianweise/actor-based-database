@@ -36,7 +36,6 @@ public class SettingsTest {
                 "actor-db.partition.size = 512000\n" +
                 "actor-db.number-of-parallel-partition-joins = 8\n" +
                 "actor-db.results.dir = ~/results/\n" +
-                "actor-db.distribution.chunk-size = 10000\n" +
                 "actor-db.query-endpoint.port = 2020";
         TestKitJunitResource testKit = new TestKitJunitResource(config);
 
