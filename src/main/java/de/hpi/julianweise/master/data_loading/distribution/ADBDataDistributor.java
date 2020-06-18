@@ -99,7 +99,6 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     private Behavior<Command> handleWrappedReceptionistListing(WrappedListing command) {
         if (command.listing.getServiceInstances(ADBPartitionManager.SERVICE_KEY).size() < this.minNumberOfNodes) {
-            getContext().getLog().warn("Unable to process Receptionist Listing. Missing PartitionManagers");
             return Behaviors.same();
         }
         this.partitionManagers.addAll(command.listing.getServiceInstances(ADBPartitionManager.SERVICE_KEY));

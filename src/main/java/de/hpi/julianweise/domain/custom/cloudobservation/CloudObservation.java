@@ -1,6 +1,6 @@
 package de.hpi.julianweise.domain.custom.cloudobservation;
 
-import de.hpi.julianweise.domain.key.ADBStringKey;
+import de.hpi.julianweise.domain.key.ADBIntegerKey;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.ADBKey;
 import lombok.AllArgsConstructor;
@@ -46,7 +46,16 @@ public class CloudObservation extends ADBEntity {
 
     @Override
     public ADBKey getPrimaryKey() {
-        return new ADBStringKey(this._timestamp + "" + this.stationNumber);
+        return new ADBIntegerKey(this.getPrimaryKeyValue());
+    }
+
+    private int getPrimaryKeyValue() {
+        final int prime = 31;
+        int result = prime + Integer.hashCode(this._timestamp);
+        result = prime * result + Integer.hashCode(this.stationNumber);
+        result = prime * result + Short.hashCode(this.latitude);
+        result = prime * result + Integer.hashCode(this.longitude);
+        return result;
     }
 
     @Override
