@@ -75,6 +75,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
             chunk.add(record);
             if (++counter >= this.settings.CSV_CHUNK_SIZE) {
                 command.getClient().tell(new CSVDataChunk(chunk));
+                this.getContext().getSelf().tell(new ParseNextCSVChunk(command.client));
                 return Behaviors.same();
             }
         }
