@@ -133,12 +133,13 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
             this.pendingDistributions.incrementAndGet();
             this.batches.replace(entry.getKey(), new ObjectArrayList<>());
         }
+        this.lastClient.tell(new BatchDistributed());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleConfirmEntityPersisted(ConfirmEntitiesPersisted command) {
         if (this.pendingDistributions.decrementAndGet() < 1) {
-           this.lastClient.tell(new BatchDistributed());
+            this.getContext().getLog().debug("Distribution confirmed");
         }
         return Behaviors.same();
     }
