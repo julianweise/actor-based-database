@@ -21,12 +21,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
-import java.util.Iterator;
 
 public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
     private final InputStreamReader inputStreamReader;
-    private final Iterator<CSVRecord> csvIterator;
+    private final Iterable<CSVRecord> csvIterator;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
 
     public interface Command {}
@@ -52,8 +51,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);
         this.inputStreamReader = new InputStreamReader(this.locateCSVFile(filePath));
-        CSVParser csvParser = this.openCSVForParsing();
-        this.csvIterator = csvParser.iterator();
+        this.csvIterator = this.openCSVForParsing();
     }
 
     @Override
@@ -75,19 +73,18 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     }
 
     private Behavior<Command> handleParseNextCSVChunk(ParseNextCSVChunk command) {
-        if (!this.csvIterator.hasNext()) {
-            command.getClient().tell(new CSVFullyParsed());
-            return Behaviors.same();
-        }
         int counter = 0;
         ObjectList<CSVRecord> chunk = new ObjectArrayList<>(this.settings.CSV_CHUNK_SIZE);
 
-        while (csvIterator.hasNext() && counter < this.settings.CSV_CHUNK_SIZE) {
-            chunk.add(this.csvIterator.next());
-            counter++;
+        for (CSVRecord line: this.csvIterator) {
+            chunk.add(line);
+            if (++counter >= this.settings.CSV_CHUNK_SIZE) {
+                command.getClient().tell(new CSVDataChunk(chunk));
+                return Behaviors.same();
+            }
         }
 
-        command.getClient().tell(new CSVDataChunk(chunk));
+        command.getClient().tell(new CSVFullyParsed());
         return Behaviors.same();
     }
 }
