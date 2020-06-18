@@ -17,14 +17,14 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
+import java.io.FileReader;
 
 public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
-    private final InputStreamReader inputStreamReader;
+    private final BufferedReader inputReader;
     private final Iterable<CSVRecord> csvIterator;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
 
@@ -50,7 +50,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);
-        this.inputStreamReader = new InputStreamReader(this.locateCSVFile(filePath));
+        this.inputReader = new BufferedReader(this.locateCSVFile(filePath));
         this.csvIterator = this.openCSVForParsing();
     }
 
@@ -62,14 +62,14 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     }
 
     @SneakyThrows(FileNotFoundException.class)
-    private FileInputStream locateCSVFile(String csvPath) {
+    private FileReader locateCSVFile(String csvPath) {
         File csvFile = new File(csvPath);
-        return new FileInputStream(csvFile);
+        return new FileReader(csvFile);
     }
 
     @SneakyThrows
     private CSVParser openCSVForParsing() {
-        return CSVFormat.EXCEL.withFirstRecordAsHeader().parse(this.inputStreamReader);
+        return CSVFormat.RFC4180.withFirstRecordAsHeader().parse(this.inputReader);
     }
 
     private Behavior<Command> handleParseNextCSVChunk(ParseNextCSVChunk command) {
