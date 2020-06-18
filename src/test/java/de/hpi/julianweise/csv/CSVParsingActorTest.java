@@ -55,9 +55,9 @@ public class CSVParsingActorTest {
 
         assertThat(result.getChunk().size()).isEqualTo(1);
 
-        assertThat(result.getChunk().get(0).get("headerA")).isEqualTo("200");
-        assertThat(result.getChunk().get(0).get("headerB")).isEqualTo("TestString");
-        assertThat(result.getChunk().get(0).get("headerC")).isEqualTo("1.02");
+        assertThat(result.getChunk().get(0).getInt("headerA")).isEqualTo(200);
+        assertThat(result.getChunk().get(0).getString("headerB")).isEqualTo("TestString");
+        assertThat(result.getChunk().get(0).getFloat("headerC")).isEqualTo(1.02f);
 
         testKit.stop(parser);
     }

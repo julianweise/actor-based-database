@@ -1,12 +1,9 @@
 package de.hpi.julianweise.csv;
 
+import com.univocity.parsers.common.record.Record;
 import de.hpi.julianweise.domain.custom.patient.PatientDeserializer;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
-import org.apache.commons.csv.CSVRecord;
-
-import static java.lang.Float.parseFloat;
-import static java.lang.Integer.parseInt;
 
 public class TestEntityFactory implements ADBEntityFactory {
 
@@ -15,11 +12,11 @@ public class TestEntityFactory implements ADBEntityFactory {
     }
 
     @Override
-    public ADBEntity build(CSVRecord row) {
+    public ADBEntity build(Record row) {
         return TestEntity.builder()
-                         .aInteger(parseInt(row.get(0), 10))
-                         .bString(row.get(1))
-                         .cFloat(parseFloat(row.get(2)))
+                         .aInteger(row.getInt(0))
+                         .bString(row.getString(1))
+                         .cFloat(row.getFloat(2))
                          .build();
     }
 

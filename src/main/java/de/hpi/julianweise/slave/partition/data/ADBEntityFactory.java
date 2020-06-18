@@ -1,12 +1,12 @@
 package de.hpi.julianweise.slave.partition.data;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import org.apache.commons.csv.CSVRecord;
+import com.univocity.parsers.common.record.Record;
 
 public interface ADBEntityFactory {
     Class<? extends ADBEntity> getTargetClass();
 
-    ADBEntity build(CSVRecord row);
+    ADBEntity build(Record row);
 
     JsonDeserializer<? extends ADBEntity> buildDeserializer();
 }

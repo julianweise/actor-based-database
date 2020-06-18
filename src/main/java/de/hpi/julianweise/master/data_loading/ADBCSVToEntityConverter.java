@@ -6,12 +6,12 @@ import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
+import com.univocity.parsers.common.record.Record;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
-import org.apache.commons.csv.CSVRecord;
 
 public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConverter.Command> {
 
@@ -22,7 +22,7 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
     @AllArgsConstructor
     public static class ConvertBatch implements Command {
         ActorRef<ConvertedBatch> respondTo;
-        ObjectList<CSVRecord> batch;
+        ObjectList<Record> batch;
     }
 
     @AllArgsConstructor
@@ -47,7 +47,7 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
 
     private Behavior<Command> handleBatch(ConvertBatch command) {
         ObjectList<ADBEntity> converted = new ObjectArrayList<>(command.batch.size());
-        for(CSVRecord record : command.batch) {
+        for(Record record : command.batch) {
             converted.add(ADBEntityFactoryProvider.getInstance().build(record));
         }
         command.respondTo.tell(new ConvertedBatch(converted));

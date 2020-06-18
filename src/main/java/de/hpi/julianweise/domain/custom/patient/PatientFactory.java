@@ -1,10 +1,8 @@
 package de.hpi.julianweise.domain.custom.patient;
 
+import com.univocity.parsers.common.record.Record;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
-import org.apache.commons.csv.CSVRecord;
-
-import static java.lang.Integer.parseInt;
 
 @SuppressWarnings("unused")
 public class PatientFactory implements ADBEntityFactory {
@@ -15,18 +13,18 @@ public class PatientFactory implements ADBEntityFactory {
     }
 
     @Override
-    public ADBEntity build(CSVRecord record) {
+    public ADBEntity build(Record record) {
         return Patient.builder()
-                      .ausgleichsjahr(parseInt(record.get(1), 10))
-                      .berichtsjahr(parseInt(record.get(2), 10))
-                      .psid2(parseInt(record.get(3), 10))
-                      .psid(record.get(4))
-                      .kvNrKennzeichen(parseInt(record.get(5), 10) == 1)
-                      .geburtsjahr(parseInt(record.get(6), 10))
-                      .geschlecht(parseInt(record.get(7)) == 2 ? 'm' : 'w')
-                      .versichertenTage(parseInt(record.get(8), 10))
-                      .verstorben(parseInt(record.get(9), 10) == 1)
-                      .versichertentageKrankenGeld(parseInt(record.get(10), 10))
+                      .ausgleichsjahr(record.getInt(1))
+                      .berichtsjahr(record.getInt(2))
+                      .psid2(record.getInt(3))
+                      .psid(record.getString(4))
+                      .kvNrKennzeichen(record.getInt(5) == 1)
+                      .geburtsjahr(record.getInt(6))
+                      .geschlecht(record.getInt(7) == 2 ? 'm' : 'w')
+                      .versichertenTage(record.getInt(8))
+                      .verstorben(record.getInt(9) == 1)
+                      .versichertentageKrankenGeld(record.getInt(10))
                       .build();
     }
 

@@ -1,8 +1,8 @@
 package de.hpi.julianweise.domain.custom.sfemployeesalary;
 
+import com.univocity.parsers.common.record.Record;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
-import org.apache.commons.csv.CSVRecord;
 
 public class SFEmployeeFactory implements ADBEntityFactory {
 
@@ -12,30 +12,30 @@ public class SFEmployeeFactory implements ADBEntityFactory {
     }
 
     @Override
-    public ADBEntity build(CSVRecord record) {
+    public ADBEntity build(Record record) {
         return SFEmployeeSalary.builder()
-                               .yearType(record.get(0))
-                               .year(Integer.parseInt(record.get(1)))
-                               .organizationGroupCode(Integer.parseInt(record.get(2)))
-                               .organizationGroup(record.get(3))
-                               .departmentCode(record.get(4))
-                               .department(record.get(5))
-                               .unionCode(record.get(6))
-                               .union(record.get(7))
-                               .jobFamilyCode(record.get(8))
-                               .jobFamily(record.get(9))
-                               .jobCode(record.get(10))
-                               .job(record.get(11))
-                               .employeeIdentifier(Integer.parseInt(record.get(12)))
-                               .salaries(Double.parseDouble(record.get(13)))
-                               .overtime(Double.parseDouble(record.get(14)))
-                               .otherSalaries(Double.parseDouble(record.get(15)))
-                               .totalSalary(Double.parseDouble(record.get(16)))
-                               .retirement(Double.parseDouble(record.get(17)))
-                               .healthAndDental(Double.parseDouble(record.get(18)))
-                               .otherBenefits(Double.parseDouble(record.get(19)))
-                               .totalBenefits(Double.parseDouble(record.get(20)))
-                               .totalCompensation(Double.parseDouble(record.get(21)))
+                               .yearType(record.getString(0))
+                               .year(record.getInt(1))
+                               .organizationGroupCode(record.getInt(2))
+                               .organizationGroup(record.getString(3))
+                               .departmentCode(record.getString(4))
+                               .department(record.getString(5))
+                               .unionCode(record.getString(6))
+                               .union(record.getString(7))
+                               .jobFamilyCode(record.getString(8))
+                               .jobFamily(record.getString(9))
+                               .jobCode(record.getString(10))
+                               .job(record.getString(11))
+                               .employeeIdentifier(record.getInt(12))
+                               .salaries(record.getDouble(13))
+                               .overtime(record.getDouble(14))
+                               .otherSalaries(record.getDouble(15))
+                               .totalSalary(record.getDouble(16))
+                               .retirement(record.getDouble(17))
+                               .healthAndDental(record.getDouble(18))
+                               .otherBenefits(record.getDouble(19))
+                               .totalBenefits(record.getDouble(20))
+                               .totalCompensation(record.getDouble(21))
                                .build();
     }
 
