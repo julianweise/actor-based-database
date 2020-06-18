@@ -50,7 +50,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
 
     protected CSVParsingActor(ActorContext<CSVParsingActor.Command> context, String filePath) {
         super(context);
-        this.inputReader = new BufferedReader(this.locateCSVFile(filePath));
+        this.inputReader = new BufferedReader(this.locateCSVFile(filePath), 1048576 * 10);
         this.csvIterator = this.openCSVForParsing();
     }
 
