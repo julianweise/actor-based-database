@@ -2,6 +2,7 @@ package de.hpi.julianweise.master.data_loading;
 
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
+import akka.actor.typed.DispatcherSelector;
 import akka.actor.typed.SupervisorStrategy;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
@@ -63,7 +64,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     protected ADBLoadAndDistributeDataProcess(ActorContext<Command> context,
                                               Behavior<CSVParsingActor.Command> csvParser) {
         super(context);
-        this.csvParser = context.spawn(csvParser, "CSVParser");
+        this.csvParser = context.spawn(csvParser, "CSVParser",  DispatcherSelector.fromConfig("io-blocking-dispatcher"));
         this.dataDistributor = this.spawnDistributorPool(context);
         this.entityConverter = this.spawnConverterPool(context);
         this.csvResponseWrapper = this.getCSVResponseWrapper();
