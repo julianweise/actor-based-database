@@ -73,7 +73,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
 
     private ActorRef<ADBDataDistributor.Command> spawnDistributorPool(ActorContext<Command> context) {
         PoolRouter<ADBDataDistributor.Command> pool = Routers
-                .pool(this.settings.NUMBER_OF_THREADS, Behaviors
+                .pool(this.settings.NUMBER_DISTRIBUTOR, Behaviors
                         .supervise(ADBDataDistributorFactory.createDefault())
                         .onFailure(SupervisorStrategy.restart()))
                 .withRoundRobinRouting();
@@ -81,7 +81,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private ActorRef<ADBCSVToEntityConverter.Command> spawnConverterPool(ActorContext<Command> context) {
-        return context.spawn(Routers.pool(this.settings.NUMBER_OF_THREADS, Behaviors
+        return context.spawn(Routers.pool(this.settings.NUMBER_ENTITY_CONVERTER, Behaviors
                 .supervise(ADBCSVToEntityConverter.createDefault())
                 .onFailure(SupervisorStrategy.restart())), "converter-pool");
     }
@@ -125,7 +125,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleCSVChunk(CSVParsingActor.CSVDataChunk chunk) {
-        int chunkSize = (int) Math.ceil((double) chunk.getChunk().size() / this.settings.NUMBER_OF_THREADS);
+        int chunkSize = (int) Math.ceil((double) chunk.getChunk().size() / this.settings.NUMBER_ENTITY_CONVERTER);
         for (int i = 0; i < chunk.getChunk().size(); i += chunkSize) {
             val payload = chunk.getChunk().subList(i, Math.min(chunk.getChunk().size(), i + chunkSize));
             this.entityConverter.tell(new ADBCSVToEntityConverter.ConvertBatch(this.converterWrapper, payload));
@@ -152,11 +152,10 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleBatchDistributed() {
-        if (this.distributedBatchBatches.incrementAndGet() < this.settings.NUMBER_OF_THREADS) {
+        if (this.distributedBatchBatches.incrementAndGet() < this.settings.NUMBER_DISTRIBUTOR) {
             return Behaviors.same();
         }
         this.distributedBatchBatches.set(0);
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 
