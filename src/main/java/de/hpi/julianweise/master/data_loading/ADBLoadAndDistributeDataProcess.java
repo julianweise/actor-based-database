@@ -165,7 +165,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         if (response.getResponse() instanceof ADBDataDistributor.BatchDistributed) {
             return this.handleBatchDistributed();
         }
-        else {
+        else if (response.getResponse() instanceof ADBDataDistributor.Finalized){
             if (this.finalizedDistributor.incrementAndGet() >= this.settings.NUMBER_DISTRIBUTOR) {
                 return this.handleDataFullyDistributed();
             }

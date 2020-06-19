@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Command> {
 
-    private static final Duration MAX_ROUND_TRIP_TIME = Duration.ofMillis(300);
+    private static final Duration MAX_ROUND_TRIP_TIME = Duration.ofMillis(100);
     private static final int VIRTUAL_NODES_FACTOR = 50;
 
     private final Set<ActorRef<ADBPartitionManager.Command>> partitionManagers = new HashSet<>();
@@ -112,8 +112,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     private Behavior<Command> handleDistributeBatchToNodes(DistributeBatch command) {
         if (this.consistentHash == null  || this.partitionManagers.size() < this.minNumberOfNodes) {
-            this.getContext().getLog().warn("Unable to distribute batches to nodes. Missing partitions");
-            this.getContext().scheduleOnce(Duration.ofMillis(500), this.getContext().getSelf(), command);
+            this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
             return Behaviors.same();
         }
         this.lastClient = command.client;
@@ -148,7 +147,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
         if (this.batches.entrySet().stream().anyMatch(entry -> entry.getValue().size() > 0)
-                || this.consistentHash == null  || this.partitionManagers.size() < this.minNumberOfNodes) {
+                || this.consistentHash == null  || this.partitionManagers.size() < this.minNumberOfNodes || this.pendingDistributions.get() > 0) {
             this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
             return Behaviors.same();
         }
