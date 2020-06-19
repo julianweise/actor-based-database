@@ -17,12 +17,14 @@ import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
+import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
@@ -60,9 +62,11 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @AllArgsConstructor
     @NoArgsConstructor
     @Getter
+    @Builder
     public static class RequestMultipleAttributes implements Command, CborSerializable {
         private ActorRef<ADBLargeMessageActor.Command> respondTo;
         private Set<String> attributes;
+        private boolean isLeft;
     }
 
     @AllArgsConstructor
@@ -70,6 +74,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @Getter
     public static class MultipleAttributes implements Response, ADBLargeMessageSender.LargeMessage {
         private Map<String, ObjectList<ADBEntityEntry>> attributes;
+        private boolean isLeft;
     }
 
     @AllArgsConstructor
@@ -128,7 +133,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
                 .stream()
                 .map(this.sortedAttributes::get)
                 .collect(Collectors.toMap(s -> s.getField().getName(), s -> s.getMaterialized(this.data)));
-        val message = new MultipleAttributes(attributes);
+        val message = new MultipleAttributes(attributes, command.isLeft);
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
         ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(command.respondTo), respondTo, message);
         return Behaviors.same();

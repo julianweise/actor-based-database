@@ -11,7 +11,7 @@ import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartition;
-import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager.RedirectToPartition;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
@@ -108,29 +108,32 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         assert this.joinTask == null && this.isNotPrepared() : "This executor is already prepared!";
         this.joinTask = command.joinTask;
         this.requestLeftSideAttributes();
+        this.requestRightSideAttributes();
         return Behaviors.same();
     }
 
     private void requestLeftSideAttributes() {
-        val leftCommand = new ADBPartition.RequestMultipleAttributes(getContext().getSelf(),
-                joinQuery.getAllLeftHandSideFields());
-        joinTask.getLeftPartitionManager()
-                .tell(new ADBPartitionManager.RedirectToPartition(joinTask.getLeftPartitionId(), leftCommand));
+        val leftCommand = ADBPartition.RequestMultipleAttributes.builder()
+                                                                .respondTo(getContext().getSelf())
+                                                                .attributes(joinQuery.getAllLeftHandSideFields())
+                                                                .isLeft(true)
+                                                                .build();
+        joinTask.getLeftPartitionManager().tell(new RedirectToPartition(joinTask.getLeftPartitionId(), leftCommand));
     }
 
     private void requestRightSideAttributes() {
-        val rightCommand = new ADBPartition.RequestMultipleAttributes(getContext().getSelf(),
-                joinQuery.getAllRightHandSideFields());
-        joinTask.getRightPartitionManager()
-                .tell(new ADBPartitionManager.RedirectToPartition(joinTask.getRightPartitionId(), rightCommand));
+        val rightCommand = ADBPartition.RequestMultipleAttributes.builder()
+                                                                 .respondTo(getContext().getSelf())
+                                                                 .attributes(joinQuery.getAllRightHandSideFields())
+                                                                 .isLeft(false)
+                                                                 .build();
+        joinTask.getRightPartitionManager().tell(new RedirectToPartition(joinTask.getRightPartitionId(), rightCommand));
     }
 
     private Behavior<Command> handleMultipleAttributes(ADBPartition.MultipleAttributes response) {
-        if (this.leftAttributes == null) {
-            this.leftAttributes = response.getAttributes();
-            this.requestRightSideAttributes();
-        } else {
-            this.rightAttributes = response.getAttributes();
+        if (response.isLeft()) this.leftAttributes = response.getAttributes();
+        if (!response.isLeft()) this.rightAttributes = response.getAttributes();
+        if (this.leftAttributes != null && this.rightAttributes != null) {
             this.respondTo.tell(new JoinTaskPrepared(this.getContext().getSelf()));
         }
         return Behaviors.same();
