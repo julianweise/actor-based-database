@@ -20,6 +20,7 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBJoinQueryContext;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.assertj.core.api.Condition;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -27,11 +28,14 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static org.assertj.core.api.Assertions.anyOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBJoinWithNodeSessionTest {
@@ -130,10 +134,10 @@ public class ADBJoinWithNodeSessionTest {
         ADBPartitionManager.RedirectToPartition redirectCommand22 =
                 remotePartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
-        assertThat(redirectCommand11.getMessage().getAttributes()).containsExactly("aInteger");
-        assertThat(redirectCommand21.getMessage().getAttributes()).containsExactly("aInteger");
-        assertThat(redirectCommand12.getMessage().getAttributes()).containsExactly("cFloat", "eDouble");
-        assertThat(redirectCommand22.getMessage().getAttributes()).containsExactly("cFloat", "eDouble");
+        assertThat(redirectCommand11.getMessage().getAttributes()).containsAnyOf("aInteger", "cFloat", "eDouble");
+        assertThat(redirectCommand12.getMessage().getAttributes()).containsAnyOf("aInteger", "cFloat", "eDouble");
+        assertThat(redirectCommand21.getMessage().getAttributes()).containsAnyOf("aInteger", "cFloat", "eDouble");
+        assertThat(redirectCommand22.getMessage().getAttributes()).containsAnyOf("aInteger", "cFloat", "eDouble");
     }
 
 }

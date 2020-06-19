@@ -129,7 +129,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
     private Behavior<Command> handleRequestMultipleAttributes(RequestMultipleAttributes command) {
         val attributes = command.attributes
-                .stream()
+                .parallelStream()
                 .map(this.sortedAttributes::get)
                 .collect(Collectors.toMap(s -> s.getField().getName(), s -> s.getMaterialized(this.data)));
         val message = new MultipleAttributes(attributes, command.isLeft);
