@@ -21,7 +21,7 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
 
     @AllArgsConstructor
     public static class ConvertBatch implements Command {
-        ActorRef<ConvertedBatch> respondTo;
+        ActorRef<Response> respondTo;
         ObjectList<Record> batch;
     }
 
@@ -29,6 +29,12 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
     public static class ConvertedBatch  implements Response {
         ObjectList<ADBEntity> entities;
     }
+
+    public static class Finalize implements Command {
+        ActorRef<Response> respondTo;
+    }
+
+    public static class Finalized implements Response {}
 
     public static Behavior<Command> createDefault() {
         return Behaviors.setup(ADBCSVToEntityConverter::new);
@@ -42,6 +48,7 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(ConvertBatch.class, this::handleBatch)
+                .onMessage(Finalize.class, this::handleFinalize)
                 .build();
     }
 
@@ -52,5 +59,10 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
         }
         command.respondTo.tell(new ConvertedBatch(converted));
         return Behaviors.same();
+    }
+
+    private Behavior<Command> handleFinalize(Finalize command) {
+        command.respondTo.tell(new Finalized());
+        return Behaviors.stopped();
     }
 }

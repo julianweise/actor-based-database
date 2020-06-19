@@ -68,8 +68,10 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     }
 
     @AllArgsConstructor
-    public static class BatchDistributed implements Response {
-    }
+    public static class BatchDistributed implements Response {}
+
+    @AllArgsConstructor
+    public static class Finalized implements Response {}
 
     @AllArgsConstructor
     public static class LargeMessageSenderResponse implements Command {
@@ -149,6 +151,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
             return Behaviors.same();
         }
         this.partitionManagers.forEach(manager -> manager.tell(new ADBPartitionManager.ConcludeTransfer()));
+        this.lastClient.tell(new Finalized());
         return Behaviors.stopped();
     }
 

@@ -16,6 +16,8 @@ import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributorFactory;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
+import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
@@ -28,10 +30,12 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     private final ActorRef<ADBDataDistributor.Command> dataDistributor;
     private final ActorRef<CSVParsingActor.Response> csvResponseWrapper;
     private final ActorRef<ADBDataDistributor.Response> dataDistributorWrapper;
-    private final ActorRef<ADBCSVToEntityConverter.ConvertedBatch> converterWrapper;
+    private final ActorRef<ADBCSVToEntityConverter.Response> converterWrapper;
     private final ActorRef<ADBCSVToEntityConverter.Command> entityConverter;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final AtomicInteger distributedBatchBatches = new AtomicInteger(0);
+    private final AtomicInteger finalizedConverter = new AtomicInteger(0);
+    private final AtomicInteger finalizedDistributor = new AtomicInteger(0);
     private ActorRef<ADBMaster.Command> client;
 
     public interface Command {}
@@ -51,7 +55,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     @AllArgsConstructor
     @Getter
     public static class WrappedConverterResponse implements Command {
-        private final ADBCSVToEntityConverter.ConvertedBatch response;
+        private final ADBCSVToEntityConverter.Response response;
     }
 
     @AllArgsConstructor
@@ -95,8 +99,8 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         return getContext().messageAdapter(ADBDataDistributor.Response.class, WrappedNodeDistributorResponse::new);
     }
 
-    private ActorRef<ADBCSVToEntityConverter.ConvertedBatch> getConverterWrapper() {
-        return getContext().messageAdapter(ADBCSVToEntityConverter.ConvertedBatch.class, WrappedConverterResponse::new);
+    private ActorRef<ADBCSVToEntityConverter.Response> getConverterWrapper() {
+        return getContext().messageAdapter(ADBCSVToEntityConverter.Response.class, WrappedConverterResponse::new);
     }
 
 
@@ -106,7 +110,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
                 .onMessage(Start.class, this::handleStart)
                 .onMessage(WrappedCSVParserResponse.class, this::handleCSVParserResponse)
                 .onMessage(WrappedNodeDistributorResponse.class, this::handleDataDistributorResponse)
-                .onMessage(WrappedConverterResponse.class, this::handleEntityBatch)
+                .onMessage(WrappedConverterResponse.class, this::handleConverterResponse)
                 .build();
     }
 
@@ -135,19 +139,35 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleCSVFullyParsed() {
-        this.getContext().stop(this.dataDistributor);
-        this.getContext().stop(this.csvParser);
-        return this.handleDataFullyDistributed();
+        for(int i = 0; i < this.settings.NUMBER_ENTITY_CONVERTER; i++) {
+            this.entityConverter.tell(new ADBCSVToEntityConverter.Finalize());
+        }
+        return Behaviors.same();
     }
 
-    private Behavior<Command> handleEntityBatch(WrappedConverterResponse cmd) {
-        dataDistributor.tell(new ADBDataDistributor.DistributeBatch(dataDistributorWrapper, cmd.response.entities));
+    private Behavior<Command> handleConverterResponse(WrappedConverterResponse cmd) {
+        if (cmd.response instanceof ADBCSVToEntityConverter.ConvertedBatch) {
+            ObjectList<ADBEntity> entities = ((ADBCSVToEntityConverter.ConvertedBatch) cmd.response).entities;
+            dataDistributor.tell(new ADBDataDistributor.DistributeBatch(dataDistributorWrapper, entities));
+        } else {
+            if (this.finalizedConverter.incrementAndGet() < this.settings.NUMBER_ENTITY_CONVERTER) {
+                return Behaviors.same();
+            }
+            for(int i = 0; i < this.settings.NUMBER_DISTRIBUTOR; i++) {
+                this.dataDistributor.tell(new ADBDataDistributor.ConcludeDistribution());
+            }
+        }
         return Behaviors.same();
     }
 
     private Behavior<Command> handleDataDistributorResponse(WrappedNodeDistributorResponse response) {
         if (response.getResponse() instanceof ADBDataDistributor.BatchDistributed) {
             return this.handleBatchDistributed();
+        }
+        else {
+            if (this.finalizedDistributor.incrementAndGet() >= this.settings.NUMBER_DISTRIBUTOR) {
+                return this.handleDataFullyDistributed();
+            }
         }
         return Behaviors.same();
     }
