@@ -118,7 +118,6 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
             this.batches.get(this.consistentHash.nodeFor(entity.getPrimaryKey().toString())).add(entity);
         }
         this.getContext().getSelf().tell(new Distribute());
-        this.lastClient.tell(new BatchDistributed());
         return Behaviors.same();
     }
 
@@ -139,7 +138,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     private Behavior<Command> handleConfirmEntityPersisted(ConfirmEntitiesPersisted command) {
         if (this.pendingDistributions.decrementAndGet() < 1) {
-            this.getContext().getLog().debug("Distribution confirmed");
+            this.lastClient.tell(new BatchDistributed());
         }
         return Behaviors.same();
     }

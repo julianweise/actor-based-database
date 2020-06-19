@@ -156,6 +156,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         if (this.distributedBatchBatches.incrementAndGet() < this.settings.NUMBER_DISTRIBUTOR) {
             return Behaviors.same();
         }
+        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         this.distributedBatchBatches.set(0);
         return Behaviors.same();
     }
