@@ -65,6 +65,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     }
     @AllArgsConstructor
     public static class ConcludeDistribution implements Command, KryoSerializable {
+        ActorRef<Response> respondTo;
     }
 
     @AllArgsConstructor
@@ -151,7 +152,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
             return Behaviors.same();
         }
         this.partitionManagers.forEach(manager -> manager.tell(new ADBPartitionManager.ConcludeTransfer()));
-        this.lastClient.tell(new Finalized());
+        command.respondTo.tell(new Finalized());
         return Behaviors.stopped();
     }
 

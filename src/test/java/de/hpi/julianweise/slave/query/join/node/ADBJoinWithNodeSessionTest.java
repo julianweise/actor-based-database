@@ -121,8 +121,8 @@ public class ADBJoinWithNodeSessionTest {
         attributes.put("cFloat", new ObjectArrayList<>());
         attributes.put("eDouble", new ObjectArrayList<>());
 
-        redirectCommand11.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes));
-        redirectCommand21.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes));
+        redirectCommand11.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes, true));
+        redirectCommand21.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes, false));
 
         ADBPartitionManager.RedirectToPartition redirectCommand12 =
                 partitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);

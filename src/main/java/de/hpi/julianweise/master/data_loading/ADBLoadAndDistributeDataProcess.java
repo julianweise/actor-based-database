@@ -139,8 +139,9 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleCSVFullyParsed() {
+        this.getContext().stop(this.csvParser);
         for(int i = 0; i < this.settings.NUMBER_ENTITY_CONVERTER; i++) {
-            this.entityConverter.tell(new ADBCSVToEntityConverter.Finalize());
+            this.entityConverter.tell(new ADBCSVToEntityConverter.Finalize(this.converterWrapper));
         }
         return Behaviors.same();
     }
@@ -149,12 +150,12 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         if (cmd.response instanceof ADBCSVToEntityConverter.ConvertedBatch) {
             ObjectList<ADBEntity> entities = ((ADBCSVToEntityConverter.ConvertedBatch) cmd.response).entities;
             dataDistributor.tell(new ADBDataDistributor.DistributeBatch(dataDistributorWrapper, entities));
-        } else {
+        } else if (cmd.response instanceof ADBCSVToEntityConverter.Finalized) {
             if (this.finalizedConverter.incrementAndGet() < this.settings.NUMBER_ENTITY_CONVERTER) {
                 return Behaviors.same();
             }
             for(int i = 0; i < this.settings.NUMBER_DISTRIBUTOR; i++) {
-                this.dataDistributor.tell(new ADBDataDistributor.ConcludeDistribution());
+                this.dataDistributor.tell(new ADBDataDistributor.ConcludeDistribution(this.dataDistributorWrapper));
             }
         }
         return Behaviors.same();
@@ -176,14 +177,14 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
         if (this.distributedBatchBatches.incrementAndGet() < this.settings.NUMBER_DISTRIBUTOR) {
             return Behaviors.same();
         }
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         this.distributedBatchBatches.set(0);
+        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleDataFullyDistributed() {
         this.getContext().getLog().info("### Data have been fully loaded into the database ###");
-        this.client.tell(new ADBMaster.StartOperationalService());
+        if (this.finalizedConverter.get() < 1) this.client.tell(new ADBMaster.StartOperationalService());
         System.gc();
         return Behaviors.stopped();
     }

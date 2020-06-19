@@ -30,6 +30,7 @@ public class ADBCSVToEntityConverter extends AbstractBehavior<ADBCSVToEntityConv
         ObjectList<ADBEntity> entities;
     }
 
+    @AllArgsConstructor
     public static class Finalize implements Command {
         ActorRef<Response> respondTo;
     }
