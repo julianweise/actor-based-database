@@ -79,7 +79,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
                 return Behaviors.same();
             }
         }
-
+        if (chunk.size() > 0) command.getClient().tell(new CSVDataChunk(chunk));
         command.getClient().tell(new CSVFullyParsed());
         return Behaviors.same();
     }

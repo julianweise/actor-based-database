@@ -7,6 +7,7 @@ import akka.actor.typed.Behavior;
 import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -26,9 +27,8 @@ public class CSVParsingActorTest {
     @ClassRule
     public final static TemporaryFolder folder = new TemporaryFolder();
 
-
     @AfterClass
-    public static void cleanup() {
+    public static void cleanUp() {
         testKit.after();
         folder.delete();
         ADBPartitionManager.resetSingleton();
@@ -41,7 +41,7 @@ public class CSVParsingActorTest {
         ADBEntityFactoryProvider.initialize(new TestEntityFactory());
 
         final String testCSV = folder.newFile("test.csv").getAbsolutePath();
-        String csvContent = "headerA,headerB,headerC\n200,TestString,1.02";
+        String csvContent = "200,TestString,1.02";
         Files.write(Paths.get(testCSV), csvContent.getBytes());
 
         Behavior<CSVParsingActor.Command> parserBehavior = CSVParsingActorFactory.createForFile(testCSV);
@@ -55,9 +55,9 @@ public class CSVParsingActorTest {
 
         assertThat(result.getChunk().size()).isEqualTo(1);
 
-        assertThat(result.getChunk().get(0).getInt("headerA")).isEqualTo(200);
-        assertThat(result.getChunk().get(0).getString("headerB")).isEqualTo("TestString");
-        assertThat(result.getChunk().get(0).getFloat("headerC")).isEqualTo(1.02f);
+        assertThat(result.getChunk().get(0).getInt(0)).isEqualTo(200);
+        assertThat(result.getChunk().get(0).getString(1)).isEqualTo("TestString");
+        assertThat(result.getChunk().get(0).getFloat(2)).isEqualTo(1.02f);
 
         testKit.stop(parser);
     }
