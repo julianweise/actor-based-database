@@ -147,7 +147,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
         if (this.batches.entrySet().stream().anyMatch(entry -> entry.getValue().size() > 0)
-                || this.consistentHash == null  || this.partitionManagers.size() < this.minNumberOfNodes || this.pendingDistributions.get() > 0) {
+                || this.partitionManagers.size() < this.minNumberOfNodes || this.pendingDistributions.get() > 0) {
             this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
             return Behaviors.same();
         }

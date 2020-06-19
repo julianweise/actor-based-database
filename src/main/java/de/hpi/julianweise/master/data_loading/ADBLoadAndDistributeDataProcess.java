@@ -115,6 +115,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleStart(Start command) {
+        this.getContext().getLog().info("### Start distribution of data to all nodes ###");
         this.client = command.getRespondTo();
         this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
