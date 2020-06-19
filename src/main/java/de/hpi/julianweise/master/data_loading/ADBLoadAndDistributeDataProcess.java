@@ -174,7 +174,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleBatchDistributed() {
-        if (this.distributedBatchBatches.incrementAndGet() < this.settings.NUMBER_DISTRIBUTOR) {
+        if (distributedBatchBatches.incrementAndGet() < settings.NUMBER_DISTRIBUTOR || finalizedConverter.get() > 0) {
             return Behaviors.same();
         }
         this.distributedBatchBatches.set(0);
@@ -184,7 +184,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
 
     private Behavior<Command> handleDataFullyDistributed() {
         this.getContext().getLog().info("### Data have been fully loaded into the database ###");
-        if (this.finalizedConverter.get() < 1) this.client.tell(new ADBMaster.StartOperationalService());
+        this.client.tell(new ADBMaster.StartOperationalService());
         System.gc();
         return Behaviors.stopped();
     }
