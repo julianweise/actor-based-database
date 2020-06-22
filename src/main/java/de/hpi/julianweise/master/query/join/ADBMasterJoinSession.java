@@ -38,17 +38,12 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     private final ActorRef<ADBJoinResultMaterializer.Command> materializer;
     private boolean materializationCompleted;
 
-    @Override protected void handleReceiverTerminated() {
-
-    }
-
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter
     public static class RequestNextNodeToJoin implements ADBMasterQuerySession.Command, CborSerializable {
         private ActorRef<ADBSlaveQuerySession.Command> respondTo;
     }
-
 
     @NoArgsConstructor
     @AllArgsConstructor
