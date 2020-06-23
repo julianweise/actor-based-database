@@ -46,4 +46,9 @@ public class ADBEntityStringEntry extends ADBEntityEntry {
         result = prime * result + this.value.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "ADBEntityStringEntry: " + this.value;
+    }
 }

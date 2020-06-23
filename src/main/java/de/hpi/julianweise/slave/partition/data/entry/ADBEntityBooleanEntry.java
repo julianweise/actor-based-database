@@ -46,4 +46,9 @@ public class ADBEntityBooleanEntry extends ADBEntityEntry {
         result = prime * result + Boolean.hashCode(this.value);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "ADBEntityBooleanEntry: " + this.value;
+    }
 }

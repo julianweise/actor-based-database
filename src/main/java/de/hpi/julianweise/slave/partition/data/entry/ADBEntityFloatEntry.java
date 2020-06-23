@@ -44,4 +44,9 @@ public class ADBEntityFloatEntry extends ADBEntityEntry {
         result = prime * result + Float.hashCode(this.value);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "ADBEntityFloatEntry: " + this.value;
+    }
 }
