@@ -44,4 +44,9 @@ public class ADBEntityShortEntry extends ADBEntityEntry {
         result = prime * result + Short.hashCode(this.value);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "ADBEntityShortEntry: " + this.value;
+    }
 }
