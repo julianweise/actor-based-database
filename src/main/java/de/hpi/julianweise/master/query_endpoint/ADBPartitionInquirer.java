@@ -15,13 +15,13 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.val;
-import org.agrona.collections.Int2ObjectHashMap;
 
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBPartitionInquirer extends AbstractBehavior<ADBPartitionInquirer.Command> {
 
-    private final Int2ObjectHashMap<ADBTransactionContext> transactionContext = new Int2ObjectHashMap<>();
+    private final Int2ObjectOpenHashMap<ADBTransactionContext> transactionContext = new Int2ObjectOpenHashMap<>();
     private ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManager = new ObjectArrayList<>();
     private ObjectList<ActorRef<ADBQueryManager.Command>> queryManagers = new ObjectArrayList<>();
     private final AtomicInteger transactionCounter = new AtomicInteger();

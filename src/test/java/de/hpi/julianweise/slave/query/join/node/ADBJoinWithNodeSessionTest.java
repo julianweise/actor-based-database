@@ -18,9 +18,9 @@ import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBJoinQueryContext;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.assertj.core.api.Condition;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -28,14 +28,11 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import static org.assertj.core.api.Assertions.anyOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ADBJoinWithNodeSessionTest {
@@ -111,8 +108,10 @@ public class ADBJoinWithNodeSessionTest {
 
         int[] lRemotePartitionIds = {0};
         int[] rRemotePartitionIds = {0};
+        Int2ObjectOpenHashMap<ADBPartitionHeader> allHeaders = new Int2ObjectOpenHashMap<>();
+        allHeaders.put(0, new ADBPartitionHeader());
         session.tell(new ADBJoinWithNodeSession.RelevantPartitionsWrapper(new ADBPartitionManager
-                .RelevantPartitionsJoinQuery(0, lRemotePartitionIds, rRemotePartitionIds)));
+                .RelevantPartitionsJoinQuery(0, lRemotePartitionIds, allHeaders, rRemotePartitionIds)));
 
         ADBPartitionManager.RedirectToPartition redirectCommand11 =
                 partitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);

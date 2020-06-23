@@ -12,13 +12,13 @@ import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.agrona.collections.Object2ObjectHashMap;
 
 import java.util.Map;
 import java.util.Set;
@@ -65,8 +65,8 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
         this.partitionManagers = partitionManagers;
         this.transactionId = transactionId;
         this.parent = parent;
-        this.managerToHandlers = new Object2ObjectHashMap<>();
-        this.handlersToManager = new Object2ObjectHashMap<>();
+        this.managerToHandlers = new Object2ObjectOpenHashMap<>();
+        this.handlersToManager = new Object2ObjectOpenHashMap<>();
         this.getContext().getLog().info("Started QuerySession " + transactionId  + " for " + this.getQuerySessionName());
     }
 

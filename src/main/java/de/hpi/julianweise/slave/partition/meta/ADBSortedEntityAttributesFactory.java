@@ -12,7 +12,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
-import org.agrona.collections.Object2ObjectHashMap;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -71,7 +70,7 @@ public class ADBSortedEntityAttributesFactory {
             ObjectList<ADBJoinPredicateCostModel> relevantCostModels) {
         int numberOfRows = columnAttributes.values().stream().mapToInt(ObjectList::size).max().orElse(0);
         ObjectList<Map<String, ADBEntityEntry>> resultSet = new ObjectArrayList<>(numberOfRows);
-        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectHashMap<>());
+        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectOpenHashMap<>());
         Set<String> relevantFields = relevantCostModels
                 .stream()
                 .flatMap(model -> Stream.of(model.getPredicate().getLeftHandSideAttribute(), model.getPredicate().getRightHandSideAttribute()))

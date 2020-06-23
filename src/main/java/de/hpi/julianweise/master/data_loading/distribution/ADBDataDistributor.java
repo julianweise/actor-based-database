@@ -15,13 +15,13 @@ import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
-import org.agrona.collections.Object2ObjectHashMap;
 
 import java.time.Duration;
 import java.util.HashSet;
@@ -35,7 +35,7 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     private static final int VIRTUAL_NODES_FACTOR = 50;
 
     private final Set<ActorRef<ADBPartitionManager.Command>> partitionManagers = new HashSet<>();
-    private final Map<ActorRef<ADBPartitionManager.Command>, ObjectList<ADBEntity>> batches = new Object2ObjectHashMap<>();
+    private final Map<ActorRef<ADBPartitionManager.Command>, ObjectList<ADBEntity>> batches = new Object2ObjectOpenHashMap<>();
     private final AtomicInteger pendingDistributions = new AtomicInteger(0);
     private final int minNumberOfNodes;
     private ConsistentHash<ActorRef<ADBPartitionManager.Command>> consistentHash;

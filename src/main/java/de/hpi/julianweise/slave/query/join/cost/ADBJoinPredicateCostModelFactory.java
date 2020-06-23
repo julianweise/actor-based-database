@@ -12,9 +12,9 @@ import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermInequalit
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermLessCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.calculators.ADBJoinTermLessOrEqualCostCalculator;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
-import org.agrona.collections.Object2ObjectHashMap;
 
 import java.util.Map;
 
@@ -22,7 +22,7 @@ import java.util.Map;
 public class ADBJoinPredicateCostModelFactory {
 
     private static final Map<ADBQueryTerm.RelationalOperator, ADBJoinTermCostCalculator> strategies =
-            new Object2ObjectHashMap<ADBQueryTerm.RelationalOperator, ADBJoinTermCostCalculator>() {{
+            new Object2ObjectOpenHashMap<ADBQueryTerm.RelationalOperator, ADBJoinTermCostCalculator>() {{
                 put(ADBQueryTerm.RelationalOperator.EQUALITY, new ADBJoinTermEqualityCostCalculator());
                 put(ADBQueryTerm.RelationalOperator.INEQUALITY, new ADBJoinTermInequalityCostCalculator());
                 put(ADBQueryTerm.RelationalOperator.LESS, new ADBJoinTermLessCostCalculator());
