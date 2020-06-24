@@ -81,7 +81,13 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
 
     @Getter
     @NoArgsConstructor
-    public static class ConfirmEntitiesPersisted implements Command, KryoSerializable { }
+    public static class ConfirmEntitiesPersisted implements Command, KryoSerializable {}
+
+    @AllArgsConstructor
+    public static class InformPartitionManagerAboutConclusion implements Command {}
+
+    @AllArgsConstructor
+    public static class Terminate implements Command {}
 
     protected ADBDataDistributor(ActorContext<Command> actorContext) {
         super(actorContext);
@@ -97,6 +103,8 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
                 .onMessage(ConfirmEntitiesPersisted.class, this::handleConfirmEntityPersisted)
                 .onMessage(ConcludeDistribution.class, this::handleConcludeDistribution)
                 .onMessage(LargeMessageSenderResponse.class, this::handleLargeMessageSenderResponse)
+                .onMessage(InformPartitionManagerAboutConclusion.class, this::handleInformPartitionManager)
+                .onMessage(Terminate.class, cmd -> Behaviors.stopped())
                 .build();
     }
 
@@ -146,17 +154,21 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     }
 
     private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
-        if (this.batches.entrySet().stream().anyMatch(entry -> entry.getValue().size() > 0)
-                || this.partitionManagers.size() < this.minNumberOfNodes || this.pendingDistributions.get() > 0) {
+        boolean isBatchesWaiting = this.batches.entrySet().stream().anyMatch(entry -> entry.getValue().size() > 0);
+        if (isBatchesWaiting || partitionManagers.size() < minNumberOfNodes || pendingDistributions.get() > 0) {
             this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
             return Behaviors.same();
         }
-        this.partitionManagers.forEach(manager -> manager.tell(new ADBPartitionManager.ConcludeTransfer()));
         command.respondTo.tell(new Finalized());
-        return Behaviors.stopped();
+        return Behaviors.same();
     }
 
     private Behavior<Command> handleLargeMessageSenderResponse(LargeMessageSenderResponse wrapper) {
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleInformPartitionManager(InformPartitionManagerAboutConclusion command) {
+        this.partitionManagers.forEach(manager -> manager.tell(new ADBPartitionManager.ConcludeTransfer()));
         return Behaviors.same();
     }
 }

@@ -184,6 +184,10 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleDataFullyDistributed() {
+        this.dataDistributor.tell(new ADBDataDistributor.InformPartitionManagerAboutConclusion());
+        for(int i = 0; i < this.settings.NUMBER_DISTRIBUTOR; i++) {
+            this.dataDistributor.tell(new ADBDataDistributor.Terminate());
+        }
         this.getContext().getLog().info("### Data have been fully loaded into the database ###");
         this.client.tell(new ADBMaster.StartOperationalService());
         System.gc();

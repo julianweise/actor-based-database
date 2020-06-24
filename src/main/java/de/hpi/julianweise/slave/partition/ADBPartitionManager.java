@@ -22,9 +22,9 @@ import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,11 +42,10 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     private static final int MAX_PARTITIONS = 0x10000;
 
     private static ActorRef<ADBPartitionManager.Command> INSTANCE;
-    private final ObjectList<ADBPartitionHeader> partitionHeaders = new ObjectArrayList<>();
-    private final ObjectList<ActorRef<ADBPartition.Command>> partitions = new ObjectArrayList<>();
+    private final Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectOpenHashMap<ActorRef<ADBPartition.Command>> partitions = new Int2ObjectOpenHashMap<>();
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private ADBEntityBuffer entityBuffer = new ADBEntityBuffer(this.settings.MAX_SIZE_PARTITION);
-
 
     public interface Response {}
 
@@ -79,7 +78,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
 
     @AllArgsConstructor
     public static class PartitionFailed implements Command {
-        ActorRef<ADBPartition.Command> partition;
+        int partitionId;
     }
 
     @Getter
@@ -185,25 +184,21 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handlePartitionFails(PartitionFailed signal) {
-        this.getContext().getLog().error("Partition " + signal.partition + " failed and gets removed from manager.");
-        this.partitions.remove(signal.partition);
+        this.getContext().getLog().error("Partition " + signal.partitionId + " failed and gets removed from manager.");
+        this.partitions.remove(signal.partitionId);
         return Behaviors.same();
     }
 
     private Behavior<Command> handlePartitionRegistration(Register registration) {
-        this.getContext().watchWith(registration.partition, new PartitionFailed(registration.partition));
-        this.partitions.add(registration.partition);
-        this.partitionHeaders.add(registration.header);
-        assert this.partitions.size() < MAX_PARTITIONS : "Only " + (MAX_PARTITIONS - 1) + " are supported per node. " +
-                "Currently: " + this.partitions.size();
+        assert this.partitions.size() < MAX_PARTITIONS : "More partitions than addressable address space";
+        this.getContext().watchWith(registration.partition, new PartitionFailed(registration.header.getId()));
+        this.partitions.put(registration.header.getId(), registration.partition);
+        this.partitionHeaders.put(registration.header.getId(), registration.header);
         this.getContext().getLog().info("[PARTITIONS MAINTAINED] " + this.partitions.size());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleConcludeTransfer(ConcludeTransfer command) {
-        if (this.entityBuffer == null) {
-            return Behaviors.same();
-        }
         this.conditionallyCreateNewPartition(true);
         this.entityBuffer = null;
         this.getContext().getLog().info("Distribution concluded.");
@@ -262,6 +257,5 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     @Override
-    protected void handleReceiverTerminated() {
-    }
+    protected void handleReceiverTerminated() {}
 }
