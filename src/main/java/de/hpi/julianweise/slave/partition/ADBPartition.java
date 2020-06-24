@@ -21,6 +21,7 @@ import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,8 +29,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -64,7 +65,19 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @Builder
     public static class RequestMultipleAttributes implements Command, CborSerializable {
         private ActorRef<ADBLargeMessageActor.Command> respondTo;
-        private Set<String> attributes;
+        private String[] attributes;
+        private boolean isLeft;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Builder
+    public static class RequestMultipleAttributesFiltered implements Command, CborSerializable {
+        private ActorRef<ADBLargeMessageActor.Command> respondTo;
+        private String[] attributes;
+        private ADBEntityEntry[] minValues;
+        private ADBEntityEntry[] maxValues;
         private boolean isLeft;
     }
 
@@ -117,6 +130,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         return newReceiveBuilder()
                 .onMessage(RequestData.class, this::handleProvideData)
                 .onMessage(RequestMultipleAttributes.class, this::handleRequestMultipleAttributes)
+                .onMessage(RequestMultipleAttributesFiltered.class, this::handleRequestMultipleAttributesFiltered)
                 .onMessage(MaterializeToEntities.class, this::handleMaterialize)
                 .onMessage(MessageSenderResponse.class, (cmd) -> this)
                 .build();
@@ -128,14 +142,33 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     private Behavior<Command> handleRequestMultipleAttributes(RequestMultipleAttributes command) {
-        val attributes = command.attributes
-                .parallelStream()
-                .map(this.sortedAttributes::get)
-                .collect(Collectors.toMap(s -> s.getField().getName(), s -> s.getMaterialized(this.data)));
+        val attributes = Arrays.stream(command.attributes).parallel()
+                .collect(Collectors.toMap(attr -> attr, this::getFilteredValuesOf));
         val message = new MultipleAttributes(attributes, command.isLeft);
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
         ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(command.respondTo), respondTo, message);
         return Behaviors.same();
+    }
+
+    private Behavior<Command> handleRequestMultipleAttributesFiltered(RequestMultipleAttributesFiltered command) {
+        Map<String, ObjectList<ADBEntityEntry>> attributeValues = new Object2ObjectOpenHashMap<>();
+        for(int i = 0; i < command.attributes.length; i++) {
+            String attribute = command.attributes[i];
+            attributeValues.put(attribute, getFilteredValuesOf(attribute, command.minValues[i], command.maxValues[i]));
+        }
+        val message = new MultipleAttributes(attributeValues, command.isLeft);
+        val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
+        ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(command.respondTo), respondTo, message);
+        return Behaviors.same();
+    }
+
+    private ObjectList<ADBEntityEntry> getFilteredValuesOf(String attribute) {
+        return this.sortedAttributes.get(attribute).getMaterialized(this.data);
+    }
+
+    private ObjectList<ADBEntityEntry> getFilteredValuesOf(String attribute, ADBEntityEntry min, ADBEntityEntry max) {
+        getContext().getLog().debug("Requested attribute values for attribute " + attribute + " on partition# " + id);
+        return this.sortedAttributes.get(attribute).getMaterialized(this.data, min, max);
     }
 
     private Behavior<Command> handleMaterialize(MaterializeToEntities command) {

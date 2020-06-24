@@ -6,8 +6,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.Test;
 
-import java.util.Set;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 public class ADBJoinQueryTest {
@@ -83,17 +81,17 @@ public class ADBJoinQueryTest {
         joinQuery.addPredicate(term2);
         joinQuery.addPredicate(term3);
 
-        Set<String> uniqueLeftFields = joinQuery.getAllLeftHandSideFields();
+        String[] uniqueLeftFields = joinQuery.getAllLeftHandSideFields();
 
-        assertThat(uniqueLeftFields.size()).isEqualTo(2);
-        assertThat(uniqueLeftFields.contains("test")).isTrue();
-        assertThat(uniqueLeftFields.contains("test2")).isTrue();
+        assertThat(uniqueLeftFields.length).isEqualTo(2);
+        assertThat(uniqueLeftFields[0]).isEqualTo("test");
+        assertThat(uniqueLeftFields[1]).isEqualTo("test2");
 
-        Set<String> uniqueRightFields = joinQuery.getAllRightHandSideFields();
+        String[] uniqueRightFields = joinQuery.getAllRightHandSideFields();
 
-        assertThat(uniqueRightFields.size()).isEqualTo(2);
-        assertThat(uniqueRightFields.contains("testTarget1")).isTrue();
-        assertThat(uniqueRightFields.contains("testTarget2")).isTrue();
+        assertThat(uniqueRightFields.length).isEqualTo(2);
+        assertThat(uniqueRightFields[0]).isEqualTo("testTarget1");
+        assertThat(uniqueRightFields[1]).isEqualTo("testTarget2");
     }
 
 }

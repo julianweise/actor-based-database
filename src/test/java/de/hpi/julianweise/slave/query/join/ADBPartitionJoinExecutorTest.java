@@ -18,6 +18,7 @@ import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntryFactory;
+import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
@@ -33,6 +34,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,11 +111,25 @@ public class ADBPartitionJoinExecutorTest {
                 .createDefault(joinQuery, supervisor.ref());
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
+        ADBPartitionHeader headerLeft = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                lPartitionId);
+
+        ADBPartitionHeader headerRight = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                rPartitionId);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
                                                         .rightPartitionManager(rightPartitionManager.ref())
                                                         .rightPartitionId(rPartitionId)
+                                                        .leftHeader(headerLeft)
+                                                        .rightHeader(headerRight)
                                                         .build();
 
         executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
@@ -178,11 +194,25 @@ public class ADBPartitionJoinExecutorTest {
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
 
+        ADBPartitionHeader headerLeft = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                lPartitionId);
+
+        ADBPartitionHeader headerRight = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                rPartitionId);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
                                                         .rightPartitionManager(rightPartitionManager.ref())
                                                         .rightPartitionId(rPartitionId)
+                                                        .leftHeader(headerLeft)
+                                                        .rightHeader(headerRight)
                                                         .build();
 
         Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory
@@ -250,11 +280,25 @@ public class ADBPartitionJoinExecutorTest {
                 .createDefault(joinQuery, supervisor.ref());
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
+        ADBPartitionHeader headerLeft = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                lPartitionId);
+
+        ADBPartitionHeader headerRight = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                rPartitionId);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
                                                         .rightPartitionManager(rightPartitionManager.ref())
                                                         .rightPartitionId(rPartitionId)
+                                                        .leftHeader(headerLeft)
+                                                        .rightHeader(headerRight)
                                                         .build();
 
         executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
@@ -287,7 +331,7 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectJoinWithToTermsToBeExecutedSuccessfully() {
         int lPartitionId = 0;
-        int rPartitionId = 0;
+        int rPartitionId = 1;
 
         TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
 
@@ -316,11 +360,25 @@ public class ADBPartitionJoinExecutorTest {
                 .createDefault(joinQuery, supervisor.ref());
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
+        ADBPartitionHeader headerLeft = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                lPartitionId);
+
+        ADBPartitionHeader headerRight = new ADBPartitionHeader(
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
+                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
+                new ObjectArrayList<>(),
+                rPartitionId);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
                                                         .rightPartitionManager(rightPartitionManager.ref())
                                                         .rightPartitionId(rPartitionId)
+                                                        .leftHeader(headerLeft)
+                                                        .rightHeader(headerRight)
                                                         .build();
 
         executor.tell(new ADBPartitionJoinExecutor.Prepare(task));

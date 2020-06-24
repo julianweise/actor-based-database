@@ -30,7 +30,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.val;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -108,14 +110,15 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         private final ObjectList<ActorRef<ADBPartition.Command>> partitions;
     }
 
-    @AllArgsConstructor
     @Getter
     @NoArgsConstructor
+    @Builder
+    @AllArgsConstructor
     public static class RelevantPartitionsJoinQuery implements Response, KryoSerializable {
         private int fPartitionId;
         private int[] lPartitionIdsLeft;
-        private int[] lPartitionIdsRight;
-    }
+        private Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders;
+        private int[] lPartitionIdsRight;}
 
     @AllArgsConstructor
     public static class RequestAllPartitionHeaders implements Command {
@@ -139,7 +142,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     @Getter
     public static class RedirectToPartition implements Command, CborSerializable {
         private int localPartitionId;
-        private ADBPartition.RequestMultipleAttributes message;
+        private ADBPartition.RequestMultipleAttributesFiltered message;
     }
 
     public ADBPartitionManager(ActorContext<Command> context) {
@@ -217,18 +220,29 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleRequestAllPartitionHeaders(RequestAllPartitionHeaders command) {
-        command.respondTo.tell(new AllPartitionsHeaders(this.partitionHeaders));
+        val partitionHeaders = IntStream.range(0, this.partitionHeaders.size())
+                                        .mapToObj(this.partitionHeaders::get)
+                                        .collect(new ObjectArrayListCollector<>());
+        command.respondTo.tell(new AllPartitionsHeaders(partitionHeaders));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleRequestForJoinQuery(RequestPartitionsForJoinQuery command) {
-        int[] lPartIdsL = IntStream.range(0, this.partitions.size())
+        int[] lPartIdsL = IntStream.range(0, this.partitions.size()).parallel()
                                    .filter(id -> this.mightJoin(id, command.externalHeader, command.query))
                                    .toArray();
-        int[] lPartIdsR = IntStream.range(0, this.partitions.size())
+        int[] lPartIdsR = IntStream.range(0, this.partitions.size()).parallel()
                                    .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
                                    .toArray();
-        command.respondTo.tell(new RelevantPartitionsJoinQuery(command.externalHeader.getId(), lPartIdsL, lPartIdsR),
+        Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders = new Int2ObjectOpenHashMap<>();
+        IntStream.concat(Arrays.stream(lPartIdsL), Arrays.stream(lPartIdsR))
+              .forEach(partId -> partitionHeaders.put(partId, this.partitionHeaders.get(partId)));
+        command.respondTo.tell(RelevantPartitionsJoinQuery.builder()
+                                                          .fPartitionId(command.externalHeader.getId())
+                                                          .lPartitionIdsLeft(lPartIdsL)
+                                                          .partitionHeaders(partitionHeaders)
+                                                          .lPartitionIdsRight(lPartIdsR)
+                                                          .build(),
                 akka.actor.ActorRef.noSender());
         return Behaviors.same();
     }

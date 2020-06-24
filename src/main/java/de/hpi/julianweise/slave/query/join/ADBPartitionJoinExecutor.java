@@ -17,6 +17,8 @@ import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModelFactory;
+import de.hpi.julianweise.slave.query.join.filter.ADBJoinPartitionFilterStrategy;
+import de.hpi.julianweise.slave.query.join.filter.ADBMinMaxFilterStrategy;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutorFactory;
@@ -31,6 +33,7 @@ import lombok.Getter;
 import lombok.val;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
 
 public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
@@ -40,6 +43,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private final ActorRef<Response> respondTo;
 
     private ADBPartitionJoinTask joinTask;
+    private ADBJoinPartitionFilterStrategy filter;
     private Map<String, ObjectList<ADBEntityEntry>> leftAttributes;
     private Map<String, ObjectList<ADBEntityEntry>> rightAttributes;
     private ObjectList<ADBJoinPredicateCostModel> costModels;
@@ -107,32 +111,45 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private Behavior<Command> handlePrepare(Prepare command) {
         assert this.joinTask == null && this.isNotPrepared() : "This executor is already prepared!";
         this.joinTask = command.joinTask;
+        this.filter = new ADBMinMaxFilterStrategy(this.joinTask, this.joinQuery);
         this.requestLeftSideAttributes();
         this.requestRightSideAttributes();
         return Behaviors.same();
     }
 
     private void requestLeftSideAttributes() {
-        val leftCommand = ADBPartition.RequestMultipleAttributes.builder()
-                                                                .respondTo(getContext().getSelf())
-                                                                .attributes(joinQuery.getAllLeftHandSideFields())
-                                                                .isLeft(true)
-                                                                .build();
+        val attributes = this.joinQuery.getAllLeftHandSideFields();
+        val leftCommand = ADBPartition.RequestMultipleAttributesFiltered
+                .builder()
+                .respondTo(getContext().getSelf())
+                .attributes(attributes)
+                .minValues(Arrays.stream(attributes).map(filter::getMinValueForLeft).toArray(ADBEntityEntry[]::new))
+                .maxValues(Arrays.stream(attributes).map(filter::getMaxValueForLeft).toArray(ADBEntityEntry[]::new))
+                .isLeft(true)
+                .build();
         joinTask.getLeftPartitionManager().tell(new RedirectToPartition(joinTask.getLeftPartitionId(), leftCommand));
     }
 
     private void requestRightSideAttributes() {
-        val rightCommand = ADBPartition.RequestMultipleAttributes.builder()
-                                                                 .respondTo(getContext().getSelf())
-                                                                 .attributes(joinQuery.getAllRightHandSideFields())
-                                                                 .isLeft(false)
-                                                                 .build();
+        val attributes = this.joinQuery.getAllRightHandSideFields();
+        val rightCommand = ADBPartition.RequestMultipleAttributesFiltered
+                .builder()
+                .respondTo(getContext().getSelf())
+                .attributes(attributes)
+                .minValues(Arrays.stream(attributes).map(filter::getMinValueForRight).toArray(ADBEntityEntry[]::new))
+                .maxValues(Arrays.stream(attributes).map(filter::getMaxValueForRight).toArray(ADBEntityEntry[]::new))
+                .isLeft(false)
+                .build();
         joinTask.getRightPartitionManager().tell(new RedirectToPartition(joinTask.getRightPartitionId(), rightCommand));
     }
 
     private Behavior<Command> handleMultipleAttributes(ADBPartition.MultipleAttributes response) {
-        if (response.isLeft()) this.leftAttributes = response.getAttributes();
-        if (!response.isLeft()) this.rightAttributes = response.getAttributes();
+        if (response.isLeft()) {
+            this.leftAttributes = response.getAttributes();
+        }
+        if (!response.isLeft()) {
+            this.rightAttributes = response.getAttributes();
+        }
         if (this.leftAttributes != null && this.rightAttributes != null) {
             this.respondTo.tell(new JoinTaskPrepared(this.getContext().getSelf()));
         }
@@ -169,7 +186,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void execute() {
-        this.getContext().getLog().debug("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
+        this.getContext().getLog().info("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
         if (this.costModels.size() < 2) {
             ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();

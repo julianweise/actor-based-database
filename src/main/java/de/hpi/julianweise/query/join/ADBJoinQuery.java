@@ -10,8 +10,6 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Setter
 @Getter
@@ -30,16 +28,18 @@ public class ADBJoinQuery implements ADBQuery {
         this.getPredicates().add(predicate);
     }
 
-    public Set<String> getAllLeftHandSideFields() {
+    public String[] getAllLeftHandSideFields() {
         return this.getPredicates().stream()
                    .map(ADBJoinQueryPredicate::getLeftHandSideAttribute)
-                   .collect(Collectors.toSet());
+                   .distinct()
+                   .toArray(String[]::new);
     }
 
-    public Set<String> getAllRightHandSideFields() {
+    public String[] getAllRightHandSideFields() {
         return this.getPredicates().stream()
                    .map(ADBJoinQueryPredicate::getRightHandSideAttribute)
-                   .collect(Collectors.toSet());
+                   .distinct()
+                   .toArray(String[]::new);
     }
 
 

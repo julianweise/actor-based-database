@@ -49,6 +49,9 @@ public class JoinQueryRowWorkload extends Workload {
                              .get(termCostModel.getPredicate().getLeftHandSideAttribute());
             ADBEntityEntry rField = right.get(ADBInternalIDHelper.getEntityId(rightId))
                               .get(termCostModel.getPredicate().getRightHandSideAttribute());
+            if (lField == null || rField == null) {
+                return false;
+            }
             if (!ADBEntityEntry.matches(lField, rField, termCostModel.getPredicate().getOperator())) {
                 return false;
             }

@@ -23,7 +23,9 @@ import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutorFactory;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -42,7 +44,8 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsIdle = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsPrepared = new ObjectArrayFIFOQueue<>();
     private final AtomicInteger activeExecutors = new AtomicInteger(0);
-    private int expectedNumberOfRemotePartitionHeaderResponses = 0;
+    private ObjectList<ADBPartitionHeader> leftPartitionHeaders;
+    private Int2ObjectOpenHashMap<ADBPartitionHeader> rightPartitionHeaders;
     private int actualNumberOfRemotePartitionHeaderResponses = 0;
     private boolean requestedNextNodeComparison = false;
 
@@ -104,7 +107,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.getContext().getLog().warn("No relevant partition headers present. Concluding session.");
             this.getContext().getSelf().tell(new Conclude());
         }
-        this.expectedNumberOfRemotePartitionHeaderResponses = wrapper.response.getHeaders().size();
+        this.leftPartitionHeaders = wrapper.response.getHeaders();
         val respondTo = getContext().messageAdapter(RelevantPartitionsJoinQuery.class, RelevantPartitionsWrapper::new);
         for (ADBPartitionHeader header : wrapper.response.getHeaders()) {
             joinNodesContext.getRight().tell(new RequestPartitionsForJoinQuery(Adapter.toClassic(respondTo), header,
@@ -114,6 +117,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleRelevantForeignPartitions(RelevantPartitionsWrapper wrapper) {
+        this.rightPartitionHeaders = wrapper.response.getPartitionHeaders();
         this.generateLeftSideJoinTasks(wrapper.response.getLPartitionIdsLeft(), wrapper.response.getFPartitionId());
         if (joinNodesContext.getLeftNodeId() != joinNodesContext.getRightNodeId()) {
             generateRightSideJoinTasks(wrapper.response.getLPartitionIdsRight(), wrapper.response.getFPartitionId());
@@ -125,24 +129,32 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
 
     private void generateLeftSideJoinTasks(int[] foreignPartitionIds, int localPartitionId) {
         for (int fPartitionId : foreignPartitionIds) {
+            val leftHeader = this.leftPartitionHeaders.get(localPartitionId);
+            assert leftHeader.getId() == localPartitionId : "Incorrect header selected. Check id and sorting!";
             this.joinTasks.enqueue(ADBPartitionJoinTask
                     .builder()
                     .leftPartitionId(fPartitionId)
                     .leftPartitionManager(this.joinNodesContext.getRight())
+                    .leftHeader(this.rightPartitionHeaders.get(fPartitionId))
                     .rightPartitionId(localPartitionId)
                     .rightPartitionManager(this.joinNodesContext.getLeft())
+                    .rightHeader(this.leftPartitionHeaders.get(localPartitionId))
                     .build());
         }
     }
 
     private void generateRightSideJoinTasks(int[] foreignPartitionIds, int localPartitionId) {
         for (int fPartitionId : foreignPartitionIds) {
+            val leftHeader = this.leftPartitionHeaders.get(localPartitionId);
+            assert leftHeader.getId() == localPartitionId : "Incorrect header selected. Check id and sorting!";
             this.joinTasks.enqueue(ADBPartitionJoinTask
                     .builder()
                     .leftPartitionId(localPartitionId)
                     .leftPartitionManager(this.joinNodesContext.getLeft())
+                    .leftHeader(leftHeader)
                     .rightPartitionId(fPartitionId)
                     .rightPartitionManager(this.joinNodesContext.getRight())
+                    .rightHeader(this.rightPartitionHeaders.get(fPartitionId))
                     .build());
         }
     }
@@ -217,7 +229,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private boolean isAllRelevantHeadersProcessed() {
-        return this.actualNumberOfRemotePartitionHeaderResponses == this.expectedNumberOfRemotePartitionHeaderResponses;
+        return this.actualNumberOfRemotePartitionHeaderResponses == this.leftPartitionHeaders.size();
     }
 
     private boolean isReadyToPrepareNextNodeComparison() {
