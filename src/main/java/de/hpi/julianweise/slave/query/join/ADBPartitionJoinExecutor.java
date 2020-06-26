@@ -35,6 +35,7 @@ import lombok.val;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
@@ -145,10 +146,14 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private Behavior<Command> handleMultipleAttributes(ADBPartition.MultipleAttributes response) {
         if (response.isLeft()) {
-            this.leftAttributes = response.getAttributes();
+            this.leftAttributes = response
+                    .getAttributes().entrySet().parallelStream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, pair -> pair.getValue().materializeSorted()));
         }
         if (!response.isLeft()) {
-            this.rightAttributes = response.getAttributes();
+            this.rightAttributes = response
+                    .getAttributes().entrySet().parallelStream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, pair -> pair.getValue().materializeSorted()));
         }
         if (this.leftAttributes != null && this.rightAttributes != null) {
             this.respondTo.tell(new JoinTaskPrepared(this.getContext().getSelf()));

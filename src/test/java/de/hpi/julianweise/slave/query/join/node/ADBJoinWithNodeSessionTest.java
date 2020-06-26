@@ -13,6 +13,10 @@ import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBDoubleColumnSorted;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBFloatColumnSorted;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBIntColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityDoubleEntry;
@@ -35,7 +39,6 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +124,7 @@ public class ADBJoinWithNodeSessionTest {
         minValues.put("eDouble", new ADBEntityDoubleEntry(1, doubleField, entity));
         maxValues.put("eDouble", new ADBEntityDoubleEntry(1, doubleField, entity));
 
-        headers.add(new ADBPartitionHeader(minValues, maxValues, new ObjectArrayList<>(), lPartitionId));
+        headers.add(new ADBPartitionHeader(minValues, maxValues, lPartitionId));
 
         session.tell(new ADBJoinWithNodeSession.AllPartitionsHeaderWrapper(new ADBPartitionManager.AllPartitionsHeaders(headers)));
 
@@ -133,7 +136,7 @@ public class ADBJoinWithNodeSessionTest {
         int[] lRemotePartitionIds = {0};
         int[] rRemotePartitionIds = {0};
         Int2ObjectOpenHashMap<ADBPartitionHeader> allHeaders = new Int2ObjectOpenHashMap<>();
-        allHeaders.put(0, new ADBPartitionHeader(minValues, maxValues, new ObjectArrayList<>(), lPartitionId));
+        allHeaders.put(0, new ADBPartitionHeader(minValues, maxValues, lPartitionId));
         session.tell(new ADBJoinWithNodeSession.RelevantPartitionsWrapper(new ADBPartitionManager
                 .RelevantPartitionsJoinQuery(0, lRemotePartitionIds, allHeaders, rRemotePartitionIds)));
 
@@ -143,10 +146,10 @@ public class ADBJoinWithNodeSessionTest {
         ADBPartitionManager.RedirectToPartition redirectCommand21 =
                 remotePartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
-        Map<String, ObjectList<ADBEntityEntry>> attributes = new HashMap<>();
-        attributes.put("aInteger", new ObjectArrayList<>(Collections.singletonList(minValues.get("aInteger"))));
-        attributes.put("cFloat", new ObjectArrayList<>(Collections.singletonList(minValues.get("cFloat"))));
-        attributes.put("eDouble", new ObjectArrayList<>(Collections.singletonList(minValues.get("eDouble"))));
+        Map<String, ADBColumnSorted> attributes = new HashMap<>();
+        attributes.put("aInteger", new ADBIntColumnSorted(0, 0, new int[]{1}, new short[]{0}));
+        attributes.put("cFloat", new ADBFloatColumnSorted(0, 0, new float[]{1f}, new short[]{0}));
+        attributes.put("eDouble", new ADBDoubleColumnSorted(0, 0, new double[]{1.00}, new short[]{0}));
 
         redirectCommand11.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes, true));
         redirectCommand21.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes, false));

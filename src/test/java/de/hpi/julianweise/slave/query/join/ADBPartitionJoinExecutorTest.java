@@ -14,6 +14,9 @@ import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBDoubleColumnSorted;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBIntColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
@@ -23,8 +26,6 @@ import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -90,19 +91,11 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(this.createTestEntry(1, 0));
-        fIntegerAttributes.add(this.createTestEntry(3, 1));
-        fIntegerAttributes.add(this.createTestEntry(5, 2));
-        leftSideAttributes.put("aInteger", fIntegerAttributes);
+        Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new short[]{0, 1, 2}));
 
-        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(this.createTestEntry(3, 0));
-        lIntegerAttributes.add(this.createTestEntry(5, 1));
-        lIntegerAttributes.add(this.createTestEntry(9, 2));
-        rightSideAttributes.put("aInteger", lIntegerAttributes);
+        Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
+        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new short[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
@@ -112,15 +105,13 @@ public class ADBPartitionJoinExecutorTest {
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
         ADBPartitionHeader headerLeft = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(1, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(5, 2)),
                 lPartitionId);
 
         ADBPartitionHeader headerRight = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(3, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
@@ -168,6 +159,78 @@ public class ADBPartitionJoinExecutorTest {
     }
 
     @Test
+    public void expectLessReversedDoubleJoinToBeExecutedSuccessfully() {
+        int lPartitionId = 0;
+        int rPartitionId = 0;
+
+        TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
+
+        TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
+        TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
+
+        Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
+        rightSideAttributes.put("eDouble", new ADBDoubleColumnSorted(0, lPartitionId, new double[]{1, 3, 5}, new short[]{0, 1, 2}));
+
+        Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
+        leftSideAttributes.put("eDouble", new ADBDoubleColumnSorted(0, lPartitionId, new double[]{3, 5, 9}, new short[]{0, 1, 2}));
+
+        ADBJoinQuery joinQuery = new ADBJoinQuery();
+        joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "eDouble", "eDouble"));
+
+        ADBPartitionHeader headerLeft = new ADBPartitionHeader(
+                Collections.singletonMap("eDouble", this.createTestEntry(1, 0)),
+                Collections.singletonMap("eDouble", this.createTestEntry(5, 2)),
+                lPartitionId);
+
+        ADBPartitionHeader headerRight = new ADBPartitionHeader(
+                Collections.singletonMap("eDouble", this.createTestEntry(3, 0)),
+                Collections.singletonMap("eDouble", this.createTestEntry(9, 2)),
+                rPartitionId);
+
+        ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
+                                                        .leftPartitionManager(leftPartitionManager.ref())
+                                                        .leftPartitionId(lPartitionId)
+                                                        .rightPartitionManager(rightPartitionManager.ref())
+                                                        .rightPartitionId(rPartitionId)
+                                                        .leftHeader(headerLeft)
+                                                        .rightHeader(headerRight)
+                                                        .build();
+
+        Behavior<ADBPartitionJoinExecutor.Command> behavior = ADBPartitionJoinExecutorFactory
+                .createDefault(joinQuery, supervisor.ref());
+        ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
+
+        executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
+
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
+                leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+
+        assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllLeftHandSideFields()));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, true));
+
+        ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
+                rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
+
+        assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllRightHandSideFields()));
+
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, false));
+
+        executor.tell(new ADBPartitionJoinExecutor.Execute());
+
+        ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
+                supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
+
+        assertThat(responsePrepared.getRespondTo()).isEqualTo(executor);
+
+        ADBPartitionJoinExecutor.PartitionsJoined responseResults =
+                supervisor.expectMessageClass(ADBPartitionJoinExecutor.PartitionsJoined.class);
+
+        assertThat(responseResults.getJoinTuples().size()).isEqualTo(1);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getKey())).isEqualTo(0);
+        assertThat(ADBInternalIDHelper.getEntityId(responseResults.getJoinTuples().get(0).getValue())).isEqualTo(2);
+    }
+
+    @Test
     public void expectLessReversedJoinToBeExecutedSuccessfully() {
         int lPartitionId = 0;
         int rPartitionId = 0;
@@ -177,33 +240,23 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(this.createTestEntry(1, 0));
-        fIntegerAttributes.add(this.createTestEntry(3, 1));
-        fIntegerAttributes.add(this.createTestEntry(5, 2));
-        rightSideAttributes.put("aInteger", fIntegerAttributes);
+        Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
+        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new short[]{0, 1, 2}));
 
-        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(this.createTestEntry(3, 0));
-        lIntegerAttributes.add(this.createTestEntry(5, 1));
-        lIntegerAttributes.add(this.createTestEntry(9, 2));
-        leftSideAttributes.put("aInteger", lIntegerAttributes);
+        Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new short[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
 
         ADBPartitionHeader headerLeft = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(1, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(5, 2)),
                 lPartitionId);
 
         ADBPartitionHeader headerRight = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(3, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
@@ -259,19 +312,11 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(this.createTestEntry(3, 0));
-        lIntegerAttributes.add(this.createTestEntry(5, 1));
-        lIntegerAttributes.add(this.createTestEntry(9, 2));
-        rightSideAttributes.put("bInteger", lIntegerAttributes);
+        Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new short[]{0, 1, 2}));
 
-        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(this.createTestEntry(1, 0));
-        fIntegerAttributes.add(this.createTestEntry(3, 1));
-        fIntegerAttributes.add(this.createTestEntry(5, 2));
-        leftSideAttributes.put("aInteger", fIntegerAttributes);
+        Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
+        rightSideAttributes.put("bInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new short[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "bInteger"));
@@ -281,16 +326,15 @@ public class ADBPartitionJoinExecutorTest {
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
         ADBPartitionHeader headerLeft = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(1, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(5, 2)),
                 lPartitionId);
 
         ADBPartitionHeader headerRight = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(3, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
+
 
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
@@ -338,19 +382,12 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> leftPartitionManager = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
-        Map<String, ObjectList<ADBEntityEntry>> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> fIntegerAttributes = new ObjectArrayList<>();
-        fIntegerAttributes.add(this.createTestEntry(1, 0));
-        fIntegerAttributes.add(this.createTestEntry(3, 1));
-        fIntegerAttributes.add(this.createTestEntry(6, 2));
-        leftSideAttributes.put("aInteger", fIntegerAttributes);
+        Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 6}, new short[]{0, 1, 2}));
 
-        Map<String, ObjectList<ADBEntityEntry>> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        ObjectList<ADBEntityEntry> lIntegerAttributes = new ObjectArrayList<>();
-        lIntegerAttributes.add(this.createTestEntry(3, 0));
-        lIntegerAttributes.add(this.createTestEntry(5, 1));
-        lIntegerAttributes.add(this.createTestEntry(9, 2));
-        rightSideAttributes.put("aInteger", lIntegerAttributes);
+        Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
+        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new short[]{0, 1, 2}));
+
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
@@ -361,15 +398,13 @@ public class ADBPartitionJoinExecutorTest {
         ActorRef<ADBPartitionJoinExecutor.Command> executor = testKit.spawn(behavior);
 
         ADBPartitionHeader headerLeft = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", fIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(1, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(5, 2)),
                 lPartitionId);
 
         ADBPartitionHeader headerRight = new ADBPartitionHeader(
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(0)),
-                Collections.singletonMap("aInteger", lIntegerAttributes.get(2)),
-                new ObjectArrayList<>(),
+                Collections.singletonMap("aInteger", this.createTestEntry(3, 0)),
+                Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()

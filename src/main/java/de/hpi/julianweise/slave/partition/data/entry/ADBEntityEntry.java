@@ -4,17 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.hpi.julianweise.query.ADBQueryTerm;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.lang.reflect.Field;
 
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
 
-@NoArgsConstructor
 @JsonTypeInfo(use = NAME, include = PROPERTY)
 @JsonSubTypes({
                       @JsonSubTypes.Type(value = ADBEntityStringEntry.class, name = "ADBEntityStringEntry"),
@@ -26,9 +22,9 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
                       @JsonSubTypes.Type(value = ADBEntityByteEntry.class, name = "ADBEntityByteEntry"),
                       @JsonSubTypes.Type(value = ADBEntityShortEntry.class, name = "ADBEntityShortEntry"),
               })
-public abstract class ADBEntityEntry {
+public interface ADBEntityEntry {
 
-    public static boolean matches(ADBEntityEntry a, ADBEntityEntry b, ADBQueryTerm.RelationalOperator operator) {
+    static boolean matches(ADBEntityEntry a, ADBEntityEntry b, ADBQueryTerm.RelationalOperator operator) {
         ADBComparator comparator = ADBComparator.getFor(a.getValueField(), b.getValueField());
         switch (operator) {
             case EQUALITY: return comparator.compare(a, b) == 0;
@@ -41,16 +37,11 @@ public abstract class ADBEntityEntry {
         }
     }
 
-    @Getter
-    private int id;
-
-    public ADBEntityEntry(int id, Field field, ADBEntity entity) {
-        this.id = id;
-    }
+    int getId();
 
     @JsonIgnore
-    public abstract Field getValueField();
+    Field getValueField();
 
     @Override
-    public abstract int hashCode();
+    int hashCode();
 }

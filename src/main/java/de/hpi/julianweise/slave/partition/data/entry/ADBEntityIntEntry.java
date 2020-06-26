@@ -2,6 +2,7 @@ package de.hpi.julianweise.slave.partition.data.entry;
 
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.utility.data.entry.ADBEntityTypeEntry;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -10,7 +11,7 @@ import java.lang.reflect.Field;
 @SuppressWarnings("unused")
 @NoArgsConstructor
 @ADBEntityTypeEntry(valueType = int.class)
-public class ADBEntityIntEntry extends ADBEntityEntry {
+public class ADBEntityIntEntry implements ADBEntityEntry {
 
     public transient static Field valueField;
 
@@ -23,15 +24,23 @@ public class ADBEntityIntEntry extends ADBEntityEntry {
         }
     }
 
-    public int value;
+    @Getter
+    private int id;
+
+    @Getter
+    private int value;
 
     @SneakyThrows
     public ADBEntityIntEntry(int id, Field field, ADBEntity entity) {
-        super(id, field, entity);
+        this.id = id;
         this.value = field.getInt(entity);
     }
 
-    @Override
+    public ADBEntityIntEntry(int id, int value) {
+        this.id = id;
+        this.value = value;
+    }
+
     @SneakyThrows
     public Field getValueField() {
         return ADBEntityIntEntry.valueField;

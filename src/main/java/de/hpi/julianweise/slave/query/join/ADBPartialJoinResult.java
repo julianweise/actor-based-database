@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
-import java.util.function.BiConsumer;
 
 public class ADBPartialJoinResult implements KryoSerializable, Iterable<ADBKeyPair> {
 
@@ -39,13 +38,6 @@ public class ADBPartialJoinResult implements KryoSerializable, Iterable<ADBKeyPa
 
     public int size() {
         return Math.min(this.left.size(), this.right.size());
-    }
-
-    public void forEach(BiConsumer<Integer, Integer> logic) {
-        int guardedSize = Math.min(this.left.size(), this.right.size());
-        for(int i = 0; i < guardedSize; i++) {
-            logic.accept(this.left.getInt(i), this.right.getInt(i));
-        }
     }
 
     public String toString() {

@@ -7,13 +7,12 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import de.hpi.julianweise.settings.Settings;
+import de.hpi.julianweise.slave.partition.column.pax.ADBColumn;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
@@ -29,24 +28,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
-import java.util.Arrays;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
-    private static final int MAX_ELEMENTS = 0x10000;
+    public static final int MAX_ELEMENTS = 0x10000;
 
-    private final ObjectList<ADBEntity> data;
-    private final Map<String, ADBSortedEntityAttributes> sortedAttributes;
     private final int id;
+    private final Class<? extends ADBEntity> schema;
+    private final Map<String, ADBColumn> columns;
 
-    public interface Command {
-    }
+    public interface Command {}
 
-    public interface Response {
-    }
+    public interface Response {}
 
     @AllArgsConstructor
     public static class RequestData implements Command {
@@ -56,17 +51,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @AllArgsConstructor
     @Getter
     public static class Data implements Response {
-        private final ObjectList<ADBEntity> data;
-    }
-
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
-    @Builder
-    public static class RequestMultipleAttributes implements Command, CborSerializable {
-        private ActorRef<ADBLargeMessageActor.Command> respondTo;
-        private String[] attributes;
-        private boolean isLeft;
+        private final Map<String, ADBColumn> data;
     }
 
     @AllArgsConstructor
@@ -85,7 +70,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @NoArgsConstructor
     @Getter
     public static class MultipleAttributes implements Response, ADBLargeMessageSender.LargeMessage {
-        private Map<String, ObjectList<ADBEntityEntry>> attributes;
+        private Map<String, ADBColumnSorted> attributes;
         private boolean isLeft;
     }
 
@@ -108,20 +93,14 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         private final ADBLargeMessageSender.Response response;
     }
 
-    public ADBPartition(ActorContext<Command> context, int id, ObjectList<ADBEntity> data) {
+    public ADBPartition(ActorContext<Command> context, int id, Map<String, ADBColumn> columns, Class<? extends ADBEntity> schema) {
         super(context);
-        assert data.size() > 0;
-        assert data.stream().mapToInt(ADBEntity::getSize).sum() < Settings.SettingsProvider.get(getContext().getSystem()).MAX_SIZE_PARTITION;
-        assert data.size() < MAX_ELEMENTS : "Maximum 2^20 - 1 elements allowed per partition";
-        assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
-
-        this.getContext().getLog().info("Partition #" + id + " maintains " + data.size() + " entities.");
-
         this.id = id;
-        this.data = data;
-        this.sortedAttributes = ADBSortedEntityAttributesFactory.of(data);
+        this.schema = schema;
+        this.columns = columns;
 
-        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, id, this.sortedAttributes);
+        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(this.columns, id);
+        assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
     }
 
@@ -129,7 +108,6 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(RequestData.class, this::handleProvideData)
-                .onMessage(RequestMultipleAttributes.class, this::handleRequestMultipleAttributes)
                 .onMessage(RequestMultipleAttributesFiltered.class, this::handleRequestMultipleAttributesFiltered)
                 .onMessage(MaterializeToEntities.class, this::handleMaterialize)
                 .onMessage(MessageSenderResponse.class, (cmd) -> this)
@@ -137,21 +115,12 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     private Behavior<Command> handleProvideData(RequestData command) {
-        command.respondTo.tell(new Data(this.data));
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handleRequestMultipleAttributes(RequestMultipleAttributes command) {
-        val attributes = Arrays.stream(command.attributes).parallel()
-                .collect(Collectors.toMap(attr -> attr, this::getFilteredValuesOf));
-        val message = new MultipleAttributes(attributes, command.isLeft);
-        val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
-        ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(command.respondTo), respondTo, message);
+        command.respondTo.tell(new Data(this.columns));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleRequestMultipleAttributesFiltered(RequestMultipleAttributesFiltered command) {
-        Map<String, ObjectList<ADBEntityEntry>> attributeValues = new Object2ObjectOpenHashMap<>();
+        Map<String, ADBColumnSorted> attributeValues = new Object2ObjectOpenHashMap<>();
         for(int i = 0; i < command.attributes.length; i++) {
             String attribute = command.attributes[i];
             attributeValues.put(attribute, getFilteredValuesOf(attribute, command.minValues[i], command.maxValues[i]));
@@ -162,20 +131,18 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
         return Behaviors.same();
     }
 
-    private ObjectList<ADBEntityEntry> getFilteredValuesOf(String attribute) {
-        return this.sortedAttributes.get(attribute).getMaterialized(this.data);
-    }
-
-    private ObjectList<ADBEntityEntry> getFilteredValuesOf(String attribute, ADBEntityEntry min, ADBEntityEntry max) {
+    private ADBColumnSorted getFilteredValuesOf(String attribute, ADBEntityEntry min, ADBEntityEntry max) {
         getContext().getLog().debug("Requested attribute values for attribute " + attribute + " on partition# " + id);
-        return this.sortedAttributes.get(attribute).getMaterialized(this.data, min, max);
+        return this.columns.get(attribute).getSortedColumn(min, max);
     }
 
     private Behavior<Command> handleMaterialize(MaterializeToEntities command) {
-        assert command.internalIds.stream().filter(id -> this.id != ADBInternalIDHelper.getPartitionId(id)).count() < 1 : "Entities belonging to different Partition";
-        ObjectList<ADBEntity> materializedResults = command.internalIds.parallelStream()
-                                                                       .map(internalId -> this.data.get(ADBInternalIDHelper.getEntityId(internalId)))
-                                                                       .collect(new ObjectArrayListCollector<>());
+        assert command.internalIds.stream().anyMatch(id -> this.id != ADBInternalIDHelper.getPartitionId(id)) :
+                "Entities belonging to different Partition";
+        ObjectList<ADBEntity> materializedResults = command.internalIds
+                .parallelStream()
+                .map(internalId -> ADBEntity.fromColumns(this.columns, internalId, this.schema))
+                .collect(new ObjectArrayListCollector<>());
         command.respondTo.tell(new MaterializedEntities(materializedResults));
         return Behaviors.same();
     }

@@ -2,13 +2,16 @@ package de.hpi.julianweise.slave.partition.data;
 
 import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
+import de.hpi.julianweise.slave.partition.column.pax.ADBColumn;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
+import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 
 public abstract class ADBEntity implements KryoSerializable {
@@ -17,8 +20,17 @@ public abstract class ADBEntity implements KryoSerializable {
     @Getter
     private int internalID;
 
-    protected ADBEntity() {
+    @SneakyThrows
+    public static ADBEntity fromColumns(Map<String, ADBColumn> columns, int internalId, Class<? extends ADBEntity> schema) {
+        ADBEntity entity = schema.newInstance();
+        entity.setInternalID(internalId);
+        for (Map.Entry<String, ADBColumn> attributeColumn : columns.entrySet()) {
+            entity = attributeColumn.getValue().setField(entity, ADBInternalIDHelper.getEntityId(internalId));
+        }
+        return entity;
     }
+
+    protected ADBEntity() {}
 
     public abstract ADBKey getPrimaryKey();
 

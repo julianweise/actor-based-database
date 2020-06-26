@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Arrays;
 import java.util.Map;
 
 @AllArgsConstructor
@@ -21,7 +20,13 @@ public class ADBJoinPredicateCostModel {
     private final int sizeRight;
 
     public int getCost() {
-        return Arrays.stream(this.joinCandidates).flatMap(Arrays::stream).mapToInt(ADBInterval::size).sum();
+        int cost = 0;
+        for (ADBInterval[] rowIntervals : this.joinCandidates) {
+            for (ADBInterval rowInterval : rowIntervals) {
+                cost += rowInterval.size();
+            }
+        }
+        return cost;
     }
 
     public float getRelativeCost() {

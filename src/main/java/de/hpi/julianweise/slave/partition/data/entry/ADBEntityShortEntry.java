@@ -2,6 +2,7 @@ package de.hpi.julianweise.slave.partition.data.entry;
 
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.utility.data.entry.ADBEntityTypeEntry;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -10,12 +11,10 @@ import java.lang.reflect.Field;
 @SuppressWarnings("unused")
 @NoArgsConstructor
 @ADBEntityTypeEntry(valueType = short.class)
-public class ADBEntityShortEntry extends ADBEntityEntry {
+public class ADBEntityShortEntry implements ADBEntityEntry {
 
-    public short value;
 
     private transient static Field valueField;
-
     static {
         try {
             valueField = ADBEntityShortEntry.class.getDeclaredField("value");
@@ -25,11 +24,21 @@ public class ADBEntityShortEntry extends ADBEntityEntry {
         }
     }
 
+    @Getter
+    public int id;
+    public short value;
+
     @SneakyThrows
     public ADBEntityShortEntry(int id, Field field, ADBEntity entity) {
-        super(id, field, entity);
+        this.id = id;
         this.value = field.getShort(entity);
     }
+
+    public ADBEntityShortEntry(int id, short value) {
+        this.id = id;
+        this.value = value;
+    }
+
 
     @Override
     @SneakyThrows

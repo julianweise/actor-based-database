@@ -12,6 +12,7 @@ import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
 import de.hpi.julianweise.utility.list.IntArrayListCollector;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -90,10 +91,10 @@ public class ADBJoinResultMaterializer extends AbstractBehavior<ADBJoinResultMat
     }
 
     private Behavior<Command> handleMaterializeJoinResultChunk(MaterializeJoinResultChunk command) {
-        command.results.forEach((left, right) -> {
-            this.unmaterializedLeft.add(left.intValue());
-            this.unmaterializedRight.add(right.intValue());
-        });
+        for (ADBKeyPair keyPair : command.results) {
+            this.unmaterializedLeft.add(keyPair.getKey());
+            this.unmaterializedRight.add(keyPair.getValue());
+        }
         this.triggerMaterialization();
         return Behaviors.same();
     }

@@ -6,10 +6,8 @@ import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.query.selection.ADBSelectionQuery;
 import de.hpi.julianweise.query.selection.ADBSelectionQueryPredicate;
 import de.hpi.julianweise.query.selection.constant.ADBPredicateConstant;
-import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -22,13 +20,10 @@ public class ADBPartitionHeader {
     private int id;
     private Map<String, ADBEntityEntry> minValues;
     private Map<String, ADBEntityEntry> maxValues;
-    private transient ObjectList<ADBEntity> data;
 
-    public ADBPartitionHeader(Map<String, ADBEntityEntry> minValues, Map<String, ADBEntityEntry> maxValues,
-                              ObjectList<ADBEntity> data, int id) {
+    public ADBPartitionHeader(Map<String, ADBEntityEntry> minValues, Map<String, ADBEntityEntry> maxValues, int id) {
         this.minValues = minValues;
         this.maxValues = maxValues;
-        this.data = data;
         this.id = id;
     }
 

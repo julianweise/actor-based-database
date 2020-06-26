@@ -1,17 +1,20 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
 import de.hpi.julianweise.query.selection.ADBSelectionQuery;
+import de.hpi.julianweise.slave.partition.column.pax.ADBColumn;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
-import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Map;
+
 @AllArgsConstructor
 public class SelectionQueryWorkload extends Workload {
 
-    private final ObjectList<ADBEntity> data;
+    private final Map<String, ADBColumn> columns;
     private final ADBSelectionQuery query;
 
     @AllArgsConstructor
@@ -22,11 +25,8 @@ public class SelectionQueryWorkload extends Workload {
 
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
-        ObjectList<ADBEntity> results = this.data
-                .stream()
-                .filter(entity -> entity.matches(this.query))
-                .collect(new ObjectArrayListCollector<>());
-        message.getRespondTo().tell(new Results(results));
+        // TODO
+        message.getRespondTo().tell(new Results(new ObjectArrayList<>()));
     }
 
 }

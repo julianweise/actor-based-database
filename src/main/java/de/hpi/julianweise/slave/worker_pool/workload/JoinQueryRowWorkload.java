@@ -5,6 +5,7 @@ import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.largemessage.ADBKeyPair;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,16 +31,16 @@ public class JoinQueryRowWorkload extends Workload {
     @Override
     protected void doExecute(GenericWorker.WorkloadMessage message) {
         ADBPartialJoinResult results = new ADBPartialJoinResult();
-        this.joinCandidates.forEach((leftId, rightId) -> {
-            if (this.rowSatisfyJoinCondition(leftId, rightId)) {
+        for (ADBKeyPair keyPair : this.joinCandidates) {
+            if (this.rowSatisfyJoinCondition(keyPair.getKey(), keyPair.getValue())) {
                 results.addResult(
-                        left.get(ADBInternalIDHelper.getEntityId(leftId))
+                        left.get(ADBInternalIDHelper.getEntityId(keyPair.getKey()))
                             .get(this.costModels.get(0).getPredicate().getLeftHandSideAttribute()).getId(),
-                        right.get(ADBInternalIDHelper.getEntityId(rightId))
+                        right.get(ADBInternalIDHelper.getEntityId(keyPair.getValue()))
                              .get(this.costModels.get(0).getPredicate().getRightHandSideAttribute()).getId()
                 );
             }
-        });
+        }
         message.getRespondTo().tell(new Results(results));
     }
 

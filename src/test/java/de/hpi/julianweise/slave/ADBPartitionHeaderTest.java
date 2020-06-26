@@ -6,6 +6,8 @@ import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.slave.partition.column.pax.ADBColumn;
+import de.hpi.julianweise.slave.partition.column.pax.ADBColumnFactory;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityBooleanEntry;
@@ -15,8 +17,6 @@ import de.hpi.julianweise.slave.partition.data.entry.ADBEntityIntEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityStringEntry;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeaderFactory;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributes;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.junit.Before;
@@ -44,14 +44,15 @@ public class ADBPartitionHeaderTest {
         data.add(new TestEntity(4, "Tes", 1.4f, true, 1.04));
         data.add(new TestEntity(8, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(data);
-        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(data, partitionId, sortedAttributesL);
+        Map<String, ADBColumn> columns = ADBColumnFactory.createDefault(data, partitionId);
+
+        ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(columns, partitionId);
 
         assertThat(header.getMinValues().size()).isEqualTo(5);
         assertThat(header.getMaxValues().size()).isEqualTo(5);
 
-        assertThat(((ADBEntityIntEntry)header.getMinValues().get("aInteger")).value).isEqualTo(-1);
-        assertThat(((ADBEntityIntEntry)header.getMaxValues().get("aInteger")).value).isEqualTo(8);
+        assertThat(((ADBEntityIntEntry)header.getMinValues().get("aInteger")).getValue()).isEqualTo(-1);
+        assertThat(((ADBEntityIntEntry)header.getMaxValues().get("aInteger")).getValue()).isEqualTo(8);
         assertThat(((ADBEntityStringEntry)header.getMinValues().get("bString")).value).isEqualTo("T");
         assertThat(((ADBEntityStringEntry)header.getMaxValues().get("bString")).value).isEqualTo("Test");
         assertThat(((ADBEntityFloatEntry)header.getMinValues().get("cFloat")).value).isEqualTo(-1f);
@@ -73,8 +74,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(4, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(8, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        Map<String, ADBColumn> columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         ObjectList<ADBEntity> dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -82,10 +83,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataLeft);
-
-
-        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        Map<String, ADBColumn> columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
@@ -98,8 +97,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(-41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(-81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -107,8 +106,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight = ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -118,8 +117,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -127,8 +126,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight = ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -138,8 +137,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -147,8 +146,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight = ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
     }
@@ -164,8 +163,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        Map<String, ADBColumn> columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         ObjectList<ADBEntity> dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -173,8 +172,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        Map<String, ADBColumn> columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS_OR_EQUAL, "aInteger", "aInteger"));
@@ -187,8 +186,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -196,8 +195,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
     }
@@ -213,8 +212,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(4, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(8, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        Map<String, ADBColumn> columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         ObjectList<ADBEntity> dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -222,8 +221,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        Map<String, ADBColumn> columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        ADBPartitionHeader headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "aInteger"));
@@ -236,8 +235,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(-41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(-81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -245,8 +244,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
 
@@ -256,8 +255,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -265,8 +264,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
 
@@ -276,8 +275,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(141, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(181, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(-5, "T", -1.0f, true, -1.01));
@@ -285,8 +284,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isTrue();
     }
@@ -302,8 +301,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        Map<String, ADBColumn> columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         ObjectList<ADBEntity> dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01));
@@ -311,8 +310,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        Map<String, ADBColumn> columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        ADBPartitionHeader headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER_OR_EQUAL, "aInteger", "aInteger"));
@@ -325,8 +324,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(22, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01));
@@ -334,8 +333,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
     }
@@ -351,8 +350,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        Map<String, ADBColumn> columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         ObjectList<ADBEntity> dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01));
@@ -360,8 +359,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        Map<String, ADBColumn> columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        ADBPartitionHeader headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
@@ -374,8 +373,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(22, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01));
@@ -383,8 +382,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight = ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
     }
@@ -400,8 +399,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(15, "Tes", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(23, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        Map<String, ADBColumn> columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        ADBPartitionHeader headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         ObjectList<ADBEntity> dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(23, "T", -1.0f, true, -1.01));
@@ -409,8 +408,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        Map<String, ADBSortedEntityAttributes> sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        ADBPartitionHeader headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        Map<String, ADBColumn> columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        ADBPartitionHeader headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "bString", "bString"));
@@ -423,8 +422,8 @@ public class ADBPartitionHeaderTest {
         dataLeft.add(new TestEntity(15, "GRASDASDE", 1.4f, true, 1.04));
         dataLeft.add(new TestEntity(22, "Gs#d23$f3QS", 1.8f, false, 1.08));
 
-        sortedAttributesL = ADBSortedEntityAttributesFactory.of(dataLeft);
-        headerLeft = ADBPartitionHeaderFactory.createDefault(dataLeft, partitionIdLeft, sortedAttributesL);
+        columnsLeft = ADBColumnFactory.createDefault(dataLeft, partitionIdLeft);
+        headerLeft = ADBPartitionHeaderFactory.createDefault(columnsLeft, partitionIdLeft);
 
         dataRight = new ObjectArrayList<>();
         dataRight.add(new TestEntity(23, "T1", -1.0f, true, -1.01));
@@ -432,8 +431,8 @@ public class ADBPartitionHeaderTest {
         dataRight.add(new TestEntity(41, "Tes", 1.4f, true, 1.04));
         dataRight.add(new TestEntity(81, "Test", 1.8f, false, 1.08));
 
-        sortedAttributesR = ADBSortedEntityAttributesFactory.of(dataRight);
-        headerRight = ADBPartitionHeaderFactory.createDefault(dataRight, partitionIdRight, sortedAttributesR);
+        columnsRight = ADBColumnFactory.createDefault(dataRight, partitionIdRight);
+        headerRight =ADBPartitionHeaderFactory.createDefault(columnsRight, partitionIdRight);
 
         assertThat(headerLeft.isOverlapping(headerRight, joinQuery)).isFalse();
     }
