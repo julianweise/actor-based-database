@@ -1,5 +1,6 @@
 package de.hpi.julianweise.slave.partition.column.pax;
 
+import de.hpi.julianweise.query.selection.constant.ADBPredicateConstant;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.column.sorted.ADBByteColumnSorted;
 import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
@@ -75,5 +76,10 @@ public class ADBByteColumn extends ADBColumn {
 
     protected ADBEntityEntry getEntry(int id, int index) {
         return new ADBEntityByteEntry(id, this.values.getByte(index));
+    }
+
+    @SneakyThrows
+    public boolean satisfy(int index, ADBPredicateConstant constant) {
+        return this.values.getByte(index) == constant.getValueField().getByte(constant);
     }
 }

@@ -1,5 +1,6 @@
 package de.hpi.julianweise.slave.partition.column.pax;
 
+import de.hpi.julianweise.query.selection.constant.ADBPredicateConstant;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
@@ -54,6 +55,8 @@ public abstract class ADBColumn {
         int id = ADBInternalIDHelper.createID(ADBSlave.ID, partitionId, sortedIndices[sortedIndices.length - 1]);
         return this.getEntry(id, this.sortedIndices[this.sortedIndices.length - 1]);
     }
+
+    public abstract boolean satisfy(int index, ADBPredicateConstant constant);
 
     public abstract ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max);
 }

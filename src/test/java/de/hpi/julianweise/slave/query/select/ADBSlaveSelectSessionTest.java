@@ -7,6 +7,8 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.TestEntity;
+import de.hpi.julianweise.csv.TestEntityFactory;
+import de.hpi.julianweise.domain.key.ADBEntityFactoryProvider;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query.select.ADBMasterSelectSession;
@@ -34,7 +36,7 @@ import java.util.Collections;
 import static de.hpi.julianweise.query.ADBQueryTerm.RelationalOperator.EQUALITY;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ADBSlavaeSelectSessionTest {
+public class ADBSlaveSelectSessionTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
@@ -42,6 +44,7 @@ public class ADBSlavaeSelectSessionTest {
     @Before
     public void setUp() {
         testKit.spawn(ADBSlave.create());
+        ADBEntityFactoryProvider.initialize(new TestEntityFactory());
         ADBComparator.buildComparatorMapping();
     }
 
