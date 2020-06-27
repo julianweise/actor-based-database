@@ -39,7 +39,7 @@ public class JoinQueryColumnWorkload extends Workload {
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
         for(int i = 0; i < this.bitMatrix.length; i++) {
-            this.bitMatrix[i] = new SparseBitSet(this.leftSideValues.size() * 2);
+            this.bitMatrix[i] = new SparseBitSet(this.rightSideValues.size() * 2);
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
