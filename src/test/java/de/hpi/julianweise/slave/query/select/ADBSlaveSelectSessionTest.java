@@ -102,7 +102,7 @@ public class ADBSlaveSelectSessionTest {
     }
 
     @Test
-    public void returnValidResultSet() {
+    public void returnValidResultSet() throws InterruptedException {
         TestProbe<ADBDataDistributor.Command> persistProbe = testKit.createTestProbe();
         TestProbe<Receptionist.Listing> receptionistProbe = testKit.createTestProbe();
 
@@ -123,6 +123,8 @@ public class ADBSlaveSelectSessionTest {
                         new ObjectArrayList<>(Collections.singletonList(testEntity)))));
         validListing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(manager ->
                 manager.tell(new ADBPartitionManager.ConcludeTransfer()));
+
+        Thread.sleep(2000);
 
         ADBSelectionQuery query = new ADBSelectionQuery();
         ADBSelectionQueryPredicate predicate = ADBSelectionQueryPredicate
