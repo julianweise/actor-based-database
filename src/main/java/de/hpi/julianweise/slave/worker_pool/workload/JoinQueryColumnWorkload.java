@@ -41,8 +41,11 @@ public class JoinQueryColumnWorkload extends Workload {
 
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
+        int maxIdRight = this.rightSideValues.stream()
+                                       .mapToInt(e -> ADBInternalIDHelper.getEntityId(e.getId()))
+                                       .max().orElse(this.leftSideValues.size());
         for(int i = 0; i < this.bitMatrix.length; i++) {
-            this.bitMatrix[i] = new SparseBitSet(this.rightSideValues.size());
+            this.bitMatrix[i] = new SparseBitSet(maxIdRight);
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
