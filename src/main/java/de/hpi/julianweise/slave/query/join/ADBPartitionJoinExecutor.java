@@ -143,11 +143,13 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private Behavior<Command> handleMultipleAttributes(ADBPartition.MultipleAttributes response) {
         if (response.isLeft()) {
+            this.leftOriginalSizes = response.getOriginalSize();
             this.leftAttributes = response
                     .getAttributes().entrySet().parallelStream()
                     .collect(Collectors.toMap(Map.Entry::getKey, pair -> pair.getValue().materializeSorted()));
         }
         if (!response.isLeft()) {
+            this.rightOriginalSizes = response.getOriginalSize();
             this.rightAttributes = response
                     .getAttributes().entrySet().parallelStream()
                     .collect(Collectors.toMap(Map.Entry::getKey, pair -> pair.getValue().materializeSorted()));
