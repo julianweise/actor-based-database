@@ -32,12 +32,16 @@ public class JoinQueryColumnWorkload extends Workload {
         this.leftSideValues = left;
         this.rightSideValues = right;
         this.costModel = costModel;
-        this.bitMatrix = new SparseBitSet[this.leftSideValues.size()];
+        // Information could also be transferred from origin-partition
+        int maxId = this.leftSideValues.stream()
+                                       .mapToInt(e -> ADBInternalIDHelper.getEntityId(e.getId()))
+                                       .max().orElse(this.leftSideValues.size());
+        this.bitMatrix = new SparseBitSet[maxId + 1];
     }
 
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
-        for(int i = 0; i < this.leftSideValues.size(); i++) {
+        for(int i = 0; i < this.bitMatrix.length; i++) {
             this.bitMatrix[i] = new SparseBitSet(this.rightSideValues.size());
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
