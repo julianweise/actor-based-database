@@ -33,19 +33,13 @@ public class JoinQueryColumnWorkload extends Workload {
         this.rightSideValues = right;
         this.costModel = costModel;
         // Information could also be transferred from origin-partition
-        int maxId = this.leftSideValues.stream()
-                                       .mapToInt(e -> ADBInternalIDHelper.getEntityId(e.getId()))
-                                       .max().orElse(this.leftSideValues.size());
-        this.bitMatrix = new SparseBitSet[maxId + 1];
+        this.bitMatrix = new SparseBitSet[this.leftSideValues.size() * 2];
     }
 
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
-        int maxIdRight = this.rightSideValues.stream()
-                                       .mapToInt(e -> ADBInternalIDHelper.getEntityId(e.getId()))
-                                       .max().orElse(this.leftSideValues.size());
         for(int i = 0; i < this.bitMatrix.length; i++) {
-            this.bitMatrix[i] = new SparseBitSet(maxIdRight);
+            this.bitMatrix[i] = new SparseBitSet(this.leftSideValues.size() * 2);
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
