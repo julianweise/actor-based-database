@@ -28,6 +28,8 @@ import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBJoinQueryContext;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -151,8 +153,15 @@ public class ADBJoinWithNodeSessionTest {
         attributes.put("cFloat", new ADBFloatColumnSorted(0, 0, new float[]{1f}, new short[]{0}));
         attributes.put("eDouble", new ADBDoubleColumnSorted(0, 0, new double[]{1.00}, new short[]{0}));
 
-        redirectCommand11.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes, true));
-        redirectCommand21.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes, false));
+        Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
+        originalSizes.put("aInteger", 1);
+        originalSizes.put("cFloat", 1);
+        originalSizes.put("eDouble", 1);
+
+        redirectCommand11.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes,
+                originalSizes, true));
+        redirectCommand21.getMessage().getRespondTo().tell(new ADBPartition.MultipleAttributes(attributes,
+                originalSizes, false));
 
         ADBPartitionManager.RedirectToPartition redirectCommand12 =
                 partitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);

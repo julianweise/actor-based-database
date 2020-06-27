@@ -26,6 +26,7 @@ import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +48,8 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private ADBJoinPartitionFilterStrategy filter;
     private Map<String, ObjectList<ADBEntityEntry>> leftAttributes;
     private Map<String, ObjectList<ADBEntityEntry>> rightAttributes;
+    private Object2IntMap<String> leftOriginalSizes;
+    private Object2IntMap<String> rightOriginalSizes;
     private ObjectList<ADBJoinPredicateCostModel> costModels;
     private int costModelsProcessed = 0;
 
@@ -56,12 +59,6 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     @AllArgsConstructor
     public static class Prepare implements Command {
         private final ADBPartitionJoinTask joinTask;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class PartitionJoinAttributesWrapper implements Command {
-        ADBPartition.MultipleAttributes response;
     }
 
     @AllArgsConstructor
@@ -224,7 +221,8 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         val respondTo = getContext().messageAdapter(ADBColumnJoinStepExecutor.StepExecuted.class,
                 ADBColumnJoinExecutorWrapper::new);
         this.getContext().spawn(ADBColumnJoinStepExecutorFactory
-                .createDefault(this.leftAttributes, this.rightAttributes, costModels, respondTo), "ColumnJoinStep")
+                .createDefault(this.leftAttributes, this.rightAttributes, this.leftOriginalSizes,
+                        this.rightOriginalSizes, costModels, respondTo), "ColumnJoinStep")
             .tell(new ADBColumnJoinStepExecutor.Execute());
     }
 

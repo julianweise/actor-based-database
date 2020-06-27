@@ -25,6 +25,8 @@ import de.hpi.julianweise.slave.partition.meta.ADBPartitionHeader;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.SneakyThrows;
 import org.junit.After;
@@ -114,6 +116,9 @@ public class ADBPartitionJoinExecutorTest {
                 Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
+        Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
+        originalSizes.put("aInteger", 2);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
@@ -130,14 +135,14 @@ public class ADBPartitionJoinExecutorTest {
 
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllLeftHandSideFields()));
 
-        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, true));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, originalSizes, true));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllRightHandSideFields()));
 
-        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, false));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, originalSizes, false));
 
         executor.tell(new ADBPartitionJoinExecutor.Execute());
 
@@ -187,6 +192,9 @@ public class ADBPartitionJoinExecutorTest {
                 Collections.singletonMap("eDouble", this.createTestEntry(9, 2)),
                 rPartitionId);
 
+        Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
+        originalSizes.put("eDouble", 2);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
@@ -206,14 +214,14 @@ public class ADBPartitionJoinExecutorTest {
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllLeftHandSideFields()));
-        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, true));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, originalSizes, true));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllRightHandSideFields()));
 
-        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, false));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, originalSizes, false));
 
         executor.tell(new ADBPartitionJoinExecutor.Execute());
 
@@ -259,6 +267,9 @@ public class ADBPartitionJoinExecutorTest {
                 Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
+        Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
+        originalSizes.put("aInteger", 2);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
@@ -278,14 +289,14 @@ public class ADBPartitionJoinExecutorTest {
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllLeftHandSideFields()));
-        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, true));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, originalSizes, true));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllRightHandSideFields()));
 
-        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, false));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, originalSizes, false));
 
         executor.tell(new ADBPartitionJoinExecutor.Execute());
 
@@ -335,6 +346,8 @@ public class ADBPartitionJoinExecutorTest {
                 Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
+        Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
+        originalSizes.put("aInteger", 2);
 
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
@@ -350,12 +363,12 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllLeftHandSideFields()));
-        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, true));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, originalSizes, true));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllRightHandSideFields()));
-        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, false));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, originalSizes, false));
 
         ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);
@@ -407,6 +420,9 @@ public class ADBPartitionJoinExecutorTest {
                 Collections.singletonMap("aInteger", this.createTestEntry(9, 2)),
                 rPartitionId);
 
+        Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
+        originalSizes.put("aInteger", 2);
+
         ADBPartitionJoinTask task = ADBPartitionJoinTask.builder()
                                                         .leftPartitionManager(leftPartitionManager.ref())
                                                         .leftPartitionId(lPartitionId)
@@ -421,14 +437,14 @@ public class ADBPartitionJoinExecutorTest {
         ADBPartitionManager.RedirectToPartition requestJoinAttributesLeft =
                 leftPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
         assertThat(requestJoinAttributesLeft.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllLeftHandSideFields()));
-        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, true));
+        executor.tell(new ADBPartition.MultipleAttributes(leftSideAttributes, originalSizes, true));
 
         ADBPartitionManager.RedirectToPartition requestJoinAttributesRight =
                 rightPartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         assertThat(requestJoinAttributesRight.getMessage().getAttributes()).containsAll(Arrays.asList(joinQuery.getAllRightHandSideFields()));
 
-        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, false));
+        executor.tell(new ADBPartition.MultipleAttributes(rightSideAttributes, originalSizes, false));
 
         ADBPartitionJoinExecutor.JoinTaskPrepared responsePrepared =
                 supervisor.expectMessageClass(ADBPartitionJoinExecutor.JoinTaskPrepared.class);

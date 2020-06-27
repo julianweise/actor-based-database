@@ -14,6 +14,7 @@ import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryColumnWorkload;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -47,6 +48,8 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
 
     private final Map<String, ObjectList<ADBEntityEntry>> left;
     private final Map<String, ObjectList<ADBEntityEntry>> right;
+    private final Object2IntMap<String> leftOriginalSizes;
+    private final Object2IntMap<String> rightOriginalSies;
     private final ObjectList<ADBJoinPredicateCostModel> costModels;
     private final ActorRef<StepExecuted> respondTo;
     private final AtomicInteger intersectsPerformed = new AtomicInteger(0);
@@ -55,11 +58,15 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
     public ADBColumnJoinStepExecutor(ActorContext<Command> context,
                                      Map<String, ObjectList<ADBEntityEntry>> left,
                                      Map<String, ObjectList<ADBEntityEntry>> right,
+                                     Object2IntMap<String> leftOriginalSizes,
+                                     Object2IntMap<String> rightOriginalSizes,
                                      ObjectList<ADBJoinPredicateCostModel> costModels,
                                      ActorRef<StepExecuted> respondTo) {
         super(context);
         this.left = left;
         this.right = right;
+        this.leftOriginalSizes = leftOriginalSizes;
+        this.rightOriginalSies = rightOriginalSizes;
         this.costModels = costModels;
         this.respondTo = respondTo;
     }
@@ -79,6 +86,8 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
                     .builder()
                     .left(this.left.get(costModel.getPredicate().getLeftHandSideAttribute()))
                     .right(this.right.get(costModel.getPredicate().getRightHandSideAttribute()))
+                    .leftOriginalSize(this.leftOriginalSizes.getInt(costModel.getPredicate().getLeftHandSideAttribute()))
+                    .rightOriginalSize(this.rightOriginalSies.getInt(costModel.getPredicate().getRightHandSideAttribute()))
                     .costModel(costModel)
                     .build();
             ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));

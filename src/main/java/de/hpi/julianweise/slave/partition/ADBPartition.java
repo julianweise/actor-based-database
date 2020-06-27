@@ -20,6 +20,8 @@ import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -71,6 +73,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     @Getter
     public static class MultipleAttributes implements Response, ADBLargeMessageSender.LargeMessage {
         private Map<String, ADBColumnSorted> attributes;
+        private Object2IntMap<String> originalSize;
         private boolean isLeft;
     }
 
@@ -121,11 +124,13 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
     private Behavior<Command> handleRequestMultipleAttributesFiltered(RequestMultipleAttributesFiltered command) {
         Map<String, ADBColumnSorted> attributeValues = new Object2ObjectOpenHashMap<>();
+        Object2IntMap<String> originalSize = new Object2IntLinkedOpenHashMap<>();
         for(int i = 0; i < command.attributes.length; i++) {
             String attribute = command.attributes[i];
             attributeValues.put(attribute, getFilteredValuesOf(attribute, command.minValues[i], command.maxValues[i]));
+            originalSize.put(attribute, this.columns.get(attribute).size());
         }
-        val message = new MultipleAttributes(attributeValues, command.isLeft);
+        val message = new MultipleAttributes(attributeValues, originalSize, command.isLeft);
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, MessageSenderResponse::new);
         ADBLargeMessageActor.sendMessage(this.getContext(), Adapter.toClassic(command.respondTo), respondTo, message);
         return Behaviors.same();

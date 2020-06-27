@@ -15,6 +15,7 @@ public class JoinQueryColumnWorkload extends Workload {
 
     private final ObjectList<ADBEntityEntry> leftSideValues;
     private final ObjectList<ADBEntityEntry> rightSideValues;
+    private final int rightOriginalSize;
     private final ADBJoinPredicateCostModel costModel;
     private final SparseBitSet[] bitMatrix;
 
@@ -28,24 +29,20 @@ public class JoinQueryColumnWorkload extends Workload {
     @Builder
     public JoinQueryColumnWorkload(ObjectList<ADBEntityEntry> left,
                                    ObjectList<ADBEntityEntry> right,
+                                   int leftOriginalSize,
+                                   int rightOriginalSize,
                                    ADBJoinPredicateCostModel costModel) {
         this.leftSideValues = left;
         this.rightSideValues = right;
         this.costModel = costModel;
-        // Information could also be transferred from origin-partition
-        int maxId = this.leftSideValues.stream()
-                                       .mapToInt(e -> ADBInternalIDHelper.getEntityId(e.getId()))
-                                       .max().orElse(this.leftSideValues.size());
-        this.bitMatrix = new SparseBitSet[maxId + 1];
+        this.rightOriginalSize = rightOriginalSize;
+        this.bitMatrix = new SparseBitSet[leftOriginalSize];
     }
 
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
-        int maxIdRight = this.rightSideValues.stream()
-                                       .mapToInt(e -> ADBInternalIDHelper.getEntityId(e.getId()))
-                                       .max().orElse(this.rightSideValues.size());
         for(int i = 0; i < this.bitMatrix.length; i++) {
-            this.bitMatrix[i] = new SparseBitSet(maxIdRight);
+            this.bitMatrix[i] = new SparseBitSet(this.rightOriginalSize);
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
