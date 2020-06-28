@@ -8,7 +8,7 @@ import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityByteEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
-import it.unimi.dsi.fastutil.shorts.ShortComparator;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -18,9 +18,9 @@ import java.util.Arrays;
 public class ADBByteColumn extends ADBColumn {
 
     @AllArgsConstructor
-    private class ValuesIndexComparator implements ShortComparator {
+    private class ValuesIndexComparator implements IntComparator {
         @Override
-        public int compare(short a, short b) {
+        public int compare(int a, int b) {
             return Byte.compare(values.getByte(a), values.getByte(b));
         }
     }
@@ -54,9 +54,9 @@ public class ADBByteColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         byte[] sorted = new byte[sortedIndices.length];
-        short[] original = new short[sortedIndices.length];
+        int[] original = new int[sortedIndices.length];
         int currentPointer = 0;
-        for (short sortedIndex : this.sortedIndices) {
+        for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getByte(min) > this.values.getByte(sortedIndex)) continue;
             if (max.getValueField().getByte(max) < this.values.getByte(sortedIndex)) break;
             sorted[currentPointer] = this.values.getByte(sortedIndex);
@@ -70,7 +70,7 @@ public class ADBByteColumn extends ADBColumn {
         return this.values.size();
     }
 
-    protected ShortComparator getIndexedValueComparator() {
+    protected IntComparator getIndexedValueComparator() {
         return new ValuesIndexComparator();
     }
 

@@ -8,7 +8,7 @@ import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityBooleanEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
-import it.unimi.dsi.fastutil.shorts.ShortComparator;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -18,9 +18,9 @@ import java.util.Arrays;
 public class ADBBooleanColumn extends ADBColumn {
 
     @AllArgsConstructor
-    private class ValuesIndexComparator implements ShortComparator {
+    private class ValuesIndexComparator implements IntComparator {
         @Override
-        public int compare(short a, short b) {
+        public int compare(int a, int b) {
             return Boolean.compare(values.getBoolean(a), values.getBoolean(b));
         }
     }
@@ -54,9 +54,9 @@ public class ADBBooleanColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         boolean[] sorted = new boolean[sortedIndices.length];
-        short[] original = new short[sortedIndices.length];
+        int[] original = new int[sortedIndices.length];
         int currentPointer = 0;
-        for (short sortedIndex : this.sortedIndices) {
+        for (int sortedIndex : this.sortedIndices) {
             sorted[currentPointer] = this.values.getBoolean(sortedIndex);
             original[currentPointer++] = sortedIndex;
         }
@@ -68,7 +68,7 @@ public class ADBBooleanColumn extends ADBColumn {
         return this.values.size();
     }
 
-    protected ShortComparator getIndexedValueComparator() {
+    protected IntComparator getIndexedValueComparator() {
         return new ValuesIndexComparator();
     }
 

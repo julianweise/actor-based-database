@@ -149,9 +149,9 @@ public class ADBJoinWithNodeSessionTest {
                 remotePartitionManager.expectMessageClass(ADBPartitionManager.RedirectToPartition.class);
 
         Map<String, ADBColumnSorted> attributes = new HashMap<>();
-        attributes.put("aInteger", new ADBIntColumnSorted(0, 0, new int[]{1}, new short[]{0}));
-        attributes.put("cFloat", new ADBFloatColumnSorted(0, 0, new float[]{1f}, new short[]{0}));
-        attributes.put("eDouble", new ADBDoubleColumnSorted(0, 0, new double[]{1.00}, new short[]{0}));
+        attributes.put("aInteger", new ADBIntColumnSorted(0, 0, new int[]{1}, new int[]{0}));
+        attributes.put("cFloat", new ADBFloatColumnSorted(0, 0, new float[]{1f}, new int[]{0}));
+        attributes.put("eDouble", new ADBDoubleColumnSorted(0, 0, new double[]{1.00}, new int[]{0}));
 
         Object2IntMap<String> originalSizes = new Object2IntOpenHashMap<>();
         originalSizes.put("aInteger", 1);

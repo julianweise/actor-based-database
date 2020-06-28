@@ -8,7 +8,7 @@ import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityFloatEntry;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.shorts.ShortComparator;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -18,9 +18,9 @@ import java.util.Arrays;
 public class ADBFloatColumn extends ADBColumn {
 
     @AllArgsConstructor
-    private class ValuesIndexComparator implements ShortComparator {
+    private class ValuesIndexComparator implements IntComparator {
         @Override
-        public int compare(short a, short b) {
+        public int compare(int a, int b) {
             return Float.compare(values.getFloat(a), values.getFloat(b));
         }
     }
@@ -54,9 +54,9 @@ public class ADBFloatColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         float[] sorted = new float[sortedIndices.length];
-        short[] original = new short[sortedIndices.length];
+        int[] original = new int[sortedIndices.length];
         int currentPointer = 0;
-        for (short sortedIndex : this.sortedIndices) {
+        for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getFloat(min) > this.values.getFloat(sortedIndex)) continue;
             if (max.getValueField().getFloat(max) < this.values.getFloat(sortedIndex)) break;
             sorted[currentPointer] = this.values.getFloat(sortedIndex);
@@ -70,7 +70,7 @@ public class ADBFloatColumn extends ADBColumn {
         return this.values.size();
     }
 
-    protected ShortComparator getIndexedValueComparator() {
+    protected IntComparator getIndexedValueComparator() {
         return new ValuesIndexComparator();
     }
 

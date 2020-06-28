@@ -7,8 +7,8 @@ import de.hpi.julianweise.slave.partition.column.sorted.ADBLongColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityLongEntry;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.shorts.ShortComparator;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -18,9 +18,9 @@ import java.util.Arrays;
 public class ADBLongColumn extends ADBColumn {
 
     @AllArgsConstructor
-    private class ValuesIndexComparator implements ShortComparator {
+    private class ValuesIndexComparator implements IntComparator {
         @Override
-        public int compare(short a, short b) {
+        public int compare(int a, int b) {
             return Long.compare(values.getLong(a), values.getLong(b));
         }
     }
@@ -54,9 +54,9 @@ public class ADBLongColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         long[] sorted = new long[sortedIndices.length];
-        short[] original = new short[sortedIndices.length];
+        int[] original = new int[sortedIndices.length];
         int currentPointer = 0;
-        for (short sortedIndex : this.sortedIndices) {
+        for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getLong(min) > this.values.getLong(sortedIndex)) continue;
             if (max.getValueField().getLong(max) < this.values.getLong(sortedIndex)) break;
             sorted[currentPointer] = this.values.getLong(sortedIndex);
@@ -70,7 +70,7 @@ public class ADBLongColumn extends ADBColumn {
         return this.values.size();
     }
 
-    protected ShortComparator getIndexedValueComparator() {
+    protected IntComparator getIndexedValueComparator() {
         return new ValuesIndexComparator();
     }
 

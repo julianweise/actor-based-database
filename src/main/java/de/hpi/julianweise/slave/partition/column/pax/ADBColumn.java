@@ -6,15 +6,15 @@ import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
-import it.unimi.dsi.fastutil.shorts.ShortArrays;
-import it.unimi.dsi.fastutil.shorts.ShortComparator;
+import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 
 import java.lang.reflect.Field;
 
 public abstract class ADBColumn {
 
     protected final int partitionId;
-    protected transient short[] sortedIndices;
+    protected transient int[] sortedIndices;
     protected transient Field entityField;
     protected transient boolean finalized = false;
 
@@ -34,15 +34,14 @@ public abstract class ADBColumn {
 
     protected abstract ADBEntityEntry getEntry(int id, int index);
 
-    protected abstract ShortComparator getIndexedValueComparator();
+    protected abstract IntComparator getIndexedValueComparator();
 
     public abstract int size();
 
-    protected short[] calculateSortedIndices() {
-        assert this.size() <= Short.MAX_VALUE : "Number of column values can not be represented by short";
-        short[] sortedIndices = new short[this.size()];
+    protected int[] calculateSortedIndices() {
+        int[] sortedIndices = new int[this.size()];
         for (short i = 0; i < sortedIndices.length; i++) sortedIndices[i] = i;
-        ShortArrays.parallelQuickSort(sortedIndices, this.getIndexedValueComparator());
+        IntArrays.parallelQuickSort(sortedIndices, this.getIndexedValueComparator());
         return sortedIndices;
     }
 

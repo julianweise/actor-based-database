@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 public class ADBBooleanColumnSorted extends ADBColumnSorted {
     private boolean[] values;
 
-    public ADBBooleanColumnSorted(int nodeId, int partitionId, boolean[] values, short[] originalIndices) {
+    public ADBBooleanColumnSorted(int nodeId, int partitionId, boolean[] values, int[] originalIndices) {
         super(nodeId, partitionId, originalIndices);
         this.values = values;
     }

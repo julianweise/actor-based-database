@@ -8,7 +8,7 @@ import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityIntEntry;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.shorts.ShortComparator;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
@@ -49,9 +49,9 @@ public class ADBIntColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         int[] sorted = new int[sortedIndices.length];
-        short[] original = new short[sortedIndices.length];
+        int[] original = new int[sortedIndices.length];
         int currentPointer = 0;
-        for (short sortedIndex : this.sortedIndices) {
+        for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getInt(min) > this.values.getInt(sortedIndex)) continue;
             if (max.getValueField().getInt(max) < this.values.getInt(sortedIndex)) break;
             sorted[currentPointer] = this.values.getInt(sortedIndex);
@@ -61,7 +61,7 @@ public class ADBIntColumn extends ADBColumn {
                 Arrays.copyOfRange(original, 0, currentPointer));
     }
 
-    protected ShortComparator getIndexedValueComparator() {
+    protected IntComparator getIndexedValueComparator() {
         return (a, b) -> Integer.compare(values.getInt(a), values.getInt(b));
     }
 

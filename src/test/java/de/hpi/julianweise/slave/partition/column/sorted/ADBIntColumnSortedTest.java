@@ -16,7 +16,7 @@ public class ADBIntColumnSortedTest {
     @Test
     public void shouldReturnCorrectMaterializedEntries() throws IllegalAccessException {
         int[] values = new int[]{1, 2, 3};
-        short[] originalIds = new short[]{1, 0, 2};
+        int[] originalIds = new int[]{1, 0, 2};
         ADBIntColumnSorted columnSorted = new ADBIntColumnSorted(NODE_ID, PARTITION_ID, values, originalIds);
 
         ObjectList<ADBEntityEntry> sortedEntries = columnSorted.materializeSorted();

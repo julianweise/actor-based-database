@@ -14,7 +14,7 @@ public abstract class ADBColumnSorted {
 
     protected int nodeId;
     protected int partitionId;
-    protected short[] originalIndices;
+    protected int[] originalIndices;
 
     public ObjectList<ADBEntityEntry> materializeSorted() {
         ObjectList<ADBEntityEntry> result = new ObjectArrayList<>(this.originalIndices.length);

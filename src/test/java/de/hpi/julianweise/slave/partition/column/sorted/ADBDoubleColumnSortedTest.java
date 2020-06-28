@@ -16,7 +16,7 @@ public class ADBDoubleColumnSortedTest {
     @Test
     public void shouldReturnCorrectMaterializedEntries() throws IllegalAccessException {
         double[] values = new double[]{1, 2, 3};
-        short[] originalIds = new short[]{1, 0, 2};
+        int[] originalIds = new int[]{1, 0, 2};
         ADBDoubleColumnSorted columnSorted = new ADBDoubleColumnSorted(NODE_ID, PARTITION_ID, values, originalIds);
 
         ObjectList<ADBEntityEntry> sortedEntries = columnSorted.materializeSorted();
