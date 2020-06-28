@@ -194,11 +194,11 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void execute() {
-        this.getContext().getLog().info("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
         if (this.costModels.get(0).getCost() == 0) {
             this.returnResults(new ADBPartialJoinResult(0));
             return;
         }
+        this.getContext().getLog().info("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
         if (this.costModels.size() < 2) {
             ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
