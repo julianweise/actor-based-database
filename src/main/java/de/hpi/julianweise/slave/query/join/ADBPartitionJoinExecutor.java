@@ -170,6 +170,10 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
             this.getContext().getLog().warn("Missing attributes - rescheduling execution");
             return Behaviors.same();
         }
+        if (this.leftAttributes.values().stream().anyMatch(entriesL -> entriesL.size() < 1) || this.rightAttributes.values().stream().anyMatch(entriesR -> entriesR.size() < 1)) {
+            this.returnResults(new ADBPartialJoinResult(0));
+            return Behaviors.same();
+        }
         this.costModels = this.getSortedCostModels(this.joinQuery);
         this.execute();
         return Behaviors.same();
@@ -191,6 +195,10 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private void execute() {
         this.getContext().getLog().info("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
+        if (this.costModels.get(0).getCost() == 0) {
+            this.returnResults(new ADBPartialJoinResult(0));
+            return;
+        }
         if (this.costModels.size() < 2) {
             ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
             this.costModelsProcessed = this.costModels.size();
