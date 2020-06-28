@@ -24,8 +24,8 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
               })
 public interface ADBEntityEntry {
 
-    static boolean matches(ADBEntityEntry a, ADBEntityEntry b, ADBQueryTerm.RelationalOperator operator) {
-        ADBComparator comparator = ADBComparator.getFor(a.getValueField(), b.getValueField());
+    static boolean matches(ADBEntityEntry a, ADBEntityEntry b, ADBQueryTerm.RelationalOperator operator,
+                           ADBComparator comparator) {
         switch (operator) {
             case EQUALITY: return comparator.compare(a, b) == 0;
             case LESS: return comparator.compare(a, b) < 0;

@@ -1,5 +1,7 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
+import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
@@ -10,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.agrona.collections.Object2ObjectHashMap;
 
 import java.util.Map;
 
@@ -21,6 +24,8 @@ public class JoinQueryRowWorkload extends Workload {
     private final ObjectList<Map<String, ADBEntityEntry>> left;
     private final ObjectList<Map<String, ADBEntityEntry>> right;
     private final ObjectList<ADBJoinPredicateCostModel> costModels;
+    private final Map<ADBJoinQueryPredicate, ADBComparator> comparators = new Object2ObjectHashMap<>();
+
 
     @AllArgsConstructor
     @Getter
@@ -53,7 +58,10 @@ public class JoinQueryRowWorkload extends Workload {
             if (lField == null || rField == null) {
                 return false;
             }
-            if (!ADBEntityEntry.matches(lField, rField, termCostModel.getPredicate().getOperator())) {
+            comparators.putIfAbsent(termCostModel.getPredicate(), ADBComparator.getFor(lField.getValueField(),
+                    rField.getValueField()));
+            if (!ADBEntityEntry.matches(lField, rField, termCostModel.getPredicate().getOperator(),
+                    comparators.get(termCostModel.getPredicate()))) {
                 return false;
             }
         }
