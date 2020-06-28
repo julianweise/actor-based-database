@@ -40,7 +40,7 @@ public abstract class ADBColumn {
 
     protected int[] calculateSortedIndices() {
         int[] sortedIndices = new int[this.size()];
-        for (short i = 0; i < sortedIndices.length; i++) sortedIndices[i] = i;
+        for (int i = 0; i < sortedIndices.length; i++) sortedIndices[i] = i;
         IntArrays.parallelQuickSort(sortedIndices, this.getIndexedValueComparator());
         return sortedIndices;
     }
