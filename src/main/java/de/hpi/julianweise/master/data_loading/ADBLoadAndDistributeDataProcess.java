@@ -7,36 +7,45 @@ import akka.actor.typed.SupervisorStrategy;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
-import akka.actor.typed.javadsl.PoolRouter;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.javadsl.Routers;
+import akka.actor.typed.receptionist.Receptionist;
 import de.hpi.julianweise.csv.CSVParsingActor;
 import de.hpi.julianweise.master.ADBMaster;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributor;
 import de.hpi.julianweise.master.data_loading.distribution.ADBDataDistributorFactory;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
+import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAndDistributeDataProcess.Command> {
 
     private final ActorRef<CSVParsingActor.Command> csvParser;
-    private final ActorRef<ADBDataDistributor.Command> dataDistributor;
+    private final Map<ActorRef<ADBPartitionManager.Command>, ActorRef<ADBDataDistributor.Command>> dataDistributors;
+    private List<ActorRef<ADBPartitionManager.Command>> partitionManagers = new ObjectArrayList<>();
+    private int nextDistributorIndex = 0;
     private final ActorRef<CSVParsingActor.Response> csvResponseWrapper;
     private final ActorRef<ADBDataDistributor.Response> dataDistributorWrapper;
     private final ActorRef<ADBCSVToEntityConverter.Response> converterWrapper;
     private final ActorRef<ADBCSVToEntityConverter.Command> entityConverter;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
-    private final AtomicInteger distributedBatchBatches = new AtomicInteger(0);
     private final AtomicInteger finalizedConverter = new AtomicInteger(0);
     private final AtomicInteger finalizedDistributor = new AtomicInteger(0);
     private ActorRef<ADBMaster.Command> client;
+    private final int minNumberOfNodes;
+
 
     public interface Command {}
 
@@ -59,30 +68,27 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     @AllArgsConstructor
+    public static class WrappedReceptionistListing implements Command {
+        private final Receptionist.Listing listing;
+    }
+
+    @AllArgsConstructor
     @Getter
     public static class Start implements Command {
         private final ActorRef<ADBMaster.Command> respondTo;
     }
 
-
     protected ADBLoadAndDistributeDataProcess(ActorContext<Command> context,
                                               Behavior<CSVParsingActor.Command> csvParser) {
         super(context);
         this.csvParser = context.spawn(csvParser, "CSVParser",  DispatcherSelector.fromConfig("io-blocking-dispatcher"));
-        this.dataDistributor = this.spawnDistributorPool(context);
         this.entityConverter = this.spawnConverterPool(context);
         this.csvResponseWrapper = this.getCSVResponseWrapper();
         this.dataDistributorWrapper = this.getDataDistributorResponseWrapper();
         this.converterWrapper = this.getConverterWrapper();
-    }
+        this.minNumberOfNodes = getContext().getSystem().settings().config().getInt("akka.cluster.min-nr-of-members") - 1;
+        this.dataDistributors = new Object2ObjectOpenHashMap<>(this.minNumberOfNodes);
 
-    private ActorRef<ADBDataDistributor.Command> spawnDistributorPool(ActorContext<Command> context) {
-        PoolRouter<ADBDataDistributor.Command> pool = Routers
-                .pool(this.settings.NUMBER_DISTRIBUTOR, Behaviors
-                        .supervise(ADBDataDistributorFactory.createDefault())
-                        .onFailure(SupervisorStrategy.restart()))
-                .withRoundRobinRouting();
-        return context.spawn(pool, "distributor-pool");
     }
 
     private ActorRef<ADBCSVToEntityConverter.Command> spawnConverterPool(ActorContext<Command> context) {
@@ -111,13 +117,29 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
                 .onMessage(WrappedCSVParserResponse.class, this::handleCSVParserResponse)
                 .onMessage(WrappedNodeDistributorResponse.class, this::handleDataDistributorResponse)
                 .onMessage(WrappedConverterResponse.class, this::handleConverterResponse)
+                .onMessage(WrappedReceptionistListing.class, this::handleWrappedReceptionistListing)
                 .build();
+    }
+
+    private Behavior<Command> handleWrappedReceptionistListing(WrappedReceptionistListing command) {
+        if (command.listing.getServiceInstances(ADBPartitionManager.SERVICE_KEY).size() < this.minNumberOfNodes) {
+            return Behaviors.same();
+        }
+        this.partitionManagers = new ObjectArrayList<>(command.listing.getAllServiceInstances(ADBPartitionManager.SERVICE_KEY));
+        command.listing.getServiceInstances(ADBPartitionManager.SERVICE_KEY).forEach(this::createDistributorFor);
+        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
+        return Behaviors.same();
+    }
+
+    private void createDistributorFor(ActorRef<ADBLargeMessageActor.Command> manager) {
+        String distributorName = "distributor-" + this.dataDistributors.size();
+        val distributor = getContext().spawn(ADBDataDistributorFactory.createDefault(manager), distributorName);
+        this.dataDistributors.putIfAbsent(manager, distributor);
     }
 
     private Behavior<Command> handleStart(Start command) {
         this.getContext().getLog().info("### Start distribution of data to all nodes ###");
         this.client = command.getRespondTo();
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 
@@ -136,6 +158,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
             val payload = chunk.getChunk().subList(i, Math.min(chunk.getChunk().size(), i + chunkSize));
             this.entityConverter.tell(new ADBCSVToEntityConverter.ConvertBatch(this.converterWrapper, payload));
         }
+        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 
@@ -149,17 +172,33 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
 
     private Behavior<Command> handleConverterResponse(WrappedConverterResponse cmd) {
         if (cmd.response instanceof ADBCSVToEntityConverter.ConvertedBatch) {
-            ObjectList<ADBEntity> entities = ((ADBCSVToEntityConverter.ConvertedBatch) cmd.response).entities;
-            dataDistributor.tell(new ADBDataDistributor.DistributeBatch(dataDistributorWrapper, entities));
+            return this.handleConvertedBatch((ADBCSVToEntityConverter.ConvertedBatch) cmd.response);
         } else if (cmd.response instanceof ADBCSVToEntityConverter.Finalized) {
-            if (this.finalizedConverter.incrementAndGet() < this.settings.NUMBER_ENTITY_CONVERTER) {
-                return Behaviors.same();
-            }
-            for(int i = 0; i < this.settings.NUMBER_DISTRIBUTOR; i++) {
-                this.dataDistributor.tell(new ADBDataDistributor.ConcludeDistribution(this.dataDistributorWrapper));
-            }
+            return this.handleConverterFinalized();
         }
         return Behaviors.same();
+    }
+
+    private Behavior<Command> handleConvertedBatch(ADBCSVToEntityConverter.ConvertedBatch response) {
+        ObjectList<ADBEntity> entities = response.entities;
+        this.getNextDistributor().tell(new ADBDataDistributor.DistributeBatch(dataDistributorWrapper, entities));
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleConverterFinalized() {
+        if (this.finalizedConverter.incrementAndGet() < this.settings.NUMBER_ENTITY_CONVERTER) {
+            return Behaviors.same();
+        }
+        for(ActorRef<ADBDataDistributor.Command> distributor : this.dataDistributors.values()) {
+            distributor.tell(new ADBDataDistributor.ConcludeDistribution(this.dataDistributorWrapper));
+        }
+        return Behaviors.same();
+    }
+
+    private ActorRef<ADBDataDistributor.Command> getNextDistributor() {
+        val distributor = this.dataDistributors.get(this.partitionManagers.get(this.nextDistributorIndex));
+        this.nextDistributorIndex = (this.nextDistributorIndex + 1) % this.partitionManagers.size();
+        return distributor;
     }
 
     private Behavior<Command> handleDataDistributorResponse(WrappedNodeDistributorResponse response) {
@@ -167,26 +206,18 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
             return this.handleBatchDistributed();
         }
         else if (response.getResponse() instanceof ADBDataDistributor.Finalized){
-            if (this.finalizedDistributor.incrementAndGet() >= this.settings.NUMBER_DISTRIBUTOR) {
-                return this.handleDataFullyDistributed();
-            }
+            return this.handleDataFullyDistributed();
         }
         return Behaviors.same();
     }
 
     private Behavior<Command> handleBatchDistributed() {
-        if (distributedBatchBatches.incrementAndGet() < settings.NUMBER_DISTRIBUTOR || finalizedConverter.get() > 0) {
-            return Behaviors.same();
-        }
-        this.distributedBatchBatches.set(0);
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleDataFullyDistributed() {
-        this.dataDistributor.tell(new ADBDataDistributor.InformPartitionManagerAboutConclusion());
-        for(int i = 0; i < this.settings.NUMBER_DISTRIBUTOR; i++) {
-            this.dataDistributor.tell(new ADBDataDistributor.Terminate());
+        if (this.finalizedDistributor.incrementAndGet() < this.partitionManagers.size()) {
+            return Behaviors.same();
         }
         this.getContext().getLog().info("### Data have been fully loaded into the database ###");
         this.client.tell(new ADBMaster.StartOperationalService());

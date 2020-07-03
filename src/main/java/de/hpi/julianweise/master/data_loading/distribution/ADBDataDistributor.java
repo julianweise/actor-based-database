@@ -7,15 +7,15 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Adapter;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import akka.actor.typed.receptionist.Receptionist;
-import akka.routing.ConsistentHash;
+import de.hpi.julianweise.settings.Settings;
+import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -24,22 +24,16 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Command> {
 
     private static final Duration MAX_ROUND_TRIP_TIME = Duration.ofMillis(100);
-    private static final int VIRTUAL_NODES_FACTOR = 50;
 
-    private final Set<ActorRef<ADBPartitionManager.Command>> partitionManagers = new HashSet<>();
-    private final Map<ActorRef<ADBPartitionManager.Command>, ObjectList<ADBEntity>> batches = new Object2ObjectOpenHashMap<>();
+    private final ActorRef<ADBPartitionManager.Command> partitionManager;
+    private final ObjectArrayFIFOQueue<ADBEntity> payload = new ObjectArrayFIFOQueue<>();
     private final AtomicInteger pendingDistributions = new AtomicInteger(0);
-    private final int minNumberOfNodes;
-    private ConsistentHash<ActorRef<ADBPartitionManager.Command>> consistentHash;
-    private ActorRef<Response> lastClient;
+    private final SettingsImpl settings;
 
 
     public interface Command {}
@@ -47,13 +41,9 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     public interface Response extends CborSerializable {}
 
     @AllArgsConstructor
-    public static class WrappedListing implements Command {
-        private final Receptionist.Listing listing;
-    }
-
-    @AllArgsConstructor
     @Getter
     public static class Distribute implements Command {
+        boolean force;
     }
 
     @AllArgsConstructor
@@ -69,12 +59,6 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     }
 
     @AllArgsConstructor
-    public static class BatchDistributed implements Response {}
-
-    @AllArgsConstructor
-    public static class Finalized implements Response {}
-
-    @AllArgsConstructor
     public static class LargeMessageSenderResponse implements Command {
         ADBLargeMessageSender.Response response;
     }
@@ -84,91 +68,70 @@ public class ADBDataDistributor extends AbstractBehavior<ADBDataDistributor.Comm
     public static class ConfirmEntitiesPersisted implements Command, KryoSerializable {}
 
     @AllArgsConstructor
-    public static class InformPartitionManagerAboutConclusion implements Command {}
+    public static class BatchDistributed implements Response {}
 
     @AllArgsConstructor
-    public static class Terminate implements Command {}
+    public static class Finalized implements Response {}
 
-    protected ADBDataDistributor(ActorContext<Command> actorContext) {
+    protected ADBDataDistributor(ActorContext<Command> actorContext, ActorRef<ADBPartitionManager.Command> endpoint) {
         super(actorContext);
-        this.minNumberOfNodes = getContext().getSystem().settings().config().getInt("akka.cluster.min-nr-of-members") - 1;
+        this.partitionManager = endpoint;
+        this.settings = Settings.SettingsProvider.get(getContext().getSystem());
     }
 
     @Override
     public Receive<ADBDataDistributor.Command> createReceive() {
         return newReceiveBuilder()
-                .onMessage(WrappedListing.class, this::handleWrappedReceptionistListing)
                 .onMessage(Distribute.class, this::handleDistribute)
                 .onMessage(DistributeBatch.class, this::handleDistributeBatchToNodes)
                 .onMessage(ConfirmEntitiesPersisted.class, this::handleConfirmEntityPersisted)
                 .onMessage(ConcludeDistribution.class, this::handleConcludeDistribution)
                 .onMessage(LargeMessageSenderResponse.class, this::handleLargeMessageSenderResponse)
-                .onMessage(InformPartitionManagerAboutConclusion.class, this::handleInformPartitionManager)
-                .onMessage(Terminate.class, cmd -> Behaviors.stopped())
                 .build();
     }
-
-    private Behavior<Command> handleWrappedReceptionistListing(WrappedListing command) {
-        if (command.listing.getServiceInstances(ADBPartitionManager.SERVICE_KEY).size() < this.minNumberOfNodes) {
-            return Behaviors.same();
-        }
-        this.partitionManagers.addAll(command.listing.getServiceInstances(ADBPartitionManager.SERVICE_KEY));
-        this.consistentHash = ConsistentHash.create(this.partitionManagers, VIRTUAL_NODES_FACTOR);
-        this.partitionManagers.forEach(manager -> this.batches.put(manager, new ObjectArrayList<>()));
-        return Behaviors.same();
-    }
-
     private Behavior<Command> handleDistributeBatchToNodes(DistributeBatch command) {
-        if (this.consistentHash == null  || this.partitionManagers.size() < this.minNumberOfNodes) {
-            this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
-            return Behaviors.same();
-        }
-        this.lastClient = command.client;
         for (ADBEntity entity : command.getEntities()) {
-            this.batches.get(this.consistentHash.nodeFor(entity.getPrimaryKey().toString())).add(entity);
+            this.payload.enqueue(entity);
         }
-        this.getContext().getSelf().tell(new Distribute());
+        this.getContext().getSelf().tell(new Distribute(false));
+        command.getClient().tell(new BatchDistributed());
         return Behaviors.same();
     }
 
     private Behavior<Command> handleDistribute(Distribute command) {
         val respondTo = getContext().messageAdapter(ADBLargeMessageSender.Response.class, LargeMessageSenderResponse::new);
-        for (Map.Entry<ActorRef<ADBLargeMessageActor.Command>, ObjectList<ADBEntity>> entry : batches.entrySet()) {
-            if (entry.getValue().size() < 1) {
-                continue;
-            }
-            ADBPartitionManager.PersistEntities message = new ADBPartitionManager.PersistEntities(
-                    Adapter.toClassic(getContext().getSelf()), entry.getValue());
-            ADBLargeMessageActor.sendMessage(getContext(), Adapter.toClassic(entry.getKey()), respondTo, message);
-            this.pendingDistributions.incrementAndGet();
-            this.batches.replace(entry.getKey(), new ObjectArrayList<>());
+        while (payload.size() >= this.settings.DISTRIBUTION_CHUNK_SIZE || command.force && payload.size() > 0) {
+            this.distributeBatch(respondTo);
         }
         return Behaviors.same();
     }
 
+    private void distributeBatch(ActorRef<ADBLargeMessageSender.Response> respondTo) {
+        ObjectList<ADBEntity> payload = new ObjectArrayList<>(this.settings.DISTRIBUTION_CHUNK_SIZE);
+        int upperBoundQueue = Math.min(this.settings.DISTRIBUTION_CHUNK_SIZE, this.payload.size());
+        for (int i = 0; i < upperBoundQueue; i++) payload.add(this.payload.dequeue());
+        val message = new ADBPartitionManager.PersistEntities(Adapter.toClassic(getContext().getSelf()), payload);
+        ADBLargeMessageActor.sendMessage(getContext(), Adapter.toClassic(partitionManager), respondTo, message);
+        this.pendingDistributions.incrementAndGet();
+    }
+
     private Behavior<Command> handleConfirmEntityPersisted(ConfirmEntitiesPersisted command) {
-        if (this.pendingDistributions.decrementAndGet() < 1) {
-            this.lastClient.tell(new BatchDistributed());
-        }
+        this.pendingDistributions.decrementAndGet();
         return Behaviors.same();
     }
 
     private Behavior<Command> handleConcludeDistribution(ConcludeDistribution command) {
-        boolean isBatchesWaiting = this.batches.entrySet().stream().anyMatch(entry -> entry.getValue().size() > 0);
-        if (isBatchesWaiting || partitionManagers.size() < minNumberOfNodes || pendingDistributions.get() > 0) {
+        if (pendingDistributions.get() > 0 || this.payload.size() > 0) {
+            this.getContext().getSelf().tell(new Distribute(true));
             this.getContext().scheduleOnce(MAX_ROUND_TRIP_TIME, this.getContext().getSelf(), command);
             return Behaviors.same();
         }
+        this.partitionManager.tell(new ADBPartitionManager.ConcludeTransfer());
         command.respondTo.tell(new Finalized());
-        return Behaviors.same();
+        return Behaviors.stopped();
     }
 
     private Behavior<Command> handleLargeMessageSenderResponse(LargeMessageSenderResponse wrapper) {
-        return Behaviors.same();
-    }
-
-    private Behavior<Command> handleInformPartitionManager(InformPartitionManagerAboutConclusion command) {
-        this.partitionManagers.forEach(manager -> manager.tell(new ADBPartitionManager.ConcludeTransfer()));
         return Behaviors.same();
     }
 }
