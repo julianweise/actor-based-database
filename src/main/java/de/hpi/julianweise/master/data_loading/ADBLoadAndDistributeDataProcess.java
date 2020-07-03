@@ -132,6 +132,9 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private void createDistributorFor(ActorRef<ADBLargeMessageActor.Command> manager) {
+        if (this.dataDistributors.containsKey(manager)) {
+            return;
+        }
         String distributorName = "distributor-" + this.dataDistributors.size();
         val distributor = getContext().spawn(ADBDataDistributorFactory.createDefault(manager), distributorName);
         this.dataDistributors.putIfAbsent(manager, distributor);
