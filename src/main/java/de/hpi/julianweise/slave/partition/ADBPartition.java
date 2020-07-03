@@ -104,6 +104,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
 
         ADBPartitionHeader header = ADBPartitionHeaderFactory.createDefault(this.columns, id);
         assert ADBPartitionManager.getInstance() != null : "Requesting ADBPartitionManager but not initialized yet";
+        this.getContext().getLog().info("Partition {} maintains {} elements", this.id, this.numberOfElements());
         ADBPartitionManager.getInstance().tell(new ADBPartitionManager.Register(this.getContext().getSelf(), header));
     }
 
@@ -150,5 +151,12 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
                 .collect(new ObjectArrayListCollector<>());
         command.respondTo.tell(new MaterializedEntities(materializedResults));
         return Behaviors.same();
+    }
+
+    private int numberOfElements() {
+        for(Map.Entry<String, ADBColumn> column : this.columns.entrySet()) {
+            return column.getValue().size();
+        }
+        return 0;
     }
 }
