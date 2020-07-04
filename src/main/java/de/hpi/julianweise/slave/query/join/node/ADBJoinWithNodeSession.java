@@ -202,6 +202,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
             this.requestedNextNodeComparison = true;
         }
+        this.getContext().getLog().debug("Current process {} %", this.process());
     }
 
     private void executeNextTask() {
