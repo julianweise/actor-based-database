@@ -21,6 +21,7 @@ import de.hpi.julianweise.slave.query.join.filter.ADBJoinPartitionFilterStrategy
 import de.hpi.julianweise.slave.query.join.filter.ADBMinMaxFilterStrategy;
 import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor;
+import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutor.StepExecuted;
 import de.hpi.julianweise.slave.query.join.steps.ADBColumnJoinStepExecutorFactory;
 import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
@@ -36,6 +37,7 @@ import lombok.val;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
@@ -220,20 +222,21 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void joinRowBased(ADBPartialJoinResult joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
-        val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.leftAttributes, costModels);
-        val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.rightAttributes, costModels);
+        val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.leftAttributes,
+                this.leftOriginalSizes, costModels);
+        val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.rightAttributes,
+                this.rightOriginalSizes, costModels);
         val workload = new JoinQueryRowWorkload(joinCandidates, leftAttributes, rightAttributes, costModels);
         val respondTo = getContext().messageAdapter(GenericWorker.Response.class, GenericWorkerResponseWrapper::new);
         ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));
     }
 
     private void joinColumnBased(ObjectList<ADBJoinPredicateCostModel> costModels) {
-        val respondTo = getContext().messageAdapter(ADBColumnJoinStepExecutor.StepExecuted.class,
-                ADBColumnJoinExecutorWrapper::new);
-        this.getContext().spawn(ADBColumnJoinStepExecutorFactory
-                .createDefault(this.leftAttributes, this.rightAttributes, this.leftOriginalSizes,
-                        this.rightOriginalSizes, costModels, respondTo), "ColumnJoinStep")
-            .tell(new ADBColumnJoinStepExecutor.Execute());
+        val respondTo = getContext().messageAdapter(StepExecuted.class, ADBColumnJoinExecutorWrapper::new);
+        val actorName = "ColumnJoinStep-" + UUID.randomUUID().toString();
+        val behavior = ADBColumnJoinStepExecutorFactory.createDefault(
+                leftAttributes, rightAttributes, leftOriginalSizes, rightOriginalSizes, costModels, respondTo);
+        this.getContext().spawn(behavior, actorName).tell(new ADBColumnJoinStepExecutor.Execute());
     }
 
     private Behavior<Command> handleGenericWorkerResponse(GenericWorkerResponseWrapper wrapper) {

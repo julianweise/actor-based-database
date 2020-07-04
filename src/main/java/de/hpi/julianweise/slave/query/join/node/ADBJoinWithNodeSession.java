@@ -88,8 +88,8 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         this.joinNodesContext = joinNodesContext;
         val respondTo = getContext().messageAdapter(AllPartitionsHeaders.class, AllPartitionsHeaderWrapper::new);
         this.joinNodesContext.getLeft().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
-        this.getContext().getLog().info("[Create] On node#" + ADBSlave.ID + " to execute: " + this.joinNodesContext);
         this.setUpExecutors();
+        this.getContext().getLog().info("[Create] On node#" + ADBSlave.ID + " to execute: " + this.joinNodesContext);
     }
 
     @Override
@@ -180,7 +180,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
 
     private void setUpExecutors() {
         val respondTo = getContext().messageAdapter(ADBPartitionJoinExecutor.Response.class, ExecutorResponseWrapper::new);
-        for (int i = 0; i < Settings.SettingsProvider.get(getContext().getSystem()).PARALLEL_PARTITION_JOINS; i++) {
+        for (int i = 0; i < Settings.SettingsProvider.get(getContext().getSystem()).NUMBER_OF_THREADS * 2; i++) {
             val behavior = ADBPartitionJoinExecutorFactory.createDefault(this.joinQueryContext.getQuery(), respondTo);
             val executor = getContext().spawn(behavior, ADBPartitionJoinExecutorFactory.name(joinQueryContext.getQuery()));
             this.executorsIdle.enqueue(executor);
@@ -221,7 +221,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private boolean isReadyToConclude() {
-        return executorsIdle.size() == settings.PARALLEL_PARTITION_JOINS &&
+        return executorsIdle.size() == settings.NUMBER_OF_THREADS * 2 &&
                 executorsPrepared.isEmpty() &&
                 joinTasks.isEmpty() &&
                 this.activeExecutors.get() == 0 &&

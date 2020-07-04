@@ -7,6 +7,7 @@ import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -67,10 +68,11 @@ public class ADBSortedEntityAttributesFactory {
 
     public static ObjectList<Map<String, ADBEntityEntry>> resortByIndex(
             Map<String, ObjectList<ADBEntityEntry>> columnAttributes,
+            Object2IntMap<String> originalSizes,
             ObjectList<ADBJoinPredicateCostModel> relevantCostModels) {
-        int numberOfRows = columnAttributes.values().stream().mapToInt(ObjectList::size).max().orElse(0);
+        int numberOfRows = originalSizes.values().stream().mapToInt(i -> i).max().orElse(0);
         ObjectList<Map<String, ADBEntityEntry>> resultSet = new ObjectArrayList<>(numberOfRows);
-        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectOpenHashMap<>());
+        for(int i=0; i < numberOfRows; i++) resultSet.add(new Object2ObjectOpenHashMap<>(columnAttributes.size()));
         Set<String> relevantFields = relevantCostModels
                 .stream()
                 .flatMap(model -> Stream.of(model.getPredicate().getLeftHandSideAttribute(), model.getPredicate().getRightHandSideAttribute()))

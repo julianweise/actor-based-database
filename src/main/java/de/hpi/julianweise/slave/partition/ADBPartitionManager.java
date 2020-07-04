@@ -234,16 +234,17 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         int[] lPartIdsR = IntStream.range(0, this.partitions.size()).parallel()
                                    .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
                                    .toArray();
-        Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders = new Int2ObjectOpenHashMap<>();
+        this.getContext().getLog().debug("Reduced Partitions for {} by {}%", command.externalHeader,
+                (1 - ((lPartIdsL.length + lPartIdsR.length) / (this.partitions.size() * 2))) * 100);
+        Int2ObjectOpenHashMap<ADBPartitionHeader> lPartitionHeaders = new Int2ObjectOpenHashMap<>();
         IntStream.concat(Arrays.stream(lPartIdsL), Arrays.stream(lPartIdsR))
-              .forEach(partId -> partitionHeaders.put(partId, this.partitionHeaders.get(partId)));
+              .forEach(partId -> lPartitionHeaders.put(partId, this.partitionHeaders.get(partId)));
         command.respondTo.tell(RelevantPartitionsJoinQuery.builder()
                                                           .fPartitionId(command.externalHeader.getId())
                                                           .lPartitionIdsLeft(lPartIdsL)
-                                                          .partitionHeaders(partitionHeaders)
+                                                          .partitionHeaders(lPartitionHeaders)
                                                           .lPartitionIdsRight(lPartIdsR)
-                                                          .build(),
-                akka.actor.ActorRef.noSender());
+                                                          .build(), akka.actor.ActorRef.noSender());
         return Behaviors.same();
     }
 
