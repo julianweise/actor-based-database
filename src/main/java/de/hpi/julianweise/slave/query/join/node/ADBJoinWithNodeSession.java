@@ -47,6 +47,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private ObjectList<ADBPartitionHeader> leftPartitionHeaders;
     private Int2ObjectOpenHashMap<ADBPartitionHeader> rightPartitionHeaders;
     private int actualNumberOfRemotePartitionHeaderResponses = 0;
+    private int initialWorkflowSize;
     private boolean requestedNextNodeComparison = false;
 
 
@@ -131,6 +132,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         for (int fPartitionId : foreignPartitionIds) {
             val leftHeader = this.leftPartitionHeaders.get(localPartitionId);
             assert leftHeader.getId() == localPartitionId : "Incorrect header selected. Check id and sorting!";
+            this.initialWorkflowSize++;
             this.joinTasks.enqueue(ADBPartitionJoinTask
                     .builder()
                     .leftPartitionId(fPartitionId)
@@ -147,6 +149,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         for (int fPartitionId : foreignPartitionIds) {
             val leftHeader = this.leftPartitionHeaders.get(localPartitionId);
             assert leftHeader.getId() == localPartitionId : "Incorrect header selected. Check id and sorting!";
+            this.initialWorkflowSize++;
             this.joinTasks.enqueue(ADBPartitionJoinTask
                     .builder()
                     .leftPartitionId(localPartitionId)
@@ -170,9 +173,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         return Behaviors.same();
     }
 
-    private void handleJoinResults(ActorRef<ADBPartitionJoinExecutor.Command> executor,
-                                   ADBPartialJoinResult joinTuples) {
-        getContext().getLog().debug("Received " + joinTuples.size() + " results from task");
+    private void handleJoinResults(ActorRef<ADBPartitionJoinExecutor.Command> executor, ADBPartialJoinResult joinTuples) {
         this.executorsIdle.enqueue(executor);
         this.activeExecutors.decrementAndGet();
         this.supervisor.tell(new ADBSlaveJoinSession.JoinPartitionsResults(joinTuples));
@@ -188,7 +189,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private void nextExecutionRound() {
-        while(!executorsPrepared.isEmpty() && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS - 1) {
+        while(!executorsPrepared.isEmpty() && this.activeExecutors.get() < this.settings.NUMBER_OF_THREADS) {
             this.executeNextTask();
         }
         while (!this.joinTasks.isEmpty() && !this.executorsIdle.isEmpty()) {
@@ -233,10 +234,19 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private boolean isReadyToPrepareNextNodeComparison() {
-        return this.isAllRelevantHeadersProcessed() && this.joinTasks.size() <= settings.THRESHOLD_NEXT_NODE_COMPARISON;
+        return this.isAllRelevantHeadersProcessed() && this.process() >= settings.THRESHOLD_NEXT_NODE_COMPARISON;
+    }
+
+    private float process() {
+        if (!this.isAllRelevantHeadersProcessed()) {
+            return 0;
+        }
+        if (this.initialWorkflowSize == 0) {
+            return 1;
+        }
+        return 1 - ((float) this.joinTasks.size() / this.initialWorkflowSize);
     }
 
     @Override
-    protected void handleReceiverTerminated() {
-    }
+    protected void handleReceiverTerminated() {}
 }
