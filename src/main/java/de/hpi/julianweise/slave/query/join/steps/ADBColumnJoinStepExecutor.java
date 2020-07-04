@@ -49,7 +49,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
     private final Map<String, ObjectList<ADBEntityEntry>> left;
     private final Map<String, ObjectList<ADBEntityEntry>> right;
     private final Object2IntMap<String> leftOriginalSizes;
-    private final Object2IntMap<String> rightOriginalSies;
+    private final Object2IntMap<String> rightOriginalSizes;
     private final ObjectList<ADBJoinPredicateCostModel> costModels;
     private final ActorRef<StepExecuted> respondTo;
     private final AtomicInteger intersectsPerformed = new AtomicInteger(0);
@@ -66,7 +66,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
         this.left = left;
         this.right = right;
         this.leftOriginalSizes = leftOriginalSizes;
-        this.rightOriginalSies = rightOriginalSizes;
+        this.rightOriginalSizes = rightOriginalSizes;
         this.costModels = costModels;
         this.respondTo = respondTo;
     }
@@ -87,7 +87,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
                     .left(this.left.get(costModel.getPredicate().getLeftHandSideAttribute()))
                     .right(this.right.get(costModel.getPredicate().getRightHandSideAttribute()))
                     .leftOriginalSize(this.leftOriginalSizes.getInt(costModel.getPredicate().getLeftHandSideAttribute()))
-                    .rightOriginalSize(this.rightOriginalSies.getInt(costModel.getPredicate().getRightHandSideAttribute()))
+                    .rightOriginalSize(this.rightOriginalSizes.getInt(costModel.getPredicate().getRightHandSideAttribute()))
                     .costModel(costModel)
                     .build();
             ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));

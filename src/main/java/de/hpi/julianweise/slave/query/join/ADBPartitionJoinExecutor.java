@@ -196,29 +196,43 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void execute() {
+        this.getContext().getLog().debug("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
         if (this.costModels.get(0).getCost() == 0) {
-            this.returnResults(new ADBPartialJoinResult(0));
+            this.handleNoJoinResultsExpected();
             return;
         }
-        this.getContext().getLog().info("[JOIN COST MODEL] Cheapest predicate {} ", this.costModels.get(0));
         if (this.costModels.size() < 2) {
-            ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
-            this.costModelsProcessed = this.costModels.size();
-            this.returnResults(results);
+            this.handleOnlyTwoJoinPredicates();
             return;
         }
         if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
-            ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
-            this.costModelsProcessed = this.costModels.size();
-            this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
+            this.handleRowBasedJoin();
         } else if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
-            this.costModelsProcessed = this.costModels.size();
-            this.joinColumnBased(this.costModels);
+            this.handleColumnBasedJoin();
         } else {
-            ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
-            this.costModelsProcessed = this.costModels.size();
-            this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
+            this.handleRowBasedJoin();
         }
+    }
+
+    private void handleNoJoinResultsExpected() {
+        this.returnResults(new ADBPartialJoinResult(0));
+    }
+
+    private void handleOnlyTwoJoinPredicates() {
+        ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
+        this.costModelsProcessed = this.costModels.size();
+        this.returnResults(results);
+    }
+
+    private void handleRowBasedJoin() {
+        ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
+        this.costModelsProcessed = this.costModels.size();
+        this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
+    }
+
+    private void handleColumnBasedJoin() {
+        this.costModelsProcessed = this.costModels.size();
+        this.joinColumnBased(this.costModels);
     }
 
     private void joinRowBased(ADBPartialJoinResult joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
