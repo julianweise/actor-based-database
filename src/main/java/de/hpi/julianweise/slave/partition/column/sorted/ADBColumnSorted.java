@@ -1,6 +1,5 @@
 package de.hpi.julianweise.slave.partition.column.sorted;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityIntEntry;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
@@ -36,10 +35,10 @@ public abstract class ADBColumnSorted {
         return ObjectArrayList.wrap(original);
     }
 
-    public ADBEntityEntry getByOriginalIndex(int originalIndex) throws InvalidArgumentException {
+    public ADBEntityEntry getByOriginalIndex(int originalIndex) {
         int id = ADBInternalIDHelper.createID(this.nodeId, this.partitionId, originalIndex);
         if (this.originalToSorted[originalIndex] >= this.size()) {
-            throw new InvalidArgumentException(new String[] {"Original Index has been pruned"});
+            throw new IllegalArgumentException("Original Index has been pruned");
         }
         return this.createForIndex(id, this.originalToSorted[originalIndex]);
     }

@@ -1,6 +1,5 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
@@ -59,7 +58,7 @@ public class JoinQueryRowWorkload extends Workload {
                         comparators.get(termCostModel.getPredicate()))) {
                     return false;
                 }
-            } catch (InvalidArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 return false;
             }
         }
