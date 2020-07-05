@@ -199,10 +199,11 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.getContext().getSelf().tell(new Conclude());
         }
         if (this.isReadyToPrepareNextNodeComparison() && !requestedNextNodeComparison) {
+            this.getContext().getLog().debug("Trigger next Inter-Node-Join.");
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
             this.requestedNextNodeComparison = true;
         }
-        this.getContext().getLog().debug("Current process {} %", this.process());
+        this.getContext().getLog().debug("Current process {} %", this.process() * 100);
     }
 
     private void executeNextTask() {
