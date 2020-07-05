@@ -198,7 +198,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         if (this.isReadyToConclude()) {
             this.getContext().getSelf().tell(new Conclude());
         }
-        if (this.isReadyToPrepareNextNodeComparison() && !requestedNextNodeComparison) {
+        if (this.isReadyToPrepareNextNodeComparison() && !this.requestedNextNodeComparison) {
             this.getContext().getLog().debug("Trigger next Inter-Node-Join.");
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
             this.requestedNextNodeComparison = true;
@@ -236,7 +236,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private boolean isReadyToPrepareNextNodeComparison() {
-        return this.isAllRelevantHeadersProcessed() && this.process() >= settings.THRESHOLD_NEXT_NODE_COMPARISON;
+        return this.isAllRelevantHeadersProcessed() && this.process() >= this.settings.THRESHOLD_NEXT_NODE_COMPARISON;
     }
 
     private float process() {

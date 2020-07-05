@@ -13,7 +13,7 @@ public class SettingsImpl implements Extension {
     public final double JOIN_STRATEGY_LOWER_BOUND;
     public final double JOIN_STRATEGY_UPPER_BOUND;
     public final String RESULT_BASE_DIR;
-    public final int THRESHOLD_NEXT_NODE_COMPARISON;
+    public final double THRESHOLD_NEXT_NODE_COMPARISON;
     public final int NUMBER_ENTITY_CONVERTER;
     public final int DISTRIBUTION_CHUNK_SIZE;
 
@@ -26,7 +26,7 @@ public class SettingsImpl implements Extension {
         JOIN_STRATEGY_UPPER_BOUND = config.getDouble("actor-db.join.strategy.upper-bound");
         MAX_SIZE_PARTITION = config.getInt("actor-db.data-loading.partition.size");
         RESULT_BASE_DIR = config.getString("actor-db.results.dir");
-        THRESHOLD_NEXT_NODE_COMPARISON = config.getInt("actor-db.join.strategy.threshold-request-next-node");
+        THRESHOLD_NEXT_NODE_COMPARISON = config.getDouble("actor-db.join.strategy.threshold-request-next-node");
         NUMBER_ENTITY_CONVERTER = config.getInt("actor-db.data-loading.entity-converter.number");
         DISTRIBUTION_CHUNK_SIZE = config.getInt("actor-db.data-loading.distributor.chunk-size");
     }
