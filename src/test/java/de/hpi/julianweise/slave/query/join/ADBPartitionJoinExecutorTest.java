@@ -94,10 +94,12 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
         Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new int[]{0, 1, 2}));
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new int[]{0, 1
+                , 2}, new int[]{0, 1, 2}));
 
         Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2}));
+        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0,
+                1, 2}, new int[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.EQUALITY, "aInteger", "aInteger"));
@@ -174,10 +176,10 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
         Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        rightSideAttributes.put("eDouble", new ADBDoubleColumnSorted(0, lPartitionId, new double[]{1, 3, 5}, new int[]{0, 1, 2}));
+        rightSideAttributes.put("eDouble", new ADBDoubleColumnSorted(0, lPartitionId, new double[]{1, 3, 5}, new int[]{0, 1, 2}, new int[]{0, 1, 2}));
 
         Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        leftSideAttributes.put("eDouble", new ADBDoubleColumnSorted(0, lPartitionId, new double[]{3, 5, 9}, new int[]{0, 1, 2}));
+        leftSideAttributes.put("eDouble", new ADBDoubleColumnSorted(0, lPartitionId, new double[]{3, 5, 9}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "eDouble", "eDouble"));
@@ -249,10 +251,10 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
         Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new int[]{0, 1, 2}));
+        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
         Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2}));
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.LESS, "aInteger", "aInteger"));
@@ -324,10 +326,10 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
         Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new int[]{0, 1, 2}));
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 5}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
         Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        rightSideAttributes.put("bInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2}));
+        rightSideAttributes.put("bInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();
         joinQuery.addPredicate(new ADBJoinQueryPredicate(ADBQueryTerm.RelationalOperator.GREATER, "aInteger", "bInteger"));
@@ -388,7 +390,7 @@ public class ADBPartitionJoinExecutorTest {
     @Test
     public void expectJoinWithToTermsToBeExecutedSuccessfully() {
         int lPartitionId = 0;
-        int rPartitionId = 1;
+        int rPartitionId = 0;
 
         TestProbe<ADBPartitionJoinExecutor.Response> supervisor = testKit.createTestProbe();
 
@@ -396,10 +398,10 @@ public class ADBPartitionJoinExecutorTest {
         TestProbe<ADBPartitionManager.Command> rightPartitionManager = testKit.createTestProbe();
 
         Map<String, ADBColumnSorted> leftSideAttributes = new Object2ObjectOpenHashMap<>();
-        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 6}, new int[]{0, 1, 2}));
+        leftSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{1, 3, 6}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
         Map<String, ADBColumnSorted> rightSideAttributes = new Object2ObjectOpenHashMap<>();
-        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2}));
+        rightSideAttributes.put("aInteger", new ADBIntColumnSorted(0, lPartitionId, new int[]{3, 5, 9}, new int[]{0, 1, 2},   new int[]{0, 1, 2}));
 
 
         ADBJoinQuery joinQuery = new ADBJoinQuery();

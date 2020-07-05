@@ -54,16 +54,18 @@ public class ADBShortColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         short[] sorted = new short[sortedIndices.length];
-        int[] original = new int[sortedIndices.length];
+        int[] sortedToOriginal = new int[sortedIndices.length];
+        int[] originalToSorted = new int[sortedIndices.length];
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getShort(min) > this.values.getShort(sortedIndex)) continue;
             if (max.getValueField().getShort(max) < this.values.getShort(sortedIndex)) break;
             sorted[currentPointer] = this.values.getShort(sortedIndex);
-            original[currentPointer++] = sortedIndex;
+            sortedToOriginal[currentPointer] = sortedIndex;
+            originalToSorted[sortedIndex] = currentPointer++;
         }
         return new ADBShortColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(original, 0, currentPointer));
+                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
     }
 
     public int size() {

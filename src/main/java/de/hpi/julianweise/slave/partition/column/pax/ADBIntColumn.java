@@ -49,16 +49,18 @@ public class ADBIntColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         int[] sorted = new int[sortedIndices.length];
-        int[] original = new int[sortedIndices.length];
+        int[] sortedToOriginal = new int[sortedIndices.length];
+        int[] originalToSorted = new int[sortedIndices.length];
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getInt(min) > this.values.getInt(sortedIndex)) continue;
             if (max.getValueField().getInt(max) < this.values.getInt(sortedIndex)) break;
             sorted[currentPointer] = this.values.getInt(sortedIndex);
-            original[currentPointer++] = sortedIndex;
+            sortedToOriginal[currentPointer] = sortedIndex;
+            originalToSorted[sortedIndex] = currentPointer++;
         }
         return new ADBIntColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(original, 0, currentPointer));
+                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
     }
 
     protected IntComparator getIndexedValueComparator() {

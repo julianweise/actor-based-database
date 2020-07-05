@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 public class ADBShortColumnSorted extends ADBColumnSorted {
     private short[] values;
 
-    public ADBShortColumnSorted(int nodeId, int partitionId, short[] values, int[] originalIndices) {
-        super(nodeId, partitionId, originalIndices);
+    public ADBShortColumnSorted(int nodeId, int partitionId, short[] values, int[] sorted2Original, int[] original2Sorted) {
+        super(nodeId, partitionId, sorted2Original, original2Sorted);
         this.values = values;
     }
 

@@ -34,7 +34,7 @@ public class ADBDoubleColumnTest {
         assertThat(column.size()).isEqualTo(3);
         assertThat(column.partitionId).isEqualTo(1);
         assertThat(column.finalized).isTrue();
-        assertThat(column.sortedIndices).isEqualTo(new short[]{1, 0, 2});
+        assertThat(column.sortedIndices).isEqualTo(new int[]{1, 0, 2});
     }
 
     @Test

@@ -54,16 +54,19 @@ public class ADBFloatColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         float[] sorted = new float[sortedIndices.length];
-        int[] original = new int[sortedIndices.length];
+        int[] sortedToOriginal = new int[sortedIndices.length];
+        int[] originalToSorted = new int[sortedIndices.length];
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getFloat(min) > this.values.getFloat(sortedIndex)) continue;
             if (max.getValueField().getFloat(max) < this.values.getFloat(sortedIndex)) break;
             sorted[currentPointer] = this.values.getFloat(sortedIndex);
-            original[currentPointer++] = sortedIndex;
+            sortedToOriginal[currentPointer] = sortedIndex;
+            originalToSorted[sortedIndex] = currentPointer++;
+
         }
         return new ADBFloatColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(original, 0, currentPointer));
+                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
     }
 
     public int size() {

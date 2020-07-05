@@ -47,6 +47,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     private final Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<ActorRef<ADBPartition.Command>> partitions = new Int2ObjectOpenHashMap<>();
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
+    private final ADBPartitionFactory partitionFactory = new ADBPartitionFactory();
     private ADBEntityBuffer entityBuffer = new ADBEntityBuffer(this.settings.MAX_SIZE_PARTITION);
 
     public interface Response {}
@@ -174,9 +175,8 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
 
     private void conditionallyCreateNewPartition(boolean forceCreation) {
         while (forceCreation && this.entityBuffer.getBufferSize() > 0 || this.entityBuffer.isNewPartitionReady()) {
-            int partId = ADBPartitionFactory.getNewPartitionId();
-            this.getContext().spawn(ADBPartitionFactory.createDefault(entityBuffer.getPayloadForPartition(), partId),
-                    "Partition-" + partId);
+            this.getContext().spawn(this.partitionFactory.createDefault(entityBuffer.getPayloadForPartition()),
+                    "Partition-" + this.partitionFactory.getLastPartitionId());
         }
     }
 

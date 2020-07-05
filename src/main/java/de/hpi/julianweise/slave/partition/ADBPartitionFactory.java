@@ -7,25 +7,33 @@ import de.hpi.julianweise.slave.partition.column.pax.ADBColumn;
 import de.hpi.julianweise.slave.partition.column.pax.ADBColumnFactory;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import lombok.AllArgsConstructor;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@AllArgsConstructor
 public class ADBPartitionFactory {
 
-    private static final AtomicInteger partitionIDGenerator = new AtomicInteger(0);
+    private final AtomicInteger partitionIDGenerator = new AtomicInteger(0);
 
-    public static Behavior<ADBPartition.Command> createDefault(ObjectList<ADBEntity> data, int partitionId) {
+    public Behavior<ADBPartition.Command> createDefault(ObjectList<ADBEntity> data) {
         assert data.size() > 0;
         assert data.size() < ADBPartition.MAX_ELEMENTS : "Maximum 2^20 - 1 elements allowed per partition";
 
-        Map<String, ADBColumn> columns = ADBColumnFactory.createDefault(data, partitionId);
-        return Behaviors.setup(context -> new ADBPartition(context, partitionId, columns,
+        int newPartitionId = this.getNewPartitionId();
+
+        Map<String, ADBColumn> columns = ADBColumnFactory.createDefault(data, newPartitionId);
+        return Behaviors.setup(context -> new ADBPartition(context, newPartitionId, columns,
                 ADBEntityFactoryProvider.getInstance().getTargetClass()));
     }
 
-    public static int getNewPartitionId() {
-        return partitionIDGenerator.getAndIncrement();
+    private int getNewPartitionId() {
+        return this.partitionIDGenerator.getAndIncrement();
+    }
+
+    public int getLastPartitionId() {
+        return this.partitionIDGenerator.get();
     }
 
 }

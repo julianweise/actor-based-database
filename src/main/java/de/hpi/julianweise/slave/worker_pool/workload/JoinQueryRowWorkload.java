@@ -1,6 +1,8 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
+import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
@@ -21,8 +23,8 @@ import java.util.Map;
 public class JoinQueryRowWorkload extends Workload {
 
     private final ADBPartialJoinResult joinCandidates;
-    private final ObjectList<Map<String, ADBEntityEntry>> left;
-    private final ObjectList<Map<String, ADBEntityEntry>> right;
+    private final Map<String, ADBColumnSorted> left;
+    private final Map<String, ADBColumnSorted> right;
     private final ObjectList<ADBJoinPredicateCostModel> costModels;
     private final Map<ADBJoinQueryPredicate, ADBComparator> comparators = new Object2ObjectHashMap<>();
 
@@ -38,12 +40,7 @@ public class JoinQueryRowWorkload extends Workload {
         ADBPartialJoinResult results = new ADBPartialJoinResult();
         for (ADBKeyPair keyPair : this.joinCandidates) {
             if (this.rowSatisfyJoinCondition(keyPair.getKey(), keyPair.getValue())) {
-                results.addResult(
-                        left.get(ADBInternalIDHelper.getEntityId(keyPair.getKey()))
-                            .get(this.costModels.get(0).getPredicate().getLeftHandSideAttribute()).getId(),
-                        right.get(ADBInternalIDHelper.getEntityId(keyPair.getValue()))
-                             .get(this.costModels.get(0).getPredicate().getRightHandSideAttribute()).getId()
-                );
+                results.addResult(keyPair.getKey(), keyPair.getValue());
             }
         }
         message.getRespondTo().tell(new Results(results));
@@ -51,17 +48,18 @@ public class JoinQueryRowWorkload extends Workload {
 
     private boolean rowSatisfyJoinCondition(int leftId, int rightId) {
         for (ADBJoinPredicateCostModel termCostModel : costModels) {
-            ADBEntityEntry lField = left.get(ADBInternalIDHelper.getEntityId(leftId))
-                             .get(termCostModel.getPredicate().getLeftHandSideAttribute());
-            ADBEntityEntry rField = right.get(ADBInternalIDHelper.getEntityId(rightId))
-                              .get(termCostModel.getPredicate().getRightHandSideAttribute());
-            if (lField == null || rField == null) {
-                return false;
-            }
-            comparators.putIfAbsent(termCostModel.getPredicate(), ADBComparator.getFor(lField.getValueField(),
-                    rField.getValueField()));
-            if (!ADBEntityEntry.matches(lField, rField, termCostModel.getPredicate().getOperator(),
-                    comparators.get(termCostModel.getPredicate()))) {
+            try {
+                ADBEntityEntry left = this.left.get(termCostModel.getPredicate().getLeftHandSideAttribute())
+                                               .getByOriginalIndex(ADBInternalIDHelper.getEntityId(leftId));
+                ADBEntityEntry right = this.right.get(termCostModel.getPredicate().getRightHandSideAttribute())
+                                                 .getByOriginalIndex(ADBInternalIDHelper.getEntityId(rightId));
+                comparators.putIfAbsent(termCostModel.getPredicate(), ADBComparator.getFor(left.getValueField(),
+                        right.getValueField()));
+                if (!ADBEntityEntry.matches(left, right, termCostModel.getPredicate().getOperator(),
+                        comparators.get(termCostModel.getPredicate()))) {
+                    return false;
+                }
+            } catch (InvalidArgumentException e) {
                 return false;
             }
         }

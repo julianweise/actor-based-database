@@ -12,8 +12,8 @@ import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
 import de.hpi.julianweise.slave.partition.ADBPartition;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager.RedirectToPartition;
+import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
-import de.hpi.julianweise.slave.partition.meta.ADBSortedEntityAttributesFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModelFactory;
@@ -50,6 +50,8 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private ADBJoinPartitionFilterStrategy filter;
     private Map<String, ObjectList<ADBEntityEntry>> leftAttributes;
     private Map<String, ObjectList<ADBEntityEntry>> rightAttributes;
+    private Map<String, ADBColumnSorted> leftColumns;
+    private Map<String, ADBColumnSorted> rightColumns;
     private Object2IntMap<String> leftOriginalSizes;
     private Object2IntMap<String> rightOriginalSizes;
     private ObjectList<ADBJoinPredicateCostModel> costModels;
@@ -146,12 +148,14 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private Behavior<Command> handleMultipleAttributes(ADBPartition.MultipleAttributes response) {
         if (response.isLeft()) {
             this.leftOriginalSizes = response.getOriginalSize();
+            this.leftColumns = response.getAttributes();
             this.leftAttributes = response
                     .getAttributes().entrySet().parallelStream()
                     .collect(Collectors.toMap(Map.Entry::getKey, pair -> pair.getValue().materializeSorted()));
         }
         if (!response.isLeft()) {
             this.rightOriginalSizes = response.getOriginalSize();
+            this.rightColumns = response.getAttributes();
             this.rightAttributes = response
                     .getAttributes().entrySet().parallelStream()
                     .collect(Collectors.toMap(Map.Entry::getKey, pair -> pair.getValue().materializeSorted()));
@@ -236,11 +240,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void joinRowBased(ADBPartialJoinResult joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
-        val leftAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.leftAttributes,
-                this.leftOriginalSizes, costModels);
-        val rightAttributes = ADBSortedEntityAttributesFactory.resortByIndex(this.rightAttributes,
-                this.rightOriginalSizes, costModels);
-        val workload = new JoinQueryRowWorkload(joinCandidates, leftAttributes, rightAttributes, costModels);
+        val workload = new JoinQueryRowWorkload(joinCandidates, this.leftColumns, this.rightColumns, costModels);
         val respondTo = getContext().messageAdapter(GenericWorker.Response.class, GenericWorkerResponseWrapper::new);
         ADBQueryManager.getWorkerPool().tell(new GenericWorker.WorkloadMessage(respondTo, workload));
     }

@@ -54,14 +54,16 @@ public class ADBBooleanColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         boolean[] sorted = new boolean[sortedIndices.length];
-        int[] original = new int[sortedIndices.length];
+        int[] sortedToOriginal = new int[sortedIndices.length];
+        int[] originalToSorted = new int[sortedIndices.length];
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             sorted[currentPointer] = this.values.getBoolean(sortedIndex);
-            original[currentPointer++] = sortedIndex;
+            sortedToOriginal[currentPointer] = sortedIndex;
+            originalToSorted[sortedIndex] = currentPointer++;
         }
         return new ADBBooleanColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(original, 0, currentPointer));
+                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
     }
 
     public int size() {

@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 public class ADBFloatColumnSorted extends ADBColumnSorted {
     private float[] values;
 
-    public ADBFloatColumnSorted(int nodeId, int partitionId, float[] values, int[] originalIndices) {
-        super(nodeId, partitionId, originalIndices);
+    public ADBFloatColumnSorted(int nodeId, int partitionId, float[] values, int[] sorted2Original, int[] original2Sorted) {
+        super(nodeId, partitionId, sorted2Original, original2Sorted);
         this.values = values;
     }
 

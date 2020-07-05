@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 public class ADBByteColumnSorted extends ADBColumnSorted {
     private byte[] values;
 
-    public ADBByteColumnSorted(int nodeId, int partitionId, byte[] values, int[] originalIndices) {
-        super(nodeId, partitionId, originalIndices);
+    public ADBByteColumnSorted(int nodeId, int partitionId, byte[] values, int[] sorted2Original, int[] original2Sorted) {
+        super(nodeId, partitionId, sorted2Original, original2Sorted);
         this.values = values;
     }
 
