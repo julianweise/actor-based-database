@@ -122,7 +122,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         private int[] lPartitionIdsRight;}
 
     @AllArgsConstructor
-    public static class RequestAllPartitionHeaders implements Command {
+    public static class RequestAllPartitionHeaders implements Command, CborSerializable {
         private final ActorRef<AllPartitionsHeaders> respondTo;
     }
 
