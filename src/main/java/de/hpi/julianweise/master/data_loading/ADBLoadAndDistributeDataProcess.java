@@ -161,7 +161,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
             val payload = chunk.getChunk().subList(i, Math.min(chunk.getChunk().size(), i + chunkSize));
             this.entityConverter.tell(new ADBCSVToEntityConverter.ConvertBatch(this.converterWrapper, payload));
         }
-        this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
+        if (!chunk.isFinalChunk()) this.csvParser.tell(new CSVParsingActor.ParseNextCSVChunk(this.csvResponseWrapper));
         return Behaviors.same();
     }
 

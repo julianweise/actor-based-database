@@ -40,6 +40,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     @AllArgsConstructor
     public static class CSVDataChunk implements Response {
         private final ObjectList<Record> chunk;
+        private boolean finalChunk;
     }
 
     @Getter
@@ -75,11 +76,11 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
         while ((record = this.csvParser.parseNextRecord()) != null) {
             chunk.add(record);
             if (++counter >= this.settings.CSV_CHUNK_SIZE) {
-                command.getClient().tell(new CSVDataChunk(chunk));
+                command.getClient().tell(new CSVDataChunk(chunk, false));
                 return Behaviors.same();
             }
         }
-        if (chunk.size() > 0) command.getClient().tell(new CSVDataChunk(chunk));
+        if (chunk.size() > 0) command.getClient().tell(new CSVDataChunk(chunk, true));
         command.getClient().tell(new CSVFullyParsed());
         return Behaviors.same();
     }
