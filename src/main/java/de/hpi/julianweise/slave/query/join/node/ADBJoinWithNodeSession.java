@@ -189,7 +189,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private void nextExecutionRound() {
-        while(!executorsPrepared.isEmpty() && this.activeExecutors.get() < this.settings.NUMBER_OF_THREADS) {
+        while(!executorsPrepared.isEmpty() && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS) {
             this.executeNextTask();
         }
         while (!this.joinTasks.isEmpty() && !this.executorsIdle.isEmpty()) {
