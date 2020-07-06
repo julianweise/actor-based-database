@@ -46,4 +46,8 @@ public class ADBPair<A, B> {
     public String toString() {
         return this.key.toString() + " : " + this.value.toString();
     }
+
+    public boolean contains(Object a) {
+        return this.getKey().equals(a) || this.getValue().equals(a);
+    }
 }

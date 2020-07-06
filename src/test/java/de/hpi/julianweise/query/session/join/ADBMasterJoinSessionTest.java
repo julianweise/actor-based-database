@@ -182,7 +182,7 @@ public class ADBMasterJoinSessionTest {
                         supervisor.ref()));
 
         joinSession.tell(new ADBMasterJoinSession.JoinExecutionPlanWrapper(new JoinExecutionPlan
-                .NextNodeToJoinWith(partitionManager1.ref(), partitionManager2.ref(), partitionManager1.ref(), true)));
+                .NextJoinNodePair(partitionManager1.ref(), partitionManager2.ref(), partitionManager1.ref(), true)));
 
         joinSession.tell(new ADBMasterQuerySession
                 .RegisterQuerySessionHandler(partitionManager1.ref(), joinSessionHandler1.ref()));

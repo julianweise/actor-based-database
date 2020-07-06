@@ -18,8 +18,6 @@ import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.slave.query.join.node.ADBJoinNodesContext;
 import de.hpi.julianweise.utility.query.join.JoinExecutionPlan;
-import de.hpi.julianweise.utility.query.join.JoinExecutionPlan.GetNextNodeJoinPair;
-import de.hpi.julianweise.utility.query.join.JoinExecutionPlan.NextNodeToJoinWith;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -60,7 +58,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @AllArgsConstructor
     public static class JoinExecutionPlanWrapper implements Command {
-        NextNodeToJoinWith response;
+        JoinExecutionPlan.NextJoinNodePair response;
     }
 
     public ADBMasterJoinSession(ActorContext<ADBMasterQuerySession.Command> context,
@@ -103,13 +101,13 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleRequestNextNodeComparison(RequestNextNodeToJoin command) {
-        val respondTo = getContext().messageAdapter(NextNodeToJoinWith.class, JoinExecutionPlanWrapper::new);
-        this.joinExecutionPlan.tell(new GetNextNodeJoinPair(this.handlersToManager.get(command.respondTo), respondTo));
+        val respondTo = getContext().messageAdapter(JoinExecutionPlan.NextJoinNodePair.class, JoinExecutionPlanWrapper::new);
+        this.joinExecutionPlan.tell(new JoinExecutionPlan.GetNextJoinNodePair(this.handlersToManager.get(command.respondTo), respondTo));
         return Behaviors.same();
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinExecutionPlanResponse(JoinExecutionPlanWrapper wrapper) {
-        NextNodeToJoinWith response = wrapper.response;
+        JoinExecutionPlan.NextJoinNodePair response = wrapper.response;
         if (!response.isHasNode()) {
             this.managerToHandlers.get(response.getRequestingPartitionManager()).tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
             return Behaviors.same();

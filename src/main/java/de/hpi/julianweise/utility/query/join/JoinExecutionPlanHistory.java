@@ -14,17 +14,19 @@ public class JoinExecutionPlanHistory {
     @Getter
     private abstract static class HistoryEntry {
         private final long timestamp = (long) Math.floor(System.nanoTime() * 1e-6);
+
         abstract public String toString();
     }
 
     @AllArgsConstructor
     @Getter
     private static class NextNodeHistoryEntry extends HistoryEntry {
-        private final int nodeId;
-        private final int joinNode;
+        private final int leftNodeId;
+        private final int rightNodeId;
+        private final int executionNodeId;
 
         public String toString() {
-            return "[" + this.getTimestamp() + "] #" + this.nodeId + ":" + "#" + this.joinNode;
+            return "[" + this.getTimestamp() + "-#" + executionNodeId + " ] #" + leftNodeId + ":" + "#" + rightNodeId;
         }
     }
 
@@ -34,7 +36,7 @@ public class JoinExecutionPlanHistory {
         private final int nodeId;
 
         public String toString() {
-            return "[" + this.getTimestamp() + "] #" + this.nodeId;
+            return "[" + this.getTimestamp() + "-#" + this.nodeId + "]";
         }
     }
 
@@ -47,18 +49,18 @@ public class JoinExecutionPlanHistory {
         this.transactionId = transactionId;
     }
 
-    public void logNodeJoin(int nodeId, int joinNode) {
-        this.history.add(new NextNodeHistoryEntry(nodeId, joinNode));
+    public void logNodeJoin(int executionNodeId, int leftNodeId, int rightNodeId) {
+        this.history.add(new NextNodeHistoryEntry(executionNodeId, leftNodeId, rightNodeId));
     }
 
-    public void logFinalizedNodeJoin(int nodeId) {
-        this.history.add(new FinalizedNodeJoinHistoryEntry(nodeId));
+    public void logFinalizedNodeJoin(int executionNodeId) {
+        this.history.add(new FinalizedNodeJoinHistoryEntry(executionNodeId));
     }
 
     public float getAverageNodeJoinExecutionTime(int nodeId) {
         long[] relevantEntries = this.history.stream()
                                              .filter(entry -> entry instanceof NextNodeHistoryEntry)
-                                             .filter(entry -> ((NextNodeHistoryEntry) entry).nodeId == nodeId)
+                                             .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId == nodeId)
                                              .sorted(Comparator.comparingLong(n -> n.timestamp))
                                              .mapToLong(HistoryEntry::getTimestamp)
                                              .map(timestamp -> timestamp - this.startTime)
@@ -77,14 +79,15 @@ public class JoinExecutionPlanHistory {
     public Optional<Long> getCurrentJoinDuration(int nodeId) {
         long lastJoinStartTimestamp = this.history.stream()
                                                   .filter(entry -> entry instanceof NextNodeHistoryEntry)
-                                                  .filter(entry -> ((NextNodeHistoryEntry) entry).nodeId == nodeId)
+                                                  .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId == nodeId)
                                                   .mapToLong(HistoryEntry::getTimestamp)
                                                   .max().orElse(0);
-        OptionalLong lastJoinConclusionTimestamp = this.history.stream()
-                                                               .filter(entry -> entry instanceof FinalizedNodeJoinHistoryEntry)
-                                                               .filter(entry -> ((FinalizedNodeJoinHistoryEntry) entry).nodeId == nodeId)
-                                                               .mapToLong(HistoryEntry::getTimestamp)
-                                                               .max();
+        OptionalLong lastJoinConclusionTimestamp = this.history
+                .stream()
+                .filter(entry -> entry instanceof FinalizedNodeJoinHistoryEntry)
+                .filter(entry -> ((FinalizedNodeJoinHistoryEntry) entry).nodeId == nodeId)
+                .mapToLong(HistoryEntry::getTimestamp)
+                .max();
 
         if (!lastJoinConclusionTimestamp.isPresent()) {
             return Optional.of((long) Math.ceil(System.nanoTime() * 1e-6));

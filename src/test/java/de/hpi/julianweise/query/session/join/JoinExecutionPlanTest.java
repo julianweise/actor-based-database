@@ -44,7 +44,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -53,22 +53,22 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
@@ -81,7 +81,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -90,22 +90,22 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeC.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
@@ -118,7 +118,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -127,22 +127,22 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeC.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
@@ -155,7 +155,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -164,22 +164,22 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
@@ -192,7 +192,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -201,22 +201,22 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeC.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
@@ -229,7 +229,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -238,22 +238,22 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeC.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
@@ -267,7 +267,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeD = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -277,43 +277,43 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeD.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeC.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeD.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeD.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeD.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeD.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeD.ref());
@@ -327,7 +327,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeD = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextNodeToJoinWith> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -337,43 +337,43 @@ public class JoinExecutionPlanTest {
 
         ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeA.ref(), responseProbe.ref()));
-        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
+        var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeA.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeB.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeA.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeB.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeB.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeD.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeB.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeD.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeD.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeD.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeD.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeC.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeC.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeA.ref());
         assertThat(response.getLeftQueryManager()).isEqualTo(nodeC.ref());
 
-        plan.tell(new JoinExecutionPlan.GetNextNodeJoinPair(nodeD.ref(), responseProbe.ref()));
-        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextNodeToJoinWith.class);
+        plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeD.ref(), responseProbe.ref()));
+        response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
         assertThat(response.isHasNode()).isTrue();
         assertThat(response.getRequestingPartitionManager()).isEqualTo(nodeD.ref());
         assertThat(response.getRightQueryManager()).isEqualTo(nodeC.ref());

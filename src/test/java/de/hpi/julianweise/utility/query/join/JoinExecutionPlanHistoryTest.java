@@ -11,11 +11,11 @@ public class JoinExecutionPlanHistoryTest {
         int transactionId = 1;
         JoinExecutionPlanHistory history = new JoinExecutionPlanHistory(transactionId);
         Thread.sleep(50);
-        history.logNodeJoin(1, 2);
+        history.logNodeJoin(1,1, 2);
         Thread.sleep(50);
-        history.logNodeJoin(1, 3);
+        history.logNodeJoin(1, 1, 3);
         Thread.sleep(100);
-        history.logNodeJoin(2, 3);
+        history.logNodeJoin(2,2, 3);
 
         float averageTimeNode1 = history.getAverageNodeJoinExecutionTime(1);
         assertThat(averageTimeNode1).isGreaterThanOrEqualTo(50);
