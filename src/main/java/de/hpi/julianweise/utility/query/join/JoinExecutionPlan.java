@@ -59,8 +59,8 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     private final int transactionId;
 
     public JoinExecutionPlan(ActorContext<Command> context,
-                                ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
-                                int transactionId) {
+                             ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
+                             int transactionId) {
         super(context);
         this.partitionManagers = partitionManagers;
         this.transactionId = transactionId;
@@ -121,16 +121,24 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
                                   ActorRef<ADBPartitionManager.Command> executor) {
         this.history.logNodeJoin(this.partitionManagers.indexOf(executor),
                 this.partitionManagers.indexOf(left), this.partitionManagers.indexOf(right));
-        this.dataAccesses.computeInt(left, (manager, counter) -> counter++);
-        this.dataAccesses.computeInt(right, (manager, counter) -> counter++);
-        this.joinExecutions.computeInt(executor, (manager, counter) -> counter++);
+        this.dataAccesses.put(left, this.dataAccesses.getInt(left) + 1);
+        this.dataAccesses.put(right, this.dataAccesses.getInt(right) + 1);
+        this.joinExecutions.put(executor, this.joinExecutions.getInt(executor) + 1);
         this.joinTasks.remove(new ADBPair<>(left, right));
         this.joinTasks.remove(new ADBPair<>(right, left));
     }
 
     private int sortJoinTasksByMinimalDataAccessOfTarget(ActorRef<ADBPartitionManager.Command> a,
                                                          ActorRef<ADBPartitionManager.Command> b) {
+        if (this.dataAccesses.getInt(a) == this.dataAccesses.getInt(b)) {
+            return this.sortJoinTasksByMaximumExecutionOfTarget(a, b);
+        }
         return Integer.compare(this.dataAccesses.getInt(a), this.dataAccesses.getInt(b));
+    }
+
+    private int sortJoinTasksByMaximumExecutionOfTarget(ActorRef<ADBPartitionManager.Command> a,
+                                                        ActorRef<ADBPartitionManager.Command> b) {
+        return Integer.compare(this.joinExecutions.getInt(a), this.joinExecutions.getInt(b)) * (-1);
     }
 
     private void returnForeignJoinTask(GetNextJoinNodePair command) {
