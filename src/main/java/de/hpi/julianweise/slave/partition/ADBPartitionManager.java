@@ -119,11 +119,13 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         private int fPartitionId;
         private int[] lPartitionIdsLeft;
         private Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders;
-        private int[] lPartitionIdsRight;}
+        private int[] lPartitionIdsRight;
+    }
 
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class RequestAllPartitionHeaders implements Command, CborSerializable {
-        private final ActorRef<AllPartitionsHeaders> respondTo;
+        private ActorRef<AllPartitionsHeaders> respondTo;
     }
 
     @AllArgsConstructor
