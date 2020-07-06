@@ -50,7 +50,7 @@ public class JoinExecutionPlanHistory {
     }
 
     public void logNodeJoin(int executionNodeId, int leftNodeId, int rightNodeId) {
-        this.history.add(new NextNodeHistoryEntry(executionNodeId, leftNodeId, rightNodeId));
+        this.history.add(new NextNodeHistoryEntry(leftNodeId, rightNodeId, executionNodeId));
     }
 
     public void logFinalizedNodeJoin(int executionNodeId) {
