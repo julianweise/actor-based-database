@@ -130,8 +130,9 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
 
     @AllArgsConstructor
     @Getter
-    public static class AllPartitionsHeaders implements Response {
-        private final ObjectList<ADBPartitionHeader> headers;
+    @NoArgsConstructor
+    public static class AllPartitionsHeaders implements Response, KryoSerializable {
+        private ObjectList<ADBPartitionHeader> headers;
     }
 
     @AllArgsConstructor
