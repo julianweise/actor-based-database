@@ -119,8 +119,10 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     private void logJoinExecution(ActorRef<ADBPartitionManager.Command> left,
                                   ActorRef<ADBPartitionManager.Command> right,
                                   ActorRef<ADBPartitionManager.Command> executor) {
-        this.history.logNodeJoin(this.partitionManagers.indexOf(executor),
-                this.partitionManagers.indexOf(left), this.partitionManagers.indexOf(right));
+        this.history.logNodeJoin(partitionManagers.indexOf(executor), partitionManagers.indexOf(left),
+                partitionManagers.indexOf(right));
+        this.getContext().getLog().info("[Overall Process]: {}/{}", this.joinTasks.size(),
+                this.partitionManagers.size() * (this.partitionManagers.size() + 1) / 2);
         this.dataAccesses.put(left, this.dataAccesses.getInt(left) + 1);
         this.dataAccesses.put(right, this.dataAccesses.getInt(right) + 1);
         this.joinExecutions.put(executor, this.joinExecutions.getInt(executor) + 1);
