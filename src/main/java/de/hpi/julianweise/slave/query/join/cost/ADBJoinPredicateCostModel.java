@@ -34,21 +34,21 @@ public class ADBJoinPredicateCostModel {
     }
 
     public ADBPartialJoinResult getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
-                                                    Map<String, ObjectList<ADBEntityEntry>> right) {
+                                                  Map<String, ObjectList<ADBEntityEntry>> right) {
         ObjectList<ADBEntityEntry> leftValues = left.get(this.predicate.getLeftHandSideAttribute());
         ObjectList<ADBEntityEntry> rightValues = right.get(this.predicate.getRightHandSideAttribute());
         ADBPartialJoinResult candidates = new ADBPartialJoinResult(this.getCost());
         for (int i = 0; i < this.joinCandidates.length; i++) {
             for (ADBInterval interval : this.joinCandidates[i]) {
-                candidates.addAllResults(getJoinCandidatesForRow(interval, leftValues.get(i), rightValues));
+                candidates.addAllResults(this.getJoinCandidatesForRow(interval, leftValues.get(i), rightValues));
             }
         }
         return candidates;
     }
 
     public ADBPartialJoinResult getJoinCandidatesForRow(ADBInterval interval,
-                                                          ADBEntityEntry left,
-                                                          ObjectList<ADBEntityEntry> right) {
+                                                        ADBEntityEntry left,
+                                                        ObjectList<ADBEntityEntry> right) {
         if (interval.equals(ADBInterval.NO_INTERSECTION)) {
             return new ADBPartialJoinResult();
         }

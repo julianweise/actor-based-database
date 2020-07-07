@@ -54,19 +54,18 @@ public class ADBDoubleColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         double[] sorted = new double[sortedIndices.length];
-        int[] sortedToOriginal = new int[sortedIndices.length];
         int[] originalToSorted = new int[sortedIndices.length];
+        Arrays.fill(originalToSorted, -1);
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getDouble(min) > this.values.getDouble(sortedIndex)) continue;
             if (max.getValueField().getDouble(max) < this.values.getDouble(sortedIndex)) break;
             sorted[currentPointer] = this.values.getDouble(sortedIndex);
-            sortedToOriginal[currentPointer] = sortedIndex;
             originalToSorted[sortedIndex] = currentPointer++;
 
         }
         return new ADBDoubleColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
+                Arrays.copyOfRange(this.sortedIndices, 0, currentPointer), originalToSorted);
     }
 
     public int size() {

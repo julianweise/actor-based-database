@@ -1,5 +1,6 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
+import com.sun.tools.corba.se.idl.constExpr.Not;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
@@ -46,6 +47,8 @@ public class JoinQueryRowWorkload extends Workload {
     }
 
     private boolean rowSatisfyJoinCondition(int leftId, int rightId) {
+        assert ADBInternalIDHelper.getNodeId(leftId) == ADBInternalIDHelper.getNodeId(rightId): "Origin nodes differ!";
+        assert ADBInternalIDHelper.getPartitionId(leftId) == ADBInternalIDHelper.getPartitionId(rightId): "Origin partitions differ!";
         for (ADBJoinPredicateCostModel termCostModel : costModels) {
             try {
                 ADBEntityEntry left = this.left.get(termCostModel.getPredicate().getLeftHandSideAttribute())
