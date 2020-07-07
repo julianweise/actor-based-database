@@ -54,18 +54,19 @@ public class ADBStringColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         String[] sorted = new String[sortedIndices.length];
+        int[] sortedToOriginal = new int[sortedIndices.length];
         int[] originalToSorted = new int[sortedIndices.length];
         Arrays.fill(originalToSorted, -1);
-
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             if (((String) min.getValueField().get(min)).compareTo(this.values.get(sortedIndex)) > 0) continue;
             if (((String) max.getValueField().get(max)).compareTo(this.values.get(sortedIndex)) < 0) break;
             sorted[currentPointer] = this.values.get(sortedIndex);
+            sortedToOriginal[currentPointer] = sortedIndex;
             originalToSorted[sortedIndex] = currentPointer++;
         }
         return new ADBStringColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(this.sortedIndices, 0, currentPointer), originalToSorted);
+                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
     }
 
     public int size() {

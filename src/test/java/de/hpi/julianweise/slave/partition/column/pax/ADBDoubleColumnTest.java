@@ -110,10 +110,15 @@ public class ADBDoubleColumnTest {
         TestEntity testEntity5 = new TestEntity(5, "Test5", 5f, true, 5);
 
         column.add(testEntity2);
+        testEntity2.setInternalID(ADBInternalIDHelper.createID(0, 0, 0));
         column.add(testEntity1);
+        testEntity1.setInternalID(ADBInternalIDHelper.createID(0, 0, 1));
         column.add(testEntity3);
+        testEntity3.setInternalID(ADBInternalIDHelper.createID(0, 0, 2));
         column.add(testEntity5);
+        testEntity5.setInternalID(ADBInternalIDHelper.createID(0, 0, 3));
         column.add(testEntity4);
+        testEntity4.setInternalID(ADBInternalIDHelper.createID(0, 0, 4));
         column.complete();
 
         ADBColumnSorted sortedColumn = column.getSortedColumn(new ADBEntityDoubleEntry(2, 3), new ADBEntityDoubleEntry(4, 5));

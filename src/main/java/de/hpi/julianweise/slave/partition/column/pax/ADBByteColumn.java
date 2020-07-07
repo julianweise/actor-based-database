@@ -54,18 +54,19 @@ public class ADBByteColumn extends ADBColumn {
     @Override
     public ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max) {
         byte[] sorted = new byte[sortedIndices.length];
+        int[] sortedToOriginal = new int[sortedIndices.length];
         int[] originalToSorted = new int[sortedIndices.length];
-        Arrays.fill(originalToSorted, -1);
         Arrays.fill(originalToSorted, -1);
         int currentPointer = 0;
         for (int sortedIndex : this.sortedIndices) {
             if (min.getValueField().getByte(min) > this.values.getByte(sortedIndex)) continue;
             if (max.getValueField().getByte(max) < this.values.getByte(sortedIndex)) break;
             sorted[currentPointer] = this.values.getByte(sortedIndex);
+            sortedToOriginal[currentPointer] = sortedIndex;
             originalToSorted[sortedIndex] = currentPointer++;
         }
         return new ADBByteColumnSorted(ADBSlave.ID, partitionId, Arrays.copyOfRange(sorted, 0, currentPointer),
-                Arrays.copyOfRange(this.sortedIndices, 0, currentPointer), originalToSorted);
+                Arrays.copyOfRange(sortedToOriginal, 0, currentPointer), originalToSorted);
     }
 
     public int size() {
