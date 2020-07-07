@@ -37,7 +37,7 @@ public abstract class ADBColumnSorted {
 
     public ADBEntityEntry getByOriginalIndex(int originalIndex) {
         int id = ADBInternalIDHelper.createID(this.nodeId, this.partitionId, originalIndex);
-        if (this.originalToSorted[originalIndex] >= this.size()) {
+        if (this.originalToSorted[originalIndex] >= this.size() || this.originalToSorted[originalIndex] == -1) {
             throw new IllegalArgumentException("Original Index has been pruned");
         }
         return this.createForIndex(id, this.originalToSorted[originalIndex]);
