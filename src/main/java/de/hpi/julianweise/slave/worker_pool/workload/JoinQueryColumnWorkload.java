@@ -46,6 +46,9 @@ public class JoinQueryColumnWorkload extends Workload {
         }
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
+                if (interval.equals(ADBInterval.NO_INTERSECTION)) {
+                    continue;
+                }
                 this.handleInterval(i, interval);
             }
         }
@@ -53,9 +56,6 @@ public class JoinQueryColumnWorkload extends Workload {
     }
 
     private void handleInterval(int rowIndex, ADBInterval interval) {
-        if (interval.equals(ADBInterval.NO_INTERSECTION)) {
-            return;
-        }
         this.handleInterval(rowIndex, interval.getStart(), interval.getEnd());
     }
 
