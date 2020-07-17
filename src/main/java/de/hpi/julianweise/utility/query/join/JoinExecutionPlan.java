@@ -56,15 +56,13 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     private final Object2IntMap<ActorRef<ADBPartitionManager.Command>> dataAccesses = new Object2IntOpenHashMap<>();
     private final Object2IntMap<ActorRef<ADBPartitionManager.Command>> joinExecutions = new Object2IntOpenHashMap<>();
     private final JoinExecutionPlanHistory history;
-    private final int transactionId;
 
     public JoinExecutionPlan(ActorContext<Command> context,
                              ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
                              int transactionId) {
         super(context);
         this.partitionManagers = partitionManagers;
-        this.transactionId = transactionId;
-        this.history = new JoinExecutionPlanHistory(this.transactionId);
+        this.history = new JoinExecutionPlanHistory(transactionId);
         this.joinTasks = this.initializeJoinTasks();
         this.initializeCounter();
     }
