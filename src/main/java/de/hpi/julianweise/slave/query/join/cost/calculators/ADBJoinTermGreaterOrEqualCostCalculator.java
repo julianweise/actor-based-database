@@ -9,7 +9,7 @@ public class ADBJoinTermGreaterOrEqualCostCalculator implements ADBJoinTermCostC
 
     @Override
     public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right, ADBComparator comparator) {
-        ADBInterval[][] resultSet = new ADBInterval[left.size()][];
+        ADBInterval[][] resultSet = new ADBInterval[left.size()][0];
         int leftIndex = 0, rightIndex = 0;
         while(leftIndex < left.size() && rightIndex < right.size()) {
             if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) < 0) {
