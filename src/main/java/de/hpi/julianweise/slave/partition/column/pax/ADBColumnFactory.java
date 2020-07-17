@@ -20,6 +20,7 @@ public class ADBColumnFactory {
         put(int.class, ADBIntColumn::new);
         put(long.class, ADBLongColumn::new);
         put(float.class, ADBFloatColumn::new);
+        put(char.class, ADBCharColumn::new);
         put(double.class, ADBDoubleColumn::new);
         put(String.class, ADBStringColumn::new);
     }};
