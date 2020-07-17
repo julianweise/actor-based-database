@@ -5,6 +5,8 @@ import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import java.util.Arrays;
+
 public class ADBJoinTermGreaterOrEqualCostCalculator implements ADBJoinTermCostCalculator {
 
     @Override
@@ -20,6 +22,6 @@ public class ADBJoinTermGreaterOrEqualCostCalculator implements ADBJoinTermCostC
                 resultSet[leftIndex++] = new ADBInterval[] {new ADBInterval(0, rightIndex)};
             }
         }
-        return resultSet;
+        return Arrays.copyOf(resultSet, leftIndex);
     }
 }
