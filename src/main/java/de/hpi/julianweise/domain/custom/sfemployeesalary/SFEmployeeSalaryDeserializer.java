@@ -11,7 +11,8 @@ import java.io.IOException;
 public class SFEmployeeSalaryDeserializer extends JsonDeserializer<SFEmployeeSalary> {
 
     @Override
-    public SFEmployeeSalary deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+    public SFEmployeeSalary deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+            throws IOException {
 
         ObjectCodec oc = jsonParser.getCodec();
         JsonNode node = oc.readTree(jsonParser);
