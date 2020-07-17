@@ -9,7 +9,7 @@ public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalcu
 
     @Override
     public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right, ADBComparator comparator) {
-        ADBInterval[][] resultSet = new ADBInterval[left.size()][2];
+        ADBInterval[][] resultSet = new ADBInterval[left.size()][];
 
         int leftIndex = 0, rightIndex = 0;
         ADBComparator comparatorA = ADBComparator.getFor(comparator.getLeftSideField(), comparator.getLeftSideField());
@@ -20,13 +20,13 @@ public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalcu
                 continue;
             }
             resultSet[leftIndex][0] = new ADBInterval(0, right.size() - 1);
-            resultSet[leftIndex][1] = ADBInterval.NO_INTERSECTION;
             if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) < 0) {
                 leftIndex++;
             }
             else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) == 0) {
                 int intervalStart = rightIndex;
                 while(rightIndex + 1 < right.size() && comparator.compare(left.get(leftIndex), right.get(rightIndex + 1)) == 0) rightIndex++;
+                resultSet[leftIndex] = new ADBInterval[2];
                 resultSet[leftIndex][0] = intervalStart > 0 ? new ADBInterval(0, intervalStart - 1) : ADBInterval.NO_INTERSECTION;
                 resultSet[leftIndex++][1] = rightIndex < (right.size() - 1) ? new ADBInterval(rightIndex + 1, right.size() - 1) : ADBInterval.NO_INTERSECTION;
                 rightIndex++;
@@ -40,8 +40,9 @@ public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalcu
                 resultSet[leftIndex] = resultSet[leftIndex-1];
                 continue;
             }
-            resultSet[leftIndex][0] = right.size() > 0 ? new ADBInterval(0, right.size() - 1) : ADBInterval.NO_INTERSECTION;
-            resultSet[leftIndex][1] = ADBInterval.NO_INTERSECTION;
+            if (right.size() > 0) {
+                resultSet[leftIndex] = new ADBInterval[] {new ADBInterval(0, right.size() - 1)};
+            }
         }
         return resultSet;
     }

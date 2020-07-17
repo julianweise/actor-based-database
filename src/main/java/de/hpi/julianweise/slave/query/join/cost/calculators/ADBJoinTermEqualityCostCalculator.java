@@ -9,12 +9,11 @@ public class ADBJoinTermEqualityCostCalculator implements ADBJoinTermCostCalcula
 
     @Override
     public ADBInterval[][] calc(ObjectList<ADBEntityEntry> left, ObjectList<ADBEntityEntry> right, ADBComparator comparator) {
-        ADBInterval[][] resultSet = new ADBInterval[left.size()][1];
+        ADBInterval[][] resultSet = new ADBInterval[left.size()][];
 
         int leftId = 0, rightId = 0;
         ADBComparator comparatorA = ADBComparator.getFor(comparator.getLeftSideField(), comparator.getLeftSideField());
         while(leftId < left.size() && rightId < right.size()) {
-            resultSet[leftId][0] = ADBInterval.NO_INTERSECTION;
             if (leftId > 0 && comparatorA.compare(left.get(leftId - 1), left.get(leftId)) == 0) {
                 resultSet[leftId] = resultSet[leftId-1];
                 leftId++;
@@ -25,18 +24,11 @@ public class ADBJoinTermEqualityCostCalculator implements ADBJoinTermCostCalcula
             else if (comparator.compare(left.get(leftId), right.get(rightId)) == 0) {
                 int intervalStart = rightId;
                 while(rightId + 1 < right.size() && comparator.compare(left.get(leftId), right.get(rightId + 1)) == 0) rightId++;
-                resultSet[leftId++][0] = new ADBInterval(intervalStart, rightId++);
+                resultSet[leftId++] = new ADBInterval[] {new ADBInterval(intervalStart, rightId++)};
             }
             else if (comparator.compare(left.get(leftId), right.get(rightId)) > 0) {
                 rightId++;
             }
-        }
-        for (;leftId < left.size(); leftId++) {
-            if (leftId > 0 && comparatorA.compare(left.get(leftId - 1), left.get(leftId)) == 0) {
-                resultSet[leftId] = resultSet[leftId-1];
-                continue;
-            }
-            resultSet[leftId][0] = ADBInterval.NO_INTERSECTION;
         }
         return resultSet;
     }
