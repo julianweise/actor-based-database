@@ -60,8 +60,8 @@ public class JoinQueryColumnWorkload extends Workload {
     }
 
     private void handleInterval(int rowIndex, int start, int end) {
+        int normalizedMatrixRow = ADBInternalIDHelper.getEntityId(this.leftSideValues.get(rowIndex).getId());
         for(int i = start; i <= end; i++) {
-            int normalizedMatrixRow = ADBInternalIDHelper.getEntityId(this.leftSideValues.get(rowIndex).getId());
             int normalizedMatrixColumn = ADBInternalIDHelper.getEntityId(this.rightSideValues.get(i).getId());
             this.bitMatrix[normalizedMatrixRow].set(normalizedMatrixColumn);
         }
