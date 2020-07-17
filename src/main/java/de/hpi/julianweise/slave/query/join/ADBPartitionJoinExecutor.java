@@ -36,6 +36,7 @@ import lombok.val;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -189,7 +190,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         ObjectList<ADBJoinPredicateCostModel> costModels = query.getPredicates().parallelStream()
                                                                 .map(this::getCostModel)
                                                                 .collect(new ObjectArrayListCollector<>());
-        costModels.sort((m1, m2) -> Floats.compare(m1.getRelativeCost(), m2.getRelativeCost()));
+        costModels.sort(Comparator.comparingInt(ADBJoinPredicateCostModel::getCost));
         return costModels;
     }
 

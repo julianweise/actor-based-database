@@ -49,14 +49,10 @@ public class JoinQueryColumnWorkload extends Workload {
                 if (interval.equals(ADBInterval.NO_INTERSECTION)) {
                     continue;
                 }
-                this.handleInterval(i, interval);
+                this.handleInterval(i, interval.getStart(), interval.getEnd());
             }
         }
         message.getRespondTo().tell(new Results(this.bitMatrix));
-    }
-
-    private void handleInterval(int rowIndex, ADBInterval interval) {
-        this.handleInterval(rowIndex, interval.getStart(), interval.getEnd());
     }
 
     private void handleInterval(int rowIndex, int start, int end) {
