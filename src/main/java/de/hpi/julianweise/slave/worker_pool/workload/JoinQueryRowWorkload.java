@@ -46,8 +46,8 @@ public class JoinQueryRowWorkload extends Workload {
     }
 
     private boolean rowSatisfyJoinCondition(int leftId, int rightId) {
-        assert ADBInternalIDHelper.getNodeId(leftId) == ADBInternalIDHelper.getNodeId(rightId): "Origin nodes differ!";
-        assert ADBInternalIDHelper.getPartitionId(leftId) == ADBInternalIDHelper.getPartitionId(rightId): "Origin partitions differ!";
+//        assert ADBInternalIDHelper.getNodeId(leftId) == ADBInternalIDHelper.getNodeId(rightId): "Origin nodes differ!";
+//        assert ADBInternalIDHelper.getPartitionId(leftId) == ADBInternalIDHelper.getPartitionId(rightId): "Origin partitions differ!";
         for (ADBJoinPredicateCostModel termCostModel : costModels) {
             try {
                 ADBEntityEntry left = this.left.get(termCostModel.getPredicate().getLeftHandSideAttribute())
