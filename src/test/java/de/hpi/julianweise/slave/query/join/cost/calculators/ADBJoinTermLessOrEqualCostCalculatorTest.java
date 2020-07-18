@@ -77,10 +77,7 @@ public class ADBJoinTermLessOrEqualCostCalculatorTest {
 
         ADBComparator comparator = ADBComparator.getFor(ADBEntityIntEntry.valueField, ADBEntityIntEntry.valueField);
         ADBInterval[][] result = calculator.calc(left, right, comparator);
-        assertThat(result.length).isEqualTo(3);
-        assertThat(result[0][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
-        assertThat(result[1][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
-        assertThat(result[2][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
+        assertThat(result.length).isZero();
     }
 
     @Test
@@ -99,11 +96,10 @@ public class ADBJoinTermLessOrEqualCostCalculatorTest {
 
         ADBComparator comparator = ADBComparator.getFor(ADBEntityIntEntry.valueField, ADBEntityIntEntry.valueField);
         ADBInterval[][] result = calculator.calc(left, right, comparator);
-        assertThat(result.length).isEqualTo(4);
+        assertThat(result.length).isEqualTo(3);
         assertThat(result[0][0]).isEqualTo(new ADBInterval(0, 2));
         assertThat(result[1][0]).isEqualTo(new ADBInterval(0, 2));
         assertThat(result[2][0]).isEqualTo(new ADBInterval(1, 2));
-        assertThat(result[3][0]).isEqualTo(ADBInterval.NO_INTERSECTION);
     }
 
 }

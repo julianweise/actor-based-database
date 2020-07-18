@@ -5,8 +5,6 @@ import lombok.Getter;
 @Getter
 public class ADBInterval {
 
-    public static final ADBInterval NO_INTERSECTION = new ADBInterval(-1,-1);
-
     private final int start;
     private final int end;
 
@@ -17,9 +15,6 @@ public class ADBInterval {
     }
 
     public int size() {
-        if (this.equals(NO_INTERSECTION)) {
-            return 0;
-        }
         return 1 + this.end - this.start;
     }
 

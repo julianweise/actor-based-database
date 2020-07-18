@@ -49,9 +49,6 @@ public class ADBJoinPredicateCostModel {
     public ADBPartialJoinResult getJoinCandidatesForRow(ADBInterval interval,
                                                         ADBEntityEntry left,
                                                         ObjectList<ADBEntityEntry> right) {
-        if (interval.equals(ADBInterval.NO_INTERSECTION)) {
-            return new ADBPartialJoinResult();
-        }
         ADBPartialJoinResult candidates = new ADBPartialJoinResult(interval.size());
         for (int i = interval.getStart(); i <= interval.getEnd(); i++) {
             candidates.addResult(left.getId(), right.get(i).getId());

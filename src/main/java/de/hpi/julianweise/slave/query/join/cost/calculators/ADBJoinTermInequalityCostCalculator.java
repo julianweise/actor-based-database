@@ -5,6 +5,7 @@ import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalculator {
@@ -28,10 +29,8 @@ public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalcu
             else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) == 0) {
                 int intervalStart = rightIndex;
                 while(rightIndex + 1 < right.size() && comparator.compare(left.get(leftIndex), right.get(rightIndex + 1)) == 0) rightIndex++;
-                resultSet[leftIndex] = new ADBInterval[2];
-                resultSet[leftIndex][0] = intervalStart > 0 ? new ADBInterval(0, intervalStart - 1) : ADBInterval.NO_INTERSECTION;
-                resultSet[leftIndex++][1] = rightIndex < (right.size() - 1) ? new ADBInterval(rightIndex + 1, right.size() - 1) : ADBInterval.NO_INTERSECTION;
-                rightIndex++;
+                resultSet[leftIndex] = this.handleEquality(intervalStart, rightIndex, right.size());
+                rightIndex++; leftIndex++;
             }
             else if (comparator.compare(left.get(leftIndex), right.get(rightIndex)) > 0) {
                 rightIndex++;
@@ -47,5 +46,21 @@ public class ADBJoinTermInequalityCostCalculator implements ADBJoinTermCostCalcu
             }
         }
         return Arrays.copyOf(resultSet, leftIndex);
+    }
+
+    private ADBInterval[] handleEquality(int equalityStart, int equalityEnd, int rangeSize) {
+        ArrayList<ADBInterval> intervals = new ArrayList<>(2);
+        if (equalityStart > 0) intervals.add(this.leftInterval(equalityStart));
+        if (equalityEnd < (rangeSize - 1)) intervals.add(this.rightInterval(equalityEnd, rangeSize));
+        intervals.trimToSize();
+        return intervals.toArray(new ADBInterval[0]);
+    }
+
+    private ADBInterval leftInterval(int equalityIntervalStart) {
+        return new ADBInterval(0, equalityIntervalStart - 1);
+    }
+
+    private ADBInterval rightInterval(int equalityIntervalEnd, int rangeSize) {
+        return new ADBInterval(equalityIntervalEnd + 1, rangeSize - 1);
     }
 }
