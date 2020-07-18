@@ -1,6 +1,7 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
 import com.zaxxer.sparsebits.SparseBitSet;
+import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;
@@ -41,15 +42,34 @@ public class JoinQueryColumnWorkload extends Workload {
 
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
-        for(int i = 0; i < this.bitMatrix.length; i++) {
-            this.bitMatrix[i] = new SparseBitSet(this.rightOriginalSize);
+        this.buildMatrix();
+        if (this.costModel.getPredicate().getOperator().equals(ADBQueryTerm.RelationalOperator.INEQUALITY)) {
+            this.doExecutedMultipleIntervals();
+        } else {
+            this.doExecuteSingleInterval();
         }
+        message.getRespondTo().tell(new Results(this.bitMatrix));
+    }
+
+    public void doExecuteSingleInterval() {
+        for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
+            ADBInterval interval = this.costModel.getJoinCandidates()[i][0];
+            this.handleInterval(i, interval.getStart(), interval.getEnd());
+        }
+    }
+
+    public void doExecutedMultipleIntervals() {
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
                 this.handleInterval(i, interval.getStart(), interval.getEnd());
             }
         }
-        message.getRespondTo().tell(new Results(this.bitMatrix));
+    }
+
+    private void buildMatrix() {
+        for(int i = 0; i < this.bitMatrix.length; i++) {
+            this.bitMatrix[i] = new SparseBitSet(this.rightOriginalSize);
+        }
     }
 
     private void handleInterval(int rowIndex, int start, int end) {
