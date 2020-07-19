@@ -1,7 +1,6 @@
 package de.hpi.julianweise.slave.worker_pool.workload;
 
 import com.zaxxer.sparsebits.SparseBitSet;
-import de.hpi.julianweise.query.ADBQueryTerm;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.query.join.cost.ADBJoinPredicateCostModel;
 import de.hpi.julianweise.slave.query.join.cost.interval.ADBInterval;

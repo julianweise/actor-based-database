@@ -5,7 +5,6 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
-import com.google.common.primitives.Floats;
 import de.hpi.julianweise.query.join.ADBJoinQuery;
 import de.hpi.julianweise.query.join.ADBJoinQueryPredicate;
 import de.hpi.julianweise.settings.Settings;
