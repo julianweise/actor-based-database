@@ -17,7 +17,8 @@ import java.util.Map;
 public class ADBJoinPredicateCostModel {
     private final ADBJoinQueryPredicate predicate;
     private final ADBInterval[][] joinCandidates;
-    private final int sizeRight;
+    private final int originalSizeLeft;
+    private final int originalSizeRight;
 
     public int getCost() {
         int cost = 0;
@@ -30,7 +31,7 @@ public class ADBJoinPredicateCostModel {
     }
 
     public float getRelativeCost() {
-        return (float) this.getCost() / (this.getSizeLeft() * this.sizeRight);
+        return (float) this.getCost() / (this.originalSizeLeft * this.originalSizeRight);
     }
 
     public ADBPartialJoinResult getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
@@ -54,10 +55,6 @@ public class ADBJoinPredicateCostModel {
             candidates.addResult(left.getId(), right.get(i).getId());
         }
         return candidates;
-    }
-
-    public int getSizeLeft() {
-        return this.joinCandidates.length;
     }
 
     @Override

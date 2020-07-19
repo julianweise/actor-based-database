@@ -42,7 +42,8 @@ public class ADBJoinPredicateCostModelFactory {
         return ADBJoinPredicateCostModel.builder()
                                         .predicate(predicate)
                                         .joinCandidates(candidates)
-                                        .sizeRight(right.size())
+                                        .originalSizeLeft(left.size())
+                                        .originalSizeRight(right.size())
                                         .build();
     }
 
