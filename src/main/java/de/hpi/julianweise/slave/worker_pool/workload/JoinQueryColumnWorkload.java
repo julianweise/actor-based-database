@@ -43,22 +43,12 @@ public class JoinQueryColumnWorkload extends Workload {
     @Override
     public void doExecute(GenericWorker.WorkloadMessage message) {
         this.buildMatrix();
-        if (this.costModel.getPredicate().getOperator().equals(ADBQueryTerm.RelationalOperator.INEQUALITY)) {
-            this.doExecutedMultipleIntervals();
-        } else {
-            this.doExecuteSingleInterval();
-        }
+        this.doExecuteIntervals();
         message.getRespondTo().tell(new Results(this.bitMatrix));
     }
 
-    public void doExecuteSingleInterval() {
-        for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
-            ADBInterval interval = this.costModel.getJoinCandidates()[i][0];
-            this.handleInterval(i, interval.getStart(), interval.getEnd());
-        }
-    }
 
-    public void doExecutedMultipleIntervals() {
+    public void doExecuteIntervals() {
         for (int i = 0; i < this.costModel.getJoinCandidates().length; i++) {
             for (ADBInterval interval : this.costModel.getJoinCandidates()[i]) {
                 this.handleInterval(i, interval.getStart(), interval.getEnd());
