@@ -5,13 +5,13 @@ package de.hpi.julianweise.utility.internals;
 public class ADBInternalIDHelper {
 
     // [NNNN | PPPPPPPPPPPP | EEEEEEEEEEEEEEEE]
-    //   4   |      16      |        16
+    //   4   |      12      |        16
 
     private static final int SHIFT_NODE = 28;
     private static final int SHIFT_PARTITION = 16;
 
     private static final int BIT_MASK_NODE = 0xF0000000;
-    private static final int BIT_MASK_PARTITION = 0x0FFFF000;
+    private static final int BIT_MASK_PARTITION = 0x0FFF0000;
     private static final int BIT_MASK_ENTITY = 0x0000FFFF;
 
     public static int createID(int nodeId, int partitionId, int entityId) {

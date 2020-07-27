@@ -41,7 +41,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class ADBPartitionManager extends ADBLargeMessageActor {
 
     public static final ServiceKey<Command> SERVICE_KEY = ServiceKey.create(Command.class, "PartitionManager");
-    private static final int MAX_PARTITIONS = 0x10000;
+    private static final int MAX_PARTITIONS = 0x1000;
 
     private static ActorRef<ADBPartitionManager.Command> INSTANCE;
     private final Int2ObjectOpenHashMap<ADBPartitionHeader> partitionHeaders = new Int2ObjectOpenHashMap<>();
@@ -196,7 +196,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handlePartitionRegistration(Register registration) {
-        assert this.partitions.size() < MAX_PARTITIONS : "More partitions than addressable address space";
+        assert this.partitions.size() < MAX_PARTITIONS : "More partitions than addressable space";
         this.getContext().watchWith(registration.partition, new PartitionFailed(registration.header.getId()));
         this.partitions.put(registration.header.getId(), registration.partition);
         this.partitionHeaders.put(registration.header.getId(), registration.header);
