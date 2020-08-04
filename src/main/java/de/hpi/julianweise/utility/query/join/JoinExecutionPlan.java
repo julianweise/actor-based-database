@@ -8,7 +8,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.utility.largemessage.ADBPair;
-import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -103,13 +102,13 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     }
 
     private void returnLocalJoinTask(GetNextJoinNodePair command) {
-        ObjectList<ActorRef<ADBPartitionManager.Command>> joinPartners = this.joinTasks
+        ActorRef<ADBPartitionManager.Command> target = this.joinTasks
                 .parallelStream()
                 .filter(pair -> pair.contains(command.requestingManager))
                 .map(pair -> pair.getKey().equals(command.requestingManager) ? pair.getValue() : pair.getKey())
-                .sorted(this::sortJoinTasksByMinimalDataAccessOfTarget)
-                .collect(new ObjectArrayListCollector<>());
-        ActorRef<ADBPartitionManager.Command> target = joinPartners.get(0);
+                .min(this::sortJoinTasksByMinimalDataAccessOfTarget)
+                .orElse(null);
+
         this.logJoinExecution(command.requestingManager, target, command.requestingManager);
         this.sendNextJoinPair(command.requestingManager, target, command.requestingManager, command.responseTo);
     }
