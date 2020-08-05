@@ -30,8 +30,8 @@ public class ADBJoinPredicateCostModel {
         return cost;
     }
 
-    public float getRelativeCost() {
-        return (float) (this.getCost() / (this.originalSizeLeft * this.originalSizeRight));
+    public double getRelativeCost() {
+        return  ((double) this.getCost()) / (this.originalSizeLeft * this.originalSizeRight);
     }
 
     public ADBPartialJoinResult getJoinCandidates(Map<String, ObjectList<ADBEntityEntry>> left,
