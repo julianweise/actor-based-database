@@ -205,13 +205,6 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
             this.requestedNextNodeComparison = true;
         }
-        this.getContext().getLog().info(
-                "Active executors: {}, Prepared executors: {}, Preparing executors: {} Idle executors: {}",
-                this.activeExecutors.get(),
-                this.numberOfExecutors() - activeExecutors.get() - executorsPrepared.size() - executorsIdle.size(),
-                this.executorsPrepared.size(),
-                this.executorsIdle.size()
-        );
     }
 
     private void executeNextTask() {

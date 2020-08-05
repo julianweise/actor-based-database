@@ -230,14 +230,12 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void handleRowBasedJoin() {
-        this.getContext().getLog().info("Row-based join strategy applied");
         ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
         this.costModelsProcessed = this.costModels.size();
         this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
     }
 
     private void handleColumnBasedJoin() {
-        this.getContext().getLog().info("Column-based join strategy applied");
         this.costModelsProcessed = this.costModels.size();
         this.joinColumnBased(this.costModels);
     }
