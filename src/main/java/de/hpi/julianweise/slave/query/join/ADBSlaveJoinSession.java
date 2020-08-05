@@ -83,6 +83,8 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     private Behavior<Command> handleExecute(Execute command) {
         this.getContext().getSelf().tell(new JoinWithNode(ADBNodeJoinContext.builder()
+                                                                            .executorNodeId(ADBSlave.ID)
+                                                                            .transactionId(this.queryContext.getTransactionId())
                                                                             .left(ADBPartitionManager.getInstance())
                                                                             .leftNodeId(ADBSlave.ID)
                                                                             .right(ADBPartitionManager.getInstance())

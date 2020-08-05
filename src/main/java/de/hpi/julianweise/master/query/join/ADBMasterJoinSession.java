@@ -129,13 +129,14 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                            ActorRef<ADBPartitionManager.Command> rightPartitionManager) {
         int leftNodeId = ADBMaster.getGlobalIdFor(leftPartitionManager);
         int rightNodeId = ADBMaster.getGlobalIdFor(rightPartitionManager);
+        int executorNodeId = ADBMaster.getGlobalIdFor(requestingSession);
         this.getContext().getLog().info("Asking Node#{} to join with Node#{}", leftNodeId, rightNodeId);
         requestingSession.tell(new ADBSlaveJoinSession.JoinWithNode(ADBNodeJoinContext
                 .builder()
                 .leftNodeId(leftNodeId)
                 .rightNodeId(rightNodeId)
                 .transactionId(this.transactionId)
-                .executorNodeId(ADBSlave.ID)
+                .executorNodeId(executorNodeId)
                 .left(leftPartitionManager)
                 .right(rightPartitionManager)
                 .build()));
