@@ -138,7 +138,6 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     private ADBColumnSorted getFilteredValuesOf(String attribute, ADBEntityEntry min, ADBEntityEntry max) {
-        getContext().getLog().debug("Requested attribute values for attribute " + attribute + " on partition# " + id);
         return this.columns.get(attribute).getSortedColumn(min, max);
     }
 

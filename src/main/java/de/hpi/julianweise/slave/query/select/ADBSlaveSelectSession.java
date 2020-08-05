@@ -95,8 +95,7 @@ public class ADBSlaveSelectSession extends ADBSlaveQuerySession {
 
     private Behavior<Command> handleWorkerResults(SelectionWorkerWrapper wrapper) {
         if (!(wrapper.response instanceof SelectionQueryWorkload.Results)) {
-            this.getContext().getLog().error("Received " + wrapper.response.getClass().getName() + " instead of " +
-                    "expected SelectionQueryWorkload results");
+            this.getContext().getLog().error("Received {} instead of expected SelectionQueryWorkload results", wrapper.response.getClass().getName());
             return Behaviors.same();
         }
         this.partialResults.addAll(((SelectionQueryWorkload.Results) wrapper.response).getResults());

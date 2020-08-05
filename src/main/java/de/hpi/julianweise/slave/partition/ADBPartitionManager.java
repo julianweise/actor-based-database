@@ -190,7 +190,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handlePartitionFails(PartitionFailed signal) {
-        this.getContext().getLog().error("Partition " + signal.partitionId + " failed and gets removed from manager.");
+        this.getContext().getLog().error("Partition {} failed and gets removed from manager.", signal.partitionId);
         this.partitions.remove(signal.partitionId);
         return Behaviors.same();
     }
@@ -200,7 +200,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         this.getContext().watchWith(registration.partition, new PartitionFailed(registration.header.getId()));
         this.partitions.put(registration.header.getId(), registration.partition);
         this.partitionHeaders.put(registration.header.getId(), registration.header);
-        this.getContext().getLog().info("[PARTITIONS MAINTAINED] " + this.partitions.size());
+        this.getContext().getLog().info("[PARTITIONS MAINTAINED] {}", this.partitions.size());
         return Behaviors.same();
     }
 
@@ -237,8 +237,6 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
         int[] lPartIdsR = IntStream.range(0, this.partitions.size()).parallel()
                                    .filter(id -> this.mightJoin(command.externalHeader, id, command.query))
                                    .toArray();
-        this.getContext().getLog().debug("Reduced Partitions for {} by {}%", command.externalHeader,
-                (1 - ((lPartIdsL.length + lPartIdsR.length) / (this.partitions.size() * 2))) * 100);
         Int2ObjectOpenHashMap<ADBPartitionHeader> lPartitionHeaders = new Int2ObjectOpenHashMap<>();
         IntStream.concat(Arrays.stream(lPartIdsL), Arrays.stream(lPartIdsR))
               .forEach(partId -> lPartitionHeaders.put(partId, this.partitionHeaders.get(partId)));

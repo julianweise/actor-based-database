@@ -113,7 +113,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
             return Behaviors.same();
         }
         if (!this.managerToHandlers.containsKey(response.getRequestingPartitionManager())) {
-            this.getContext().getLog().warn("No Node-Session mapping for " + response.getRightQueryManager());
+            this.getContext().getLog().warn("No Node-Session mapping for {}",  response.getRightQueryManager());
             this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), wrapper);
             return Behaviors.same();
         }
@@ -128,7 +128,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                            ActorRef<ADBPartitionManager.Command> rightPartitionManager) {
         int leftNodeId = ADBMaster.getGlobalIdFor(leftPartitionManager);
         int rightNodeId = ADBMaster.getGlobalIdFor(rightPartitionManager);
-        this.getContext().getLog().info("Asking Node#" + leftNodeId + " to join with Node#" + rightNodeId);
+        this.getContext().getLog().info("Asking Node#{} to join with Node#{}", leftNodeId, rightNodeId);
         requestingSession.tell(new ADBSlaveJoinSession.JoinWithNode(ADBJoinNodesContext
                 .builder()
                 .leftNodeId(leftNodeId)

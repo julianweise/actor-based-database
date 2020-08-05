@@ -90,7 +90,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         val respondTo = getContext().messageAdapter(AllPartitionsHeaders.class, AllPartitionsHeaderWrapper::new);
         this.joinNodesContext.getLeft().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
         this.setUpExecutors();
-        this.getContext().getLog().info("[Create] On node#" + ADBSlave.ID + " to execute: " + this.joinNodesContext);
+        this.getContext().getLog().info("[Create] On node#{} to execute: {}", ADBSlave.ID, this.joinNodesContext);
     }
 
     @Override
@@ -199,16 +199,14 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.getContext().getSelf().tell(new Conclude());
         }
         if (this.isReadyToPrepareNextNodeComparison() && !this.requestedNextNodeComparison) {
-            this.getContext().getLog().debug("Trigger next Inter-Node-Join.");
+            this.getContext().getLog().info("Current process {}%: Trigger next Inter-Node-Join", this.process() * 100);
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
             this.requestedNextNodeComparison = true;
         }
-        this.getContext().getLog().debug("Current process {} %", this.process() * 100);
     }
 
     private void executeNextTask() {
         executorsPrepared.dequeue().tell(new ADBPartitionJoinExecutor.Execute());
-        this.getContext().getLog().debug("Executing next task");
         this.activeExecutors.incrementAndGet();
     }
 
@@ -219,7 +217,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleConclude(Conclude command) {
-        this.getContext().getLog().info("Concluding session for context: " + this.joinNodesContext);
+        this.getContext().getLog().info("Concluding node-join session for context {}", this.joinNodesContext);
         return Behaviors.stopped();
     }
 

@@ -84,14 +84,13 @@ public class ADBQueryEndpoint extends AbstractBehavior<ADBQueryEndpoint.Command>
                 Directives.path("query",
                         () -> Directives.withoutRequestTimeout(
                                 () -> Directives.post(
-                                        () -> Directives.entity(
-                                                Jackson.unmarshaller(ADBQuery.class),
-                                                query -> this.handleQuery((ADBQuery) query)))))
+                                        () -> Directives.entity(Jackson.unmarshaller(ADBQuery.class),
+                                                this::handleQuery))))
         );
     }
 
     private RouteAdapter handleQuery(ADBQuery query) {
-        this.getContext().getLog().info("Received new query: " + query);
+        this.getContext().getLog().info("Received new query: {}", query);
         CompletableFuture<Object> future = new CompletableFuture<>();
         int requestId = this.requestCounter.getAndIncrement();
         this.requests.put(requestId, future);

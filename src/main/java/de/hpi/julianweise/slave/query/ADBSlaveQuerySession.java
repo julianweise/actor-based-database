@@ -51,7 +51,7 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
         this.session.tell(new ADBMasterQuerySession.RegisterQuerySessionHandler(ADBPartitionManager.getInstance(),
                 getContext().getSelf()));
 
-        this.getContext().getLog().info("Started QuerySession " + queryContext.transactionId  + " for " + this.getQuerySessionName());
+        this.getContext().getLog().info("Started QuerySession {} for {}", queryContext.transactionId, this.getQuerySessionName());
     }
 
     protected ReceiveBuilder<ADBSlaveQuerySession.Command> createReceiveBuilder() {
@@ -67,7 +67,7 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
 
     protected void concludeTransaction() {
         this.session.tell(new ADBMasterQuerySession.ConcludeTransaction(this.getContext().getSelf()));
-        this.getContext().getLog().debug("Asking master to conclude session TX#" + queryContext.transactionId + " handling " + getQuerySessionName());
+        this.getContext().getLog().info("Asking master to conclude session TX#{} handling {}", queryContext.transactionId, getQuerySessionName());
     }
 
     protected void sendToSession(ADBLargeMessageSender.LargeMessage message) {
@@ -77,7 +77,7 @@ public abstract class ADBSlaveQuerySession extends AbstractBehavior<ADBSlaveQuer
     }
 
     private Behavior<Command> handleTerminate(Terminate command) {
-        this.getContext().getLog().info("Terminating " + this.getQuerySessionName());
+        this.getContext().getLog().info("Terminating {}", this.getQuerySessionName());
         return Behaviors.stopped();
     }
 

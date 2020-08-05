@@ -48,7 +48,7 @@ public class ADBSlave extends AbstractBehavior<ADBSlave.Command> {
 
     private Behavior<Command> handleJoined(Joined command) {
         ADBSlave.ID = command.globalId;
-        this.getContext().getLog().info("GLOBAL ID: " + command.globalId);
+        this.getContext().getLog().info("GLOBAL ID: {}", command.globalId);
         return Behaviors.same();
     }
 }

@@ -25,8 +25,6 @@ public class ADBPartitionJoinTask {
         this.rightPartitionManager = rightPartitionManager;
         this.leftHeader = leftHeader;
         this.rightHeader = rightHeader;
-
-        LOG.debug("Partition# {} joining Partition# {}", this.leftPartitionId, this.rightPartitionId);
     }
 
     private final int leftPartitionId;

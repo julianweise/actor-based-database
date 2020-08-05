@@ -63,8 +63,8 @@ public class ADBLargeMessageReceiver extends AbstractBehavior<ADBLargeMessageRec
 
     private Behavior<Command> handleInitializeTransfer(InitializeTransfer command) {
         if (this.payload != null) {
-            this.getContext().getLog().warn(String.format("%s attempted to initialize transfer for %s again that has" +
-                    "already been initialized by %s", command.respondTo, command.type, this.sender));
+            this.getContext().getLog().warn("{} attempted to initialize transfer for {} again that has" +
+                    "already been initialized by {}", command.respondTo, command.type, this.sender);
             return Behaviors.same();
         }
         this.messageType = command.getType();

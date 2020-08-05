@@ -42,7 +42,7 @@ public class ADBMaster extends AbstractBehavior<ADBMaster.Command> {
 
     public static int getGlobalIdFor(ActorRef<?> target) {
         if (!GLOBAL_IDS.containsKey(target.path().root())) {
-            LOG.error("Unable to find global node ID for " + target);
+            LOG.error("Unable to find global node ID for {}", target);
             return -1;
         }
         return GLOBAL_IDS.getInt(target.path().root());

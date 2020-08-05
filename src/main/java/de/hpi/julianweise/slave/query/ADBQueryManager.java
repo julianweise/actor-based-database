@@ -80,7 +80,7 @@ public class ADBQueryManager extends AbstractBehavior<ADBQueryManager.Command> {
     }
 
     private Behavior<Command> handleQueryEntities(QueryEntities cm) {
-        this.getContext().getLog().info("New Query [TX #" + cm.getTransactionId() + "] received");
+        this.getContext().getLog().info("New Query [TX #{}] received", cm.getTransactionId());
         String handlerName = ADBSlaveQuerySessionFactory.getName(cm);
         val sessionHandler = this.getContext().spawn(ADBSlaveQuerySessionFactory.create(cm), handlerName);
         this.getContext().watchWith(sessionHandler, new SessionHandlerTerminated(sessionHandler));

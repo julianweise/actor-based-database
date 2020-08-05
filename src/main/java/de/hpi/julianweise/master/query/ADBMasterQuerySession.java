@@ -67,7 +67,7 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
         this.parent = parent;
         this.managerToHandlers = new Object2ObjectOpenHashMap<>();
         this.handlersToManager = new Object2ObjectOpenHashMap<>();
-        this.getContext().getLog().info("Started QuerySession " + transactionId  + " for " + this.getQuerySessionName());
+        this.getContext().getLog().info("Started QuerySession {} for {}", transactionId, this.getQuerySessionName());
     }
 
     protected ReceiveBuilder<Command> createReceiveBuilder() {
@@ -84,7 +84,7 @@ public abstract class ADBMasterQuerySession extends ADBLargeMessageActor {
 
     protected Behavior<ADBMasterQuerySession.Command> concludeSession() {
         this.completedSessions.forEach(session -> session.tell(new ADBSlaveQuerySession.Terminate()));
-        this.getContext().getLog().info("Concluding QuerySession  TX#" + transactionId + " handling " + this.getQuerySessionName());
+        this.getContext().getLog().info("Concluding QuerySession  TX#{} handling {}", transactionId, this.getQuerySessionName());
         return Behaviors.stopped();
     }
 

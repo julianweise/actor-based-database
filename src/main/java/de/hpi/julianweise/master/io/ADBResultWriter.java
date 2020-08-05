@@ -80,11 +80,11 @@ public class ADBResultWriter extends AbstractBehavior<ADBResultWriter.Command> {
         String resultFileName = String.format("TX#%s_%s.csv", this.transactionId, UUID.randomUUID().toString());
         Path filePath = Paths.get(Settings.SettingsProvider.get(getContext().getSystem()).RESULT_BASE_DIR, resultFileName);
         File resultFile = filePath.toFile();
-        this.getContext().getLog().info("Creating result file at " + resultFile.getAbsolutePath());
+        this.getContext().getLog().info("Creating result file at {}", resultFile.getAbsolutePath());
         if (!resultFile.exists()){
             resultFile.getParentFile().mkdirs();
             if (!resultFile.createNewFile()) {
-                this.getContext().getLog().error("Unable to create result file " + resultFileName);
+                this.getContext().getLog().error("Unable to create result file {}", resultFileName);
             }
         }
         return resultFile;
