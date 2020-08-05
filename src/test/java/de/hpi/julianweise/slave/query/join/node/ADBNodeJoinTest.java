@@ -47,7 +47,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ADBJoinWithNodeSessionTest {
+public class ADBNodeJoinTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
@@ -95,15 +95,15 @@ public class ADBJoinWithNodeSessionTest {
         ADBJoinQuery joinQuery = new ADBJoinQuery(joinPredicates, false);
 
         ADBJoinQueryContext context = new ADBJoinQueryContext(joinQuery, transactionId);
-        ADBJoinNodesContext joinNodesContext = ADBJoinNodesContext.builder()
-                                                                  .right(partitionManager.ref())
-                                                                  .left(remotePartitionManager.ref())
-                                                                  .leftNodeId(leftNodeId)
-                                                                  .rightNodeId(rightNodeId)
-                                                                  .build();
+        ADBNodeJoinContext joinNodesContext = ADBNodeJoinContext.builder()
+                                                                .right(partitionManager.ref())
+                                                                .left(remotePartitionManager.ref())
+                                                                .leftNodeId(leftNodeId)
+                                                                .rightNodeId(rightNodeId)
+                                                                .build();
 
-        String name = ADBJoinWithNodeSessionFactory.sessionName(transactionId, joinNodesContext);
-        ActorRef<ADBJoinWithNodeSession.Command> session = testKit.spawn(ADBJoinWithNodeSessionFactory
+        String name = ADBNodeJoinFactory.sessionName(joinNodesContext);
+        ActorRef<ADBNodeJoin.Command> session = testKit.spawn(ADBNodeJoinFactory
                 .createDefault(context, left.ref(), joinNodesContext), name);
 
         remotePartitionManager.expectMessageClass(ADBPartitionManager.RequestAllPartitionHeaders.class);
@@ -128,7 +128,7 @@ public class ADBJoinWithNodeSessionTest {
 
         headers.add(new ADBPartitionHeader(minValues, maxValues, lPartitionId));
 
-        session.tell(new ADBJoinWithNodeSession.AllPartitionsHeaderWrapper(new ADBPartitionManager.AllPartitionsHeaders(headers)));
+        session.tell(new ADBNodeJoin.AllPartitionsHeaderWrapper(new ADBPartitionManager.AllPartitionsHeaders(headers)));
 
         ADBPartitionManager.RequestPartitionsForJoinQuery request =
                 partitionManager.expectMessageClass(ADBPartitionManager.RequestPartitionsForJoinQuery.class);
@@ -139,7 +139,7 @@ public class ADBJoinWithNodeSessionTest {
         int[] rRemotePartitionIds = {0};
         Int2ObjectOpenHashMap<ADBPartitionHeader> allHeaders = new Int2ObjectOpenHashMap<>();
         allHeaders.put(0, new ADBPartitionHeader(minValues, maxValues, lPartitionId));
-        session.tell(new ADBJoinWithNodeSession.RelevantPartitionsWrapper(new ADBPartitionManager
+        session.tell(new ADBNodeJoin.RelevantPartitionsWrapper(new ADBPartitionManager
                 .RelevantPartitionsJoinQuery(0, lRemotePartitionIds, allHeaders, rRemotePartitionIds)));
 
         ADBPartitionManager.RedirectToPartition redirectCommand11 =

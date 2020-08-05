@@ -8,7 +8,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import de.hpi.julianweise.settings.Settings;
 import de.hpi.julianweise.settings.SettingsImpl;
-import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager.AllPartitionsHeaders;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager.RelevantPartitionsJoinQuery;
@@ -34,10 +33,10 @@ import lombok.val;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
+public class ADBNodeJoin extends ADBLargeMessageActor {
 
     private final ActorRef<ADBSlaveQuerySession.Command> supervisor;
-    private final ADBJoinNodesContext joinNodesContext;
+    private final ADBNodeJoinContext context;
     private final ADBJoinQueryContext joinQueryContext;
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final ObjectArrayFIFOQueue<ADBPartitionJoinTask> joinTasks = new ObjectArrayFIFOQueue<>();
@@ -79,18 +78,18 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     @AllArgsConstructor
     private static class Conclude implements Command { }
 
-    public ADBJoinWithNodeSession(ActorContext<Command> context,
-                                  ADBJoinQueryContext joinQueryContext,
-                                  ActorRef<ADBSlaveQuerySession.Command> supervisor,
-                                  ADBJoinNodesContext joinNodesContext) {
+    public ADBNodeJoin(ActorContext<Command> context,
+                       ADBJoinQueryContext joinQueryContext,
+                       ActorRef<ADBSlaveQuerySession.Command> supervisor,
+                       ADBNodeJoinContext joinNodesContext) {
         super(context);
         this.supervisor = supervisor;
         this.joinQueryContext = joinQueryContext;
-        this.joinNodesContext = joinNodesContext;
+        this.context = joinNodesContext;
         val respondTo = getContext().messageAdapter(AllPartitionsHeaders.class, AllPartitionsHeaderWrapper::new);
-        this.joinNodesContext.getLeft().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
+        this.context.getLeft().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
         this.setUpExecutors();
-        this.getContext().getLog().info("[Create] On node#{} to execute: {}", ADBSlave.ID, this.joinNodesContext);
+        this.getContext().getLog().info("[Start] {}", this.context);
     }
 
     @Override
@@ -111,7 +110,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
         this.leftPartitionHeaders = wrapper.response.getHeaders();
         val respondTo = getContext().messageAdapter(RelevantPartitionsJoinQuery.class, RelevantPartitionsWrapper::new);
         for (ADBPartitionHeader header : wrapper.response.getHeaders()) {
-            joinNodesContext.getRight().tell(new RequestPartitionsForJoinQuery(Adapter.toClassic(respondTo), header,
+            context.getRight().tell(new RequestPartitionsForJoinQuery(Adapter.toClassic(respondTo), header,
                     joinQueryContext.getQuery()));
         }
         return Behaviors.same();
@@ -120,7 +119,7 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     private Behavior<Command> handleRelevantForeignPartitions(RelevantPartitionsWrapper wrapper) {
         this.rightPartitionHeaders = wrapper.response.getPartitionHeaders();
         this.generateLeftSideJoinTasks(wrapper.response.getLPartitionIdsLeft(), wrapper.response.getFPartitionId());
-        if (joinNodesContext.getLeftNodeId() != joinNodesContext.getRightNodeId()) {
+        if (context.getLeftNodeId() != context.getRightNodeId()) {
             generateRightSideJoinTasks(wrapper.response.getLPartitionIdsRight(), wrapper.response.getFPartitionId());
         }
         this.actualNumberOfRemotePartitionHeaderResponses++;
@@ -136,10 +135,10 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.joinTasks.enqueue(ADBPartitionJoinTask
                     .builder()
                     .leftPartitionId(fPartitionId)
-                    .leftPartitionManager(this.joinNodesContext.getRight())
+                    .leftPartitionManager(this.context.getRight())
                     .leftHeader(this.rightPartitionHeaders.get(fPartitionId))
                     .rightPartitionId(localPartitionId)
-                    .rightPartitionManager(this.joinNodesContext.getLeft())
+                    .rightPartitionManager(this.context.getLeft())
                     .rightHeader(this.leftPartitionHeaders.get(localPartitionId))
                     .build());
         }
@@ -153,10 +152,10 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.joinTasks.enqueue(ADBPartitionJoinTask
                     .builder()
                     .leftPartitionId(localPartitionId)
-                    .leftPartitionManager(this.joinNodesContext.getLeft())
+                    .leftPartitionManager(this.context.getLeft())
                     .leftHeader(leftHeader)
                     .rightPartitionId(fPartitionId)
-                    .rightPartitionManager(this.joinNodesContext.getRight())
+                    .rightPartitionManager(this.context.getRight())
                     .rightHeader(this.rightPartitionHeaders.get(fPartitionId))
                     .build());
         }
@@ -181,11 +180,14 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
 
     private void setUpExecutors() {
         val respondTo = getContext().messageAdapter(ADBPartitionJoinExecutor.Response.class, ExecutorResponseWrapper::new);
-        for (int i = 0; i < Settings.SettingsProvider.get(getContext().getSystem()).NUMBER_OF_THREADS * 2; i++) {
-            val behavior = ADBPartitionJoinExecutorFactory.createDefault(this.joinQueryContext.getQuery(), respondTo);
-            val executor = getContext().spawn(behavior, ADBPartitionJoinExecutorFactory.name(joinQueryContext.getQuery()));
-            this.executorsIdle.enqueue(executor);
+        for (int i = 0; i < this.numberOfExecutors(); i++) {
+            this.executorsIdle.enqueue(this.spawnExecutor(respondTo));
         }
+    }
+
+    private ActorRef<ADBLargeMessageActor.Command> spawnExecutor(ActorRef<ADBPartitionJoinExecutor.Response> rspTo) {
+        val behavior = ADBPartitionJoinExecutorFactory.createDefault(this.joinQueryContext.getQuery(), rspTo);
+        return this.getContext().spawn(behavior, ADBPartitionJoinExecutorFactory.name(joinQueryContext.getQuery()));
     }
 
     private void nextExecutionRound() {
@@ -203,6 +205,13 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             this.supervisor.tell(new ADBSlaveJoinSession.RequestNextPartitions());
             this.requestedNextNodeComparison = true;
         }
+        this.getContext().getLog().info(
+                "Active executors: {}, Prepared executors: {}, Preparing executors: {} Idle executors: {}",
+                this.activeExecutors.get(),
+                this.numberOfExecutors() - activeExecutors.get() - executorsPrepared.size() - executorsIdle.size(),
+                this.executorsPrepared.size(),
+                this.executorsIdle.size()
+        );
     }
 
     private void executeNextTask() {
@@ -217,12 +226,12 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleConclude(Conclude command) {
-        this.getContext().getLog().info("Concluding node-join session for context {}", this.joinNodesContext);
+        this.getContext().getLog().info("[Stop] {}", this.context);
         return Behaviors.stopped();
     }
 
     private boolean isReadyToConclude() {
-        return executorsIdle.size() == settings.NUMBER_OF_THREADS * 2 &&
+        return executorsIdle.size() == this.numberOfExecutors() &&
                 executorsPrepared.isEmpty() &&
                 joinTasks.isEmpty() &&
                 this.activeExecutors.get() == 0 &&
@@ -245,6 +254,10 @@ public class ADBJoinWithNodeSession extends ADBLargeMessageActor {
             return 1;
         }
         return 1 - ((float) this.joinTasks.size() / this.initialWorkflowSize);
+    }
+
+    private int numberOfExecutors() {
+        return this.settings.NUMBER_OF_THREADS * 2;
     }
 
     @Override

@@ -200,14 +200,14 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void execute() {
-        this.getContext().getLog().debug("Cheapest predicate {} ", this.costModels.get(0));
-        this.getContext().getLog().debug("Most expensive predicate {} ", this.costModels.get(costModels.size() - 1));
+        this.getContext().getLog().info("Cheapest predicate {} ", this.costModels.get(0));
+        this.getContext().getLog().info("Most expensive predicate {} ", this.costModels.get(costModels.size() - 1));
         if (this.costModels.get(0).getCost() == 0) {
             this.handleNoJoinResultsExpected();
             return;
         }
         if (this.costModels.size() < 2) {
-            this.handleOnlyTwoJoinPredicates();
+            this.handleSingleJoinPredicate();
             return;
         }
         if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
@@ -223,19 +223,21 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         this.returnResults(new ADBPartialJoinResult(0));
     }
 
-    private void handleOnlyTwoJoinPredicates() {
+    private void handleSingleJoinPredicate() {
         ADBPartialJoinResult results = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
         this.costModelsProcessed = this.costModels.size();
         this.returnResults(results);
     }
 
     private void handleRowBasedJoin() {
+        this.getContext().getLog().info("Row-based join strategy applied");
         ADBPartialJoinResult candidates = costModels.get(0).getJoinCandidates(leftAttributes, rightAttributes);
         this.costModelsProcessed = this.costModels.size();
         this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
     }
 
     private void handleColumnBasedJoin() {
+        this.getContext().getLog().info("Column-based join strategy applied");
         this.costModelsProcessed = this.costModels.size();
         this.joinColumnBased(this.costModels);
     }

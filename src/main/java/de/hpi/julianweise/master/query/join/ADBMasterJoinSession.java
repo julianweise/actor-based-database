@@ -11,12 +11,13 @@ import de.hpi.julianweise.master.materialization.ADBJoinResultMaterializerFactor
 import de.hpi.julianweise.master.query.ADBMasterQuerySession;
 import de.hpi.julianweise.master.query_endpoint.ADBPartitionInquirer;
 import de.hpi.julianweise.query.join.ADBJoinQuery;
+import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBQueryManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
 import de.hpi.julianweise.slave.query.join.ADBPartialJoinResult;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
-import de.hpi.julianweise.slave.query.join.node.ADBJoinNodesContext;
+import de.hpi.julianweise.slave.query.join.node.ADBNodeJoinContext;
 import de.hpi.julianweise.utility.query.join.JoinExecutionPlan;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -129,10 +130,12 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         int leftNodeId = ADBMaster.getGlobalIdFor(leftPartitionManager);
         int rightNodeId = ADBMaster.getGlobalIdFor(rightPartitionManager);
         this.getContext().getLog().info("Asking Node#{} to join with Node#{}", leftNodeId, rightNodeId);
-        requestingSession.tell(new ADBSlaveJoinSession.JoinWithNode(ADBJoinNodesContext
+        requestingSession.tell(new ADBSlaveJoinSession.JoinWithNode(ADBNodeJoinContext
                 .builder()
                 .leftNodeId(leftNodeId)
                 .rightNodeId(rightNodeId)
+                .transactionId(this.transactionId)
+                .executorNodeId(ADBSlave.ID)
                 .left(leftPartitionManager)
                 .right(rightPartitionManager)
                 .build()));

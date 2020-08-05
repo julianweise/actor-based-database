@@ -10,9 +10,9 @@ import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
-import de.hpi.julianweise.slave.query.join.node.ADBJoinNodesContext;
-import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSession;
-import de.hpi.julianweise.slave.query.join.node.ADBJoinWithNodeSessionFactory;
+import de.hpi.julianweise.slave.query.join.node.ADBNodeJoinContext;
+import de.hpi.julianweise.slave.query.join.node.ADBNodeJoin;
+import de.hpi.julianweise.slave.query.join.node.ADBNodeJoinFactory;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -26,13 +26,13 @@ import java.util.Set;
 
 public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
-    private final Set<ActorRef<ADBJoinWithNodeSession.Command>> activeJoinSessions = new ObjectOpenHashSet<>();
+    private final Set<ActorRef<ADBNodeJoin.Command>> activeJoinSessions = new ObjectOpenHashSet<>();
 
     @NoArgsConstructor
     @Getter
     @AllArgsConstructor
     public static class JoinWithNode implements ADBSlaveQuerySession.Command, CborSerializable {
-        private ADBJoinNodesContext context;
+        private ADBNodeJoinContext context;
     }
 
     @NoArgsConstructor
@@ -51,7 +51,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
     @AllArgsConstructor
     public static class InterNodeSessionTerminated implements Command {
-        ActorRef<ADBJoinWithNodeSession.Command> session;
+        ActorRef<ADBNodeJoin.Command> session;
     }
 
     @AllArgsConstructor
@@ -82,22 +82,22 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleExecute(Execute command) {
-        this.getContext().getSelf().tell(new JoinWithNode(ADBJoinNodesContext.builder()
-                                                                             .left(ADBPartitionManager.getInstance())
-                                                                             .leftNodeId(ADBSlave.ID)
-                                                                             .right(ADBPartitionManager.getInstance())
-                                                                             .rightNodeId(ADBSlave.ID)
-                                                                             .build()));
+        this.getContext().getSelf().tell(new JoinWithNode(ADBNodeJoinContext.builder()
+                                                                            .left(ADBPartitionManager.getInstance())
+                                                                            .leftNodeId(ADBSlave.ID)
+                                                                            .right(ADBPartitionManager.getInstance())
+                                                                            .rightNodeId(ADBSlave.ID)
+                                                                            .build()));
         return Behaviors.same();
     }
 
     private Behavior<Command> handleJoinWithNode(JoinWithNode message) {
-        ADBJoinNodesContext context = message.getContext();
+        ADBNodeJoinContext context = message.getContext();
         this.getContext().getLog().info("Requested to execute "  + context.toString());
-        String sessionName = ADBJoinWithNodeSessionFactory.sessionName(queryContext.getTransactionId(), context);
-        val behavior = ADBJoinWithNodeSessionFactory.createDefault((ADBJoinQueryContext) this.queryContext,
+        String sessionName = ADBNodeJoinFactory.sessionName(context);
+        val behavior = ADBNodeJoinFactory.createDefault((ADBJoinQueryContext) this.queryContext,
                 this.getContext().getSelf(), context);
-        ActorRef<ADBJoinWithNodeSession.Command> session = this.getContext().spawn(behavior, sessionName);
+        ActorRef<ADBNodeJoin.Command> session = this.getContext().spawn(behavior, sessionName);
         this.getContext().watchWith(session, new InterNodeSessionTerminated(session));
         this.activeJoinSessions.add(session);
         return Behaviors.same();
