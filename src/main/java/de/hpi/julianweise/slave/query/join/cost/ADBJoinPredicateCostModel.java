@@ -59,6 +59,7 @@ public class ADBJoinPredicateCostModel {
 
     @Override
     public String toString() {
-        return "[PredicateCostModel] for: " + getPredicate() + " relCost: " + getRelativeCost() + " abs: " + getCost();
+        return String.format("[PredicateCostModel] for %s relCost: %f abs: %d origL: %d origR: %d",
+                getPredicate(), getRelativeCost(), getCost(), getOriginalSizeLeft(), getOriginalSizeRight());
     }
 }
