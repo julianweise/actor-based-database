@@ -55,6 +55,11 @@ public class ADBEntityIntEntry implements ADBEntityEntry {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "ADBEntityIntEntry: " + this.value;
     }

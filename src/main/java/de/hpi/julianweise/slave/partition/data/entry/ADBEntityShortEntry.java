@@ -55,6 +55,11 @@ public class ADBEntityShortEntry implements ADBEntityEntry {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "ADBEntityShortEntry: " + this.value;
     }

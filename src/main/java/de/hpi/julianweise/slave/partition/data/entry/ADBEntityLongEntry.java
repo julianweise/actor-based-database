@@ -55,6 +55,11 @@ public class ADBEntityLongEntry implements ADBEntityEntry {
     }
 
     @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "ADBEntityLongEntry: " + this.value;
     }

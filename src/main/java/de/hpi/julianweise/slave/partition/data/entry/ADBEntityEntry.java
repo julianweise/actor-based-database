@@ -44,4 +44,6 @@ public interface ADBEntityEntry {
 
     @Override
     int hashCode();
+
+    boolean isNull();
 }

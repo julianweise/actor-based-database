@@ -2,6 +2,7 @@ package de.hpi.julianweise.slave.partition.column.sorted;
 
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityIntEntry;
+import de.hpi.julianweise.slave.partition.data.entry.ADBEntityNullEntry;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -38,7 +39,7 @@ public abstract class ADBColumnSorted {
     public ADBEntityEntry getByOriginalIndex(int originalIndex) {
         int id = ADBInternalIDHelper.createID(this.nodeId, this.partitionId, originalIndex);
         if (this.originalToSorted[originalIndex] >= this.size() || this.originalToSorted[originalIndex] == -1) {
-            throw new IllegalArgumentException("Original Index has been pruned");
+            return ADBEntityNullEntry.getInstance();
         }
         return this.createForIndex(id, this.originalToSorted[originalIndex]);
     }

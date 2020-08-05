@@ -47,18 +47,20 @@ public class JoinQueryRowWorkload extends Workload {
 
     private boolean rowSatisfyJoinCondition(int leftId, int rightId) {
         for (ADBJoinPredicateCostModel termCostModel : costModels) {
-            try {
-                ADBEntityEntry left = this.left.get(termCostModel.getPredicate().getLeftHandSideAttribute())
-                                               .getByOriginalIndex(ADBInternalIDHelper.getEntityId(leftId));
-                ADBEntityEntry right = this.right.get(termCostModel.getPredicate().getRightHandSideAttribute())
-                                                 .getByOriginalIndex(ADBInternalIDHelper.getEntityId(rightId));
-                comparators.putIfAbsent(termCostModel.getPredicate(), ADBComparator.getFor(left.getValueField(),
-                        right.getValueField()));
-                if (!ADBEntityEntry.matches(left, right, termCostModel.getPredicate().getOperator(),
-                        comparators.get(termCostModel.getPredicate()))) {
-                    return false;
-                }
-            } catch (IllegalArgumentException e) {
+            ADBEntityEntry left = this.left.get(termCostModel.getPredicate().getLeftHandSideAttribute())
+                                           .getByOriginalIndex(ADBInternalIDHelper.getEntityId(leftId));
+            if (left.isNull()) {
+                return false;
+            }
+            ADBEntityEntry right = this.right.get(termCostModel.getPredicate().getRightHandSideAttribute())
+                                             .getByOriginalIndex(ADBInternalIDHelper.getEntityId(rightId));
+            if (right.isNull()) {
+                return false;
+            }
+            comparators.putIfAbsent(termCostModel.getPredicate(), ADBComparator.getFor(left.getValueField(),
+                    right.getValueField()));
+            if (!ADBEntityEntry.matches(left, right, termCostModel.getPredicate().getOperator(),
+                    comparators.get(termCostModel.getPredicate()))) {
                 return false;
             }
         }
