@@ -33,7 +33,9 @@ public class ADBJoinPredicateCostModelFactory {
 
     public static ADBJoinPredicateCostModel calc(ADBJoinQueryPredicate predicate,
                                                  ObjectList<ADBEntityEntry> left,
-                                                 ObjectList<ADBEntityEntry> right) {
+                                                 ObjectList<ADBEntityEntry> right,
+                                                 int originalLeftSize,
+                                                 int originalRightSize) {
         ADBInterval[][] candidates = {};
         if (left.size() > 0 && right.size() > 0) {
             ADBComparator comparator = ADBComparator.getFor(left.get(0).getValueField(), right.get(0).getValueField());
@@ -42,8 +44,8 @@ public class ADBJoinPredicateCostModelFactory {
         return ADBJoinPredicateCostModel.builder()
                                         .predicate(predicate)
                                         .joinCandidates(candidates)
-                                        .originalSizeLeft(left.size())
-                                        .originalSizeRight(right.size())
+                                        .originalSizeLeft(originalLeftSize)
+                                        .originalSizeRight(originalRightSize)
                                         .build();
     }
 

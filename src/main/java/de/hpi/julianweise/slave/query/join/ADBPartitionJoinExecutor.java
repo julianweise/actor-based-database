@@ -196,7 +196,9 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private ADBJoinPredicateCostModel getCostModel(ADBJoinQueryPredicate predicate) {
         val leftValues = this.leftAttributes.get(predicate.getLeftHandSideAttribute());
         val rightValues = this.rightAttributes.get(predicate.getRightHandSideAttribute());
-        return ADBJoinPredicateCostModelFactory.calc(predicate, leftValues, rightValues);
+        val leftOriginalSize = this.leftOriginalSizes.getInt(predicate.getLeftHandSideAttribute());
+        val rightOriginalSize = this.rightOriginalSizes.getInt(predicate.getRightHandSideAttribute());
+        return ADBJoinPredicateCostModelFactory.calc(predicate, leftValues, rightValues, leftOriginalSize, rightOriginalSize);
     }
 
     private void execute() {
