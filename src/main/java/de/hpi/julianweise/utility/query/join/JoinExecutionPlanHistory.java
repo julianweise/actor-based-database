@@ -41,12 +41,10 @@ public class JoinExecutionPlanHistory {
     }
 
     private final ObjectList<HistoryEntry> history = new ObjectArrayList<>();
-    private final int transactionId;
     private final long startTime;
 
-    public JoinExecutionPlanHistory(int transactionId) {
+    public JoinExecutionPlanHistory() {
         this.startTime = (long) Math.floor(System.nanoTime() * 1e-6);
-        this.transactionId = transactionId;
     }
 
     public void logNodeJoin(int executionNodeId, int leftNodeId, int rightNodeId) {

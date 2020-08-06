@@ -9,7 +9,7 @@ public class JoinExecutionPlanHistoryTest {
     @Test
     public void addEntries() throws InterruptedException {
         int transactionId = 1;
-        JoinExecutionPlanHistory history = new JoinExecutionPlanHistory(transactionId);
+        JoinExecutionPlanHistory history = new JoinExecutionPlanHistory();
         Thread.sleep(50);
         history.logNodeJoin(1,1, 2);
         Thread.sleep(50);

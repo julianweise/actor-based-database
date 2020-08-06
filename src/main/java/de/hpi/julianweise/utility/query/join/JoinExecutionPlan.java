@@ -61,7 +61,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
                              int transactionId) {
         super(context);
         this.partitionManagers = partitionManagers;
-        this.history = new JoinExecutionPlanHistory(transactionId);
+        this.history = new JoinExecutionPlanHistory();
         this.joinTasks = this.initializeJoinTasks();
         this.initializeCounter();
     }

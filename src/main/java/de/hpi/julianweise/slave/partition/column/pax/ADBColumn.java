@@ -15,7 +15,7 @@ public abstract class ADBColumn {
 
     protected final int partitionId;
     protected transient int[] sortedIndices;
-    protected transient Field entityField;
+    protected final transient Field entityField;
     protected transient boolean finalized = false;
 
     public ADBColumn(Field entityField, int partitionId) {

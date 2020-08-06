@@ -40,7 +40,7 @@ public class CSVParsingActor extends AbstractBehavior<CSVParsingActor.Command> {
     @AllArgsConstructor
     public static class CSVDataChunk implements Response {
         private final ObjectList<Record> chunk;
-        private boolean finalChunk;
+        private final boolean finalChunk;
     }
 
     @Getter

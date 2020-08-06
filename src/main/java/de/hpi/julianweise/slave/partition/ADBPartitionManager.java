@@ -19,12 +19,12 @@ import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageSender;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
-import de.hpi.julianweise.utility.partition.ADBEntityBuffer;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,7 +48,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     private final Int2ObjectOpenHashMap<ActorRef<ADBPartition.Command>> partitions = new Int2ObjectOpenHashMap<>();
     private final SettingsImpl settings = Settings.SettingsProvider.get(getContext().getSystem());
     private final ADBPartitionFactory partitionFactory = new ADBPartitionFactory();
-    private ADBEntityBuffer entityBuffer = new ADBEntityBuffer(this.settings.MAX_SIZE_PARTITION);
+    private ObjectArrayFIFOQueue<ADBEntity> entityBuffer = new ObjectArrayFIFOQueue<>(this.settings.PARTITION_SIZE);
 
     public interface Response {}
 
@@ -170,17 +170,26 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handlePersistEntity(PersistEntities command) {
-        this.entityBuffer.addAll(command.getEntities());
+        command.entities.forEach(entity -> this.entityBuffer.enqueue(entity));
         command.respondTo.tell(new ADBDataDistributor.ConfirmEntitiesPersisted(), akka.actor.ActorRef.noSender());
-        this.conditionallyCreateNewPartition(false);
+        this.createPartitions();
         return Behaviors.same();
     }
 
-    private void conditionallyCreateNewPartition(boolean forceCreation) {
-        while (forceCreation && this.entityBuffer.getBufferSize() > 0 || this.entityBuffer.isNewPartitionReady()) {
-            this.getContext().spawn(this.partitionFactory.createDefault(entityBuffer.getPayloadForPartition()),
-                    "Partition-" + this.partitionFactory.getLastPartitionId());
+    private void createPartitions() {
+        int maxNewPartitions = this.entityBuffer.size() / this.settings.PARTITION_SIZE;
+        for (int i = 0; i < maxNewPartitions; i++) {
+            ObjectList<ADBEntity> partitionPayload = IntStream.range(0, this.settings.PARTITION_SIZE)
+                                                              .mapToObj(idx -> this.entityBuffer.dequeue())
+                                                              .collect(new ObjectArrayListCollector<>());
+            this.createPartition(partitionPayload);
         }
+    }
+
+    private void createPartition(ObjectList<ADBEntity> entities) {
+        assert entities.size() <= this.settings.PARTITION_SIZE : "Can't create a partition with more than max entities";
+        val partitionBehavior = this.partitionFactory.createDefault(entities);
+        this.getContext().spawn(partitionBehavior, "Partition-" + this.partitionFactory.getLastPartitionId());
     }
 
     private Behavior<Command> handleRedirectToPartition(RedirectToPartition command) {
@@ -205,7 +214,10 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleConcludeTransfer(ConcludeTransfer command) {
-        this.conditionallyCreateNewPartition(true);
+        ObjectList<ADBEntity> finalPartitionPayload = IntStream.range(0, this.entityBuffer.size())
+                                                               .mapToObj(idx -> this.entityBuffer.dequeue())
+                                                               .collect(new ObjectArrayListCollector<>());
+        this.createPartition(finalPartitionPayload);
         this.entityBuffer = null;
         this.getContext().getLog().info("Distribution concluded.");
         System.gc();
@@ -239,7 +251,7 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
                                    .toArray();
         Int2ObjectOpenHashMap<ADBPartitionHeader> lPartitionHeaders = new Int2ObjectOpenHashMap<>();
         IntStream.concat(Arrays.stream(lPartIdsL), Arrays.stream(lPartIdsR))
-              .forEach(partId -> lPartitionHeaders.put(partId, this.partitionHeaders.get(partId)));
+                 .forEach(partId -> lPartitionHeaders.put(partId, this.partitionHeaders.get(partId)));
         command.respondTo.tell(RelevantPartitionsJoinQuery.builder()
                                                           .fPartitionId(command.externalHeader.getId())
                                                           .lPartitionIdsLeft(lPartIdsL)
@@ -273,5 +285,6 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     @Override
-    protected void handleReceiverTerminated() {}
+    protected void handleReceiverTerminated() {
+    }
 }
