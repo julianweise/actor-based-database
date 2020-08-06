@@ -96,17 +96,18 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
     }
 
     private Behavior<Command> handleWorkerResponse(GenericWorkerResponseWrapper wrapper) {
-        if (wrapper.result instanceof JoinQueryColumnWorkload.Results) {
-            this.intersectsPerformed.getAndIncrement();
-            if (this.resultSet == null) {
-                this.resultSet = ((JoinQueryColumnWorkload.Results) wrapper.result).getResults();
-                return Behaviors.same();
-            }
-            this.intersect(((JoinQueryColumnWorkload.Results) wrapper.result).getResults());
-            if (this.intersectsPerformed.get() == this.costModels.size()) {
-                this.respondTo.tell(new StepExecuted(this.mapResults()));
-                return Behaviors.stopped();
-            }
+        if (!(wrapper.result instanceof JoinQueryColumnWorkload.Results)) {
+            return Behaviors.same();
+        }
+        this.intersectsPerformed.getAndIncrement();
+        if (this.resultSet == null) {
+            this.resultSet = ((JoinQueryColumnWorkload.Results) wrapper.result).getResults();
+            return Behaviors.same();
+        }
+        this.intersect(((JoinQueryColumnWorkload.Results) wrapper.result).getResults());
+        if (this.intersectsPerformed.get() == this.costModels.size()) {
+            this.respondTo.tell(new StepExecuted(this.getFinalJoinResults()));
+            return Behaviors.stopped();
         }
         return Behaviors.same();
     }
@@ -119,7 +120,7 @@ public class ADBColumnJoinStepExecutor extends AbstractBehavior<ADBColumnJoinSte
         }
     }
 
-    private ADBPartialJoinResult mapResults() {
+    private ADBPartialJoinResult getFinalJoinResults() {
         val leftList = this.left.get(this.costModels.get(0).getPredicate().getLeftHandSideAttribute());
         int leftNodeId = ADBInternalIDHelper.getNodeId(leftList.get(0).getId());
         int leftPartitionId = ADBInternalIDHelper.getPartitionId(leftList.get(0).getId());
