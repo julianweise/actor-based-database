@@ -14,6 +14,13 @@ public class ADBPartitionJoinTask {
 
     private final static Logger LOG = LoggerFactory.getLogger(ADBPartitionJoinTask.class);
 
+    private final int leftPartitionId;
+    private final int rightPartitionId;
+    private final ActorRef<ADBPartitionManager.Command> leftPartitionManager;
+    private final ActorRef<ADBPartitionManager.Command> rightPartitionManager;
+    private final ADBPartitionHeader leftHeader;
+    private final ADBPartitionHeader rightHeader;
+
     public ADBPartitionJoinTask(int leftPartitionId, int rightPartitionId,
                                 ActorRef<ADBPartitionManager.Command> leftPartitionManager,
                                 ActorRef<ADBPartitionManager.Command> rightPartitionManager,
@@ -26,11 +33,4 @@ public class ADBPartitionJoinTask {
         this.leftHeader = leftHeader;
         this.rightHeader = rightHeader;
     }
-
-    private final int leftPartitionId;
-    private final int rightPartitionId;
-    private final ActorRef<ADBPartitionManager.Command> leftPartitionManager;
-    private final ActorRef<ADBPartitionManager.Command> rightPartitionManager;
-    private final ADBPartitionHeader leftHeader;
-    private final ADBPartitionHeader rightHeader;
 }
