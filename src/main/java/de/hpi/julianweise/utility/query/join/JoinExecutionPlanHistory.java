@@ -116,7 +116,7 @@ public class JoinExecutionPlanHistory {
                 .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId != excludeNodeId)
                 .filter(entry -> this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
-                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).executionNodeId == ((NextNodeHistoryEntry) entry).executionNodeId))
+                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) entry).executionNodeId))
                 .max(Comparator.comparingLong(e -> e.timestamp));
         return lastNodeJoin.map(historyEntry -> ((NextNodeHistoryEntry) historyEntry).executionNodeId).orElse(-1);
     }
