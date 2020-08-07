@@ -156,7 +156,7 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
     }
 
     private Behavior<Command> handleCSVChunk(CSVParsingActor.CSVDataChunk chunk) {
-        int chunkSize = (int) Math.ceil((double) chunk.getChunk().size() / this.settings.NUMBER_ENTITY_CONVERTER);
+        int chunkSize = this.settings.CSV_CHUNK_SIZE / this.settings.NUMBER_ENTITY_CONVERTER;
         for (int i = 0; i < chunk.getChunk().size(); i += chunkSize) {
             val payload = chunk.getChunk().subList(i, Math.min(chunk.getChunk().size(), i + chunkSize));
             this.entityConverter.tell(new ADBCSVToEntityConverter.ConvertBatch(this.converterWrapper, payload));
