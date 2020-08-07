@@ -161,7 +161,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     private void stealWork(GetNextJoinNodePair command) {
         int targetNodeId = this.history.getLastNodeHandlingAJoin(partitionManagers.indexOf(command.requestingManager));
         if (targetNodeId > -1) {
-            command.responseTo.tell(new StealWork(partitionManagers.get(targetNodeId), command.requestingManager));
+            command.responseTo.tell(new StealWork(command.requestingManager, partitionManagers.get(targetNodeId)));
             this.history.logWorkStealing(this.partitionManagers.indexOf(command.requestingManager), targetNodeId);
         } else {
             command.responseTo.tell(NextJoinNodePair.builder()
