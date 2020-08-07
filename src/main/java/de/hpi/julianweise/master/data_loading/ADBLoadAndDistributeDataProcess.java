@@ -184,7 +184,6 @@ public class ADBLoadAndDistributeDataProcess extends AbstractBehavior<ADBLoadAnd
 
     private Behavior<Command> handleConvertedBatch(ADBCSVToEntityConverter.ConvertedBatch response) {
         ObjectList<ADBEntity> entities = response.entities;
-        this.getContext().getLog().info("Distribution {} entities to partition node{}", entities.size(), this.nextDistributorIndex);
         this.getNextDistributor().tell(new ADBDataDistributor.DistributeBatch(dataDistributorWrapper, entities));
         return Behaviors.same();
     }
