@@ -131,6 +131,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
 
     private Behavior<Command> handleTakeOverWork(TakeOverWork command) {
         command.joinTasks.forEach(this.joinTasks::enqueue);
+        this.initialWorkflowSize = command.joinTasks.size();
         this.nextExecutionRound();
         return Behaviors.same();
     }
