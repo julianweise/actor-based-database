@@ -154,10 +154,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
             this.logJoinExecution(foreignTask.get().getKey(), foreignTask.get().getValue(), command.requestingManager);
             this.sendNextJoinPair(foreignTask.get().getKey(), foreignTask.get().getValue(), command.requestingManager, command.responseTo);
         } else {
-            command.responseTo.tell(NextJoinNodePair.builder()
-                                                    .hasNode(false)
-                                                    .requestingPartitionManager(command.requestingManager)
-                                                    .build());
+            this.stealWork(command);
         }
     }
 
