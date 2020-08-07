@@ -122,6 +122,8 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                     response.getRightQueryManager());
         } else if (wrapper.response instanceof JoinExecutionPlan.StealWork) {
             JoinExecutionPlan.StealWork response = (JoinExecutionPlan.StealWork) wrapper.response;
+            this.getContext().getLog().info("Ask {} to steal work from {}", response.getRequestingPartitionManager(),
+             response.getTarget());
             val source = this.managerToHandlers.get(response.getRequestingPartitionManager());
             val target = this.managerToHandlers.get(response.getTarget());
             source.tell(new ADBSlaveJoinSession.StealWorkFrom(target));
