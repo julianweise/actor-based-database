@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 
 public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
@@ -147,6 +148,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleHandOverWork(HandOverWork command) {
+        if (this.activeJoinSessions.size() < 1) {
+            command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(null, Collections.emptyList(), true));
+        }
         this.activeJoinSessions.get(this.activeJoinSessions.size() - 1)
                                .tell(new ADBNodeJoin.HandOverWork(command.respondTo));
         return Behaviors.same();
