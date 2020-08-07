@@ -159,16 +159,20 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     }
 
     private void stealWork(GetNextJoinNodePair command) {
-        int targetNodeId = this.history.getLastNodeHandlingAJoin(partitionManagers.indexOf(command.requestingManager));
-        if (targetNodeId > -1) {
-            command.responseTo.tell(new StealWork(command.requestingManager, partitionManagers.get(targetNodeId)));
-            this.history.logWorkStealing(this.partitionManagers.indexOf(command.requestingManager), targetNodeId);
-        } else {
-            command.responseTo.tell(NextJoinNodePair.builder()
-                                                    .hasNode(false)
-                                                    .requestingPartitionManager(command.requestingManager)
-                                                    .build());
-        }
+        command.responseTo.tell(NextJoinNodePair.builder()
+                                                .hasNode(false)
+                                                .requestingPartitionManager(command.requestingManager)
+                                                .build());
+//        int targetNodeId = this.history.getLastNodeHandlingAJoin(partitionManagers.indexOf(command.requestingManager));
+//        if (targetNodeId > -1) {
+//            command.responseTo.tell(new StealWork(command.requestingManager, partitionManagers.get(targetNodeId)));
+//            this.history.logWorkStealing(this.partitionManagers.indexOf(command.requestingManager), targetNodeId);
+//        } else {
+//            command.responseTo.tell(NextJoinNodePair.builder()
+//                                                    .hasNode(false)
+//                                                    .requestingPartitionManager(command.requestingManager)
+//                                                    .build());
+//        }
     }
 
     private void sendNextJoinPair(ActorRef<ADBPartitionManager.Command> left,
