@@ -110,7 +110,9 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
         if (wrapper.response instanceof JoinExecutionPlan.NextJoinNodePair) {
             JoinExecutionPlan.NextJoinNodePair response = (JoinExecutionPlan.NextJoinNodePair) wrapper.response;
             if (!response.isHasNode()) {
-                this.managerToHandlers.get(response.getRequestingPartitionManager()).tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
+                val requestingSession = this.managerToHandlers.get(response.getRequestingPartitionManager());
+                this.getContext().getLog().info("No more work for {} to handle", requestingSession);
+                requestingSession.tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
                 return Behaviors.same();
             }
             if (!this.managerToHandlers.containsKey(response.getRequestingPartitionManager())) {
