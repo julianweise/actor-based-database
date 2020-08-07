@@ -160,7 +160,14 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
 
     private void stealWork(GetNextJoinNodePair command) {
         int targetNodeId = this.history.getLastNodeHandlingAJoin(partitionManagers.indexOf(command.requestingManager));
-        command.responseTo.tell(new StealWork(partitionManagers.get(targetNodeId), command.requestingManager));
+        if (targetNodeId > -1) {
+            command.responseTo.tell(new StealWork(partitionManagers.get(targetNodeId), command.requestingManager));
+        } else {
+            command.responseTo.tell(NextJoinNodePair.builder()
+                                                    .hasNode(false)
+                                                    .requestingPartitionManager(command.requestingManager)
+                                                    .build());
+        }
     }
 
     private void sendNextJoinPair(ActorRef<ADBPartitionManager.Command> left,
