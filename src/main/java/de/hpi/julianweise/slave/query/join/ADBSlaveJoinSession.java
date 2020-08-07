@@ -142,7 +142,15 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         }
         this.getContext().getLog().info("Taking over {} tasks of executor {}",
                 this.workToTakeOver.size(), command.context.getExecutorNodeId());
-        ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(command.context);
+        ADBNodeJoinContext newContext = ADBNodeJoinContext.builder()
+                .leftNodeId(command.context.getLeftNodeId())
+                .rightNodeId(command.context.getRightNodeId())
+                .transactionId(command.context.getTransactionId())
+                .executorNodeId(ADBSlave.ID)
+                .left(command.context.getLeft())
+                .right(command.context.getRight())
+                .build();
+        ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(newContext);
         session.tell(new ADBNodeJoin.TakeOverWork(this.workToTakeOver));
         this.workToTakeOver = new ObjectArrayList<>();
         return Behaviors.same();

@@ -53,6 +53,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     private int actualNumberOfRemotePartitionHeaderResponses = 0;
     private int initialWorkflowSize;
     private boolean requestedNextNodeComparison = false;
+    private boolean isStolenWork = false;
 
 
     @AllArgsConstructor
@@ -130,6 +131,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleTakeOverWork(TakeOverWork command) {
+        this.isStolenWork = true;
         command.joinTasks.forEach(this.joinTasks::enqueue);
         this.initialWorkflowSize = command.joinTasks.size();
         this.nextExecutionRound();
@@ -290,7 +292,8 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     }
 
     private boolean isReadyToPrepareNextNodeComparison() {
-        return this.isAllRelevantHeadersProcessed() && this.process() >= this.settings.THRESHOLD_NEXT_NODE_COMPARISON;
+        double threshold = this.isStolenWork ? 1.0 : this.settings.THRESHOLD_NEXT_NODE_COMPARISON;
+        return this.isAllRelevantHeadersProcessed() && this.process() >= threshold;
     }
 
     private float process() {
