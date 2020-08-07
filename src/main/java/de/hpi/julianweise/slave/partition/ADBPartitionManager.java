@@ -187,6 +187,9 @@ public class ADBPartitionManager extends ADBLargeMessageActor {
     }
 
     private void createPartition(ObjectList<ADBEntity> entities) {
+        if (entities.size() < 1) {
+            return;
+        }
         assert entities.size() <= this.settings.PARTITION_SIZE : "Can't create a partition with more than max entities";
         val partitionBehavior = this.partitionFactory.createDefault(entities);
         this.getContext().spawn(partitionBehavior, "Partition-" + this.partitionFactory.getLastPartitionId());
