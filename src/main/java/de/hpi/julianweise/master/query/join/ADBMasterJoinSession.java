@@ -100,6 +100,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleRequestNextNodeComparison(RequestNextNodeToJoin command) {
+        this.getContext().getLog().info("{} asks for more work to handle", command.respondTo);
         val respondTo = getContext().messageAdapter(JoinExecutionPlan.Response.class, JoinExecutionPlanWrapper::new);
         this.joinExecutionPlan.tell(new JoinExecutionPlan.GetNextJoinNodePair(this.handlersToManager.get(command.respondTo), respondTo));
         return Behaviors.same();
