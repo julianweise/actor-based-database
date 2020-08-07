@@ -166,7 +166,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         List<ADBPartitionJoinTask> tasksToSteal = IntStream.range(0, numberOfTasksToSteal)
                                                            .mapToObj(i -> this.joinTasks.dequeue())
                                                            .collect(Collectors.toList());
-        int MAX_SIZE = 50;
+        int MAX_SIZE = 20;
         int completePartitions = tasksToSteal.size() / MAX_SIZE;
         for (int i = 0; i < completePartitions; i++) {
             val transferPartition = tasksToSteal.subList(i * MAX_SIZE, (i + 1) * MAX_SIZE);
