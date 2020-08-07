@@ -141,9 +141,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
             return Behaviors.same();
         }
         this.getContext().getLog().info("Taking over {} tasks of executor {}",
-                command.joinTasks.size(), command.context.getExecutorNodeId());
+                this.workToTakeOver.size(), command.context.getExecutorNodeId());
         ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(command.context);
-        session.tell(new ADBNodeJoin.Execute());
+        session.tell(new ADBNodeJoin.TakeOverWork(this.workToTakeOver));
         this.workToTakeOver = new ObjectArrayList<>();
         return Behaviors.same();
     }
@@ -151,6 +151,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     private Behavior<Command> handleHandOverWork(HandOverWork command) {
         if (this.activeJoinSessions.size() < 1) {
             command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(null, Collections.emptyList(), true));
+            return Behaviors.same();
         }
         this.activeJoinSessions.get(this.activeJoinSessions.size() - 1)
                                .tell(new ADBNodeJoin.HandOverWork(command.respondTo));

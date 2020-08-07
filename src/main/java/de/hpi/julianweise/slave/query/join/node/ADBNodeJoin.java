@@ -62,8 +62,9 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         private final AllPartitionsHeaders response;
     }
 
+    @AllArgsConstructor
     public static class TakeOverWork implements Command {
-        ObjectList<ADBPartitionJoinTask> joinTasks;
+        List<ADBPartitionJoinTask> joinTasks;
     }
 
     @AllArgsConstructor
@@ -170,7 +171,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         this.getContext().getLog().info("Sending out {} tasks to be processed by {}", tasksToSteal.size(), command.respondTo);
         for (int i = 0; i < completePartitions; i++) {
             val transferPartition = tasksToSteal.subList(i * MAX_SIZE, (i + 1) * MAX_SIZE);
-            command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, transferPartition, false));
+            command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(null, transferPartition, false));
         }
         val transferPartition = tasksToSteal.subList(completePartitions * MAX_SIZE, tasksToSteal.size());
         command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, transferPartition, true));
