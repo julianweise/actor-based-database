@@ -25,6 +25,7 @@ import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,8 +48,8 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsIdle = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsPrepared = new ObjectArrayFIFOQueue<>();
     private final AtomicInteger activeExecutors = new AtomicInteger(0);
-    private ObjectList<ADBPartitionHeader> leftPartitionHeaders;
-    private Int2ObjectOpenHashMap<ADBPartitionHeader> rightPartitionHeaders;
+    private ObjectList<ADBPartitionHeader> leftPartitionHeaders = new ObjectArrayList<>();
+    private Int2ObjectOpenHashMap<ADBPartitionHeader> rightPartitionHeaders = new Int2ObjectOpenHashMap<>();
     private int actualNumberOfRemotePartitionHeaderResponses = 0;
     private int initialWorkflowSize;
     private boolean requestedNextNodeComparison = false;
