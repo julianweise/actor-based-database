@@ -106,6 +106,8 @@ public class ADBNodeJoinTest {
         ActorRef<ADBNodeJoin.Command> session = testKit.spawn(ADBNodeJoinFactory
                 .createDefault(context, left.ref(), joinNodesContext), name);
 
+        session.tell(new ADBNodeJoin.Execute());
+
         remotePartitionManager.expectMessageClass(ADBPartitionManager.RequestAllPartitionHeaders.class);
 
         ObjectList<ADBPartitionHeader> headers = new ObjectArrayList<>();

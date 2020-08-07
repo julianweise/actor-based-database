@@ -147,12 +147,11 @@ public class ADBMasterJoinSessionTest {
 
         joinSession.tell(new ADBMasterJoinSession.RequestNextNodeToJoin(joinSessionHandler2.ref()));
 
-        ADBSlaveJoinSession.NoMoreNodesToJoinWith response2 = joinSessionHandler2
-                .expectMessageClass(ADBSlaveJoinSession.NoMoreNodesToJoinWith.class);
+        ADBSlaveJoinSession.StealWorkFrom response2 = joinSessionHandler2
+                .expectMessageClass(ADBSlaveJoinSession.StealWorkFrom.class);
 
         assertThat(response1.getContext().getRight()).isEqualTo(partitionManager2.ref());
         assertThat(response1.getContext().getLeft()).isEqualTo(partitionManager1.ref());
-        assertThat(response2.getTransactionId()).isEqualTo(1);
     }
 
     @Test
