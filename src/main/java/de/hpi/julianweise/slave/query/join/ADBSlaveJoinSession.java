@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
+import java.util.List;
 
 public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
@@ -83,8 +84,11 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @Getter
     public static class TakeOverWork implements Command, CborSerializable {
         ADBNodeJoinContext context;
-        ObjectList<ADBPartitionJoinTask> joinTasks;
+        List<ADBPartitionJoinTask> joinTasks;
+        boolean last;
     }
+
+    List<ADBPartitionJoinTask> workToTakeOver = new ObjectArrayList<>();
 
     public ADBSlaveJoinSession(ActorContext<Command> context,
                                ActorRef<ADBMasterQuerySession.Command> client,
@@ -129,6 +133,10 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     private Behavior<Command> handleTakeOverWork(TakeOverWork command) {
         if (command.joinTasks.size() < 1) {
             this.getContext().getSelf().tell(new RequestNextPartitions());
+            return Behaviors.same();
+        }
+        this.workToTakeOver.addAll(command.joinTasks);
+        if (!command.isLast()) {
             return Behaviors.same();
         }
         this.getContext().getLog().info("Taking over {} tasks of executor {}",

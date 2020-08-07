@@ -33,7 +33,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ADBNodeJoin extends ADBLargeMessageActor {
@@ -161,10 +163,17 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         int halfOfPreparedTasks = (int) (this.executorsPrepared.size() * this.settings.WORK_STEALING_AMOUNT);
         int halfOfTasks = (int) (this.joinTasks.size() * this.settings.WORK_STEALING_AMOUNT);
         int numberOfTasksToSteal = Math.min(this.joinTasks.size(), halfOfPreparedTasks + halfOfTasks);
-        ObjectList<ADBPartitionJoinTask> tasksToSteal = IntStream.range(0, numberOfTasksToSteal)
-                                                                 .mapToObj(i -> this.joinTasks.dequeue())
-                                                                 .collect(new ObjectArrayListCollector<>());
-        command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, tasksToSteal));
+        List<ADBPartitionJoinTask> tasksToSteal = IntStream.range(0, numberOfTasksToSteal)
+                                                           .mapToObj(i -> this.joinTasks.dequeue())
+                                                           .collect(Collectors.toList());
+        int MAX_SIZE = 50;
+        int completePartitions = tasksToSteal.size() / MAX_SIZE;
+        for (int i = 0; i < completePartitions; i++) {
+            val transferPartition = tasksToSteal.subList(i * MAX_SIZE, (i + 1) * MAX_SIZE);
+            command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, transferPartition, false));
+        }
+        val transferPartition = tasksToSteal.subList(completePartitions * MAX_SIZE, tasksToSteal.size());
+        command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, transferPartition, true));
         return Behaviors.same();
     }
 
