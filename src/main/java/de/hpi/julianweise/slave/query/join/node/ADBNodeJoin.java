@@ -21,7 +21,6 @@ import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor.PartitionsJo
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutorFactory;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
-import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -168,6 +167,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
                                                            .collect(Collectors.toList());
         int MAX_SIZE = 20;
         int completePartitions = tasksToSteal.size() / MAX_SIZE;
+        this.getContext().getLog().info("Sending out {} tasks to be processed by {}", tasksToSteal.size(), command.respondTo);
         for (int i = 0; i < completePartitions; i++) {
             val transferPartition = tasksToSteal.subList(i * MAX_SIZE, (i + 1) * MAX_SIZE);
             command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, transferPartition, false));
