@@ -155,6 +155,9 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleJoinWithNodeResults(JoinPartitionsResults command) {
+        if (command.getJoinCandidates().size() < 1) {
+            return Behaviors.same();
+        }
         this.sendToSession(ADBMasterJoinSession.JoinQueryResults
                 .builder()
                 .transactionId(queryContext.getTransactionId())
