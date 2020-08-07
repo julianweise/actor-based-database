@@ -160,9 +160,9 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     }
 
     private Behavior<Command> handleHandOverWork(HandOverWork command) {
-        int halfOfPreparedTasks = (int) (this.executorsPrepared.size() * this.settings.WORK_STEALING_AMOUNT);
-        int halfOfTasks = (int) (this.joinTasks.size() * this.settings.WORK_STEALING_AMOUNT);
-        int numberOfTasksToSteal = Math.min(this.joinTasks.size(), halfOfPreparedTasks + halfOfTasks);
+        int relativeToStealPrepared = (int) (this.executorsPrepared.size() * this.settings.WORK_STEALING_AMOUNT);
+        int relativeToStealTasks = (int) (this.joinTasks.size() * this.settings.WORK_STEALING_AMOUNT);
+        int numberOfTasksToSteal = Math.min(this.joinTasks.size(), relativeToStealPrepared + relativeToStealTasks);
         List<ADBPartitionJoinTask> tasksToSteal = IntStream.range(0, numberOfTasksToSteal)
                                                            .mapToObj(i -> this.joinTasks.dequeue())
                                                            .collect(Collectors.toList());

@@ -144,6 +144,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
                 command.joinTasks.size(), command.context.getExecutorNodeId());
         ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(command.context);
         session.tell(new ADBNodeJoin.Execute());
+        this.workToTakeOver = new ObjectArrayList<>();
         return Behaviors.same();
     }
 
