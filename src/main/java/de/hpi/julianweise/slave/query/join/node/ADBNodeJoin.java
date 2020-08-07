@@ -21,6 +21,8 @@ import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutor.PartitionsJo
 import de.hpi.julianweise.slave.query.join.ADBPartitionJoinExecutorFactory;
 import de.hpi.julianweise.slave.query.join.ADBSlaveJoinSession;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
+import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
@@ -32,6 +34,7 @@ import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class ADBNodeJoin extends ADBLargeMessageActor {
 
@@ -51,8 +54,15 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
 
 
     @AllArgsConstructor
+    public static class Execute implements Command {}
+
+    @AllArgsConstructor
     public static class AllPartitionsHeaderWrapper implements Command {
         private final AllPartitionsHeaders response;
+    }
+
+    public static class TakeOverWork implements Command {
+        ObjectList<ADBPartitionJoinTask> joinTasks;
     }
 
     @AllArgsConstructor
@@ -63,6 +73,13 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         private int lPartitionId;
         private int[] fPartitionIdLeft;
         private int[] fPartitionIdRight;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class HandOverWork implements Command, CborSerializable {
+        ActorRef<ADBSlaveQuerySession.Command> respondTo;
     }
 
     @AllArgsConstructor
@@ -86,8 +103,6 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         this.supervisor = supervisor;
         this.joinQueryContext = joinQueryContext;
         this.context = joinNodesContext;
-        val respondTo = getContext().messageAdapter(AllPartitionsHeaders.class, AllPartitionsHeaderWrapper::new);
-        this.context.getLeft().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
         this.setUpExecutors();
         this.getContext().getLog().info("[Start] {}", this.context);
     }
@@ -95,11 +110,26 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     @Override
     public Receive<Command> createReceive() {
         return this.newReceiveBuilder()
+                   .onMessage(Execute.class, this::handleExecute)
+                   .onMessage(TakeOverWork.class, this::handleTakeOverWork)
                    .onMessage(AllPartitionsHeaderWrapper.class, this::handleAllPartitionHeaders)
                    .onMessage(ExecutorResponseWrapper.class, this::handleExecutorResponse)
                    .onMessage(RelevantPartitionsWrapper.class, this::handleRelevantForeignPartitions)
+                   .onMessage(HandOverWork.class, this::handleHandOverWork)
                    .onMessage(Conclude.class, this::handleConclude)
                    .build();
+    }
+
+    private Behavior<Command> handleExecute(Execute command) {
+        val respondTo = getContext().messageAdapter(AllPartitionsHeaders.class, AllPartitionsHeaderWrapper::new);
+        this.context.getLeft().tell(new ADBPartitionManager.RequestAllPartitionHeaders(respondTo));
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleTakeOverWork(TakeOverWork command) {
+        command.joinTasks.forEach(this.joinTasks::enqueue);
+        this.nextExecutionRound();
+        return Behaviors.same();
     }
 
     private Behavior<Command> handleAllPartitionHeaders(AllPartitionsHeaderWrapper wrapper) {
@@ -124,6 +154,17 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         }
         this.actualNumberOfRemotePartitionHeaderResponses++;
         this.nextExecutionRound();
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleHandOverWork(HandOverWork command) {
+        int halfOfPreparedTasks = (int) (this.executorsPrepared.size() * this.settings.WORK_STEALING_AMOUNT);
+        int halfOfTasks = (int) (this.joinTasks.size() * this.settings.WORK_STEALING_AMOUNT);
+        int numberOfTasksToSteal = Math.min(this.joinTasks.size(), halfOfPreparedTasks + halfOfTasks);
+        ObjectList<ADBPartitionJoinTask> tasksToSteal = IntStream.range(0, numberOfTasksToSteal)
+                                                                 .mapToObj(i -> this.joinTasks.dequeue())
+                                                                 .collect(new ObjectArrayListCollector<>());
+        command.respondTo.tell(new ADBSlaveJoinSession.TakeOverWork(this.context, tasksToSteal));
         return Behaviors.same();
     }
 
@@ -179,7 +220,8 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     }
 
     private void setUpExecutors() {
-        val respondTo = getContext().messageAdapter(ADBPartitionJoinExecutor.Response.class, ExecutorResponseWrapper::new);
+        ActorRef<ADBPartitionJoinExecutor.Response> respondTo =
+                getContext().messageAdapter(ADBPartitionJoinExecutor.Response.class, ExecutorResponseWrapper::new);
         for (int i = 0; i < this.numberOfExecutors(); i++) {
             this.executorsIdle.enqueue(this.spawnExecutor(respondTo));
         }

@@ -21,8 +21,6 @@ public class JoinExecutionPlanTest {
 
     @ClassRule
     public static TestKitJunitResource testKit = new TestKitJunitResource();
-    
-    private final int transactionId = 1;
 
     @After
     public void cleanup() {
@@ -44,14 +42,14 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
         nodes.add(nodeB.ref());
         nodes.add(nodeC.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -81,14 +79,14 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
         nodes.add(nodeB.ref());
         nodes.add(nodeC.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -118,14 +116,14 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
         nodes.add(nodeB.ref());
         nodes.add(nodeC.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -155,14 +153,14 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
         nodes.add(nodeB.ref());
         nodes.add(nodeC.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeB.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -192,14 +190,14 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
         nodes.add(nodeB.ref());
         nodes.add(nodeC.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -229,14 +227,14 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeB = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
         nodes.add(nodeB.ref());
         nodes.add(nodeC.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeC.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -267,7 +265,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeD = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -275,7 +273,7 @@ public class JoinExecutionPlanTest {
         nodes.add(nodeC.ref());
         nodes.add(nodeD.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);
@@ -327,7 +325,7 @@ public class JoinExecutionPlanTest {
         TestProbe<ADBPartitionManager.Command> nodeC = testKit.createTestProbe();
         TestProbe<ADBPartitionManager.Command> nodeD = testKit.createTestProbe();
 
-        TestProbe<JoinExecutionPlan.NextJoinNodePair> responseProbe = testKit.createTestProbe();
+        TestProbe<JoinExecutionPlan.Response> responseProbe = testKit.createTestProbe();
 
         ObjectList<ActorRef<ADBPartitionManager.Command>> nodes = new ObjectArrayList<>();
         nodes.add(nodeA.ref());
@@ -335,7 +333,7 @@ public class JoinExecutionPlanTest {
         nodes.add(nodeC.ref());
         nodes.add(nodeD.ref());
 
-        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes, transactionId));
+        ActorRef<JoinExecutionPlan.Command> plan = testKit.spawn(JoinExecutionPlan.createDefault(nodes));
 
         plan.tell(new JoinExecutionPlan.GetNextJoinNodePair(nodeA.ref(), responseProbe.ref()));
         var response = responseProbe.expectMessageClass(JoinExecutionPlan.NextJoinNodePair.class);

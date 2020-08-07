@@ -31,7 +31,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     @AllArgsConstructor
     public static class GetNextJoinNodePair implements Command {
         private ActorRef<ADBPartitionManager.Command> requestingManager;
-        private ActorRef<NextJoinNodePair> responseTo;
+        private ActorRef<Response> responseTo;
     }
 
     @NoArgsConstructor
@@ -45,9 +45,17 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
         private boolean hasNode;
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class StealWork implements Response {
+        private ActorRef<ADBPartitionManager.Command> requestingPartitionManager;
+        private ActorRef<ADBPartitionManager.Command> target;
+    }
+
     public static Behavior<Command> createDefault(
-            ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers, int transactionId) {
-        return Behaviors.setup(context -> new JoinExecutionPlan(context, partitionManagers, transactionId));
+            ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers) {
+        return Behaviors.setup(context -> new JoinExecutionPlan(context, partitionManagers));
     }
 
     private final ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers;
@@ -57,8 +65,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
     private final JoinExecutionPlanHistory history;
 
     public JoinExecutionPlan(ActorContext<Command> context,
-                             ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers,
-                             int transactionId) {
+                             ObjectList<ActorRef<ADBPartitionManager.Command>> partitionManagers) {
         super(context);
         this.partitionManagers = partitionManagers;
         this.history = new JoinExecutionPlanHistory();
@@ -154,10 +161,15 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
         }
     }
 
+    private void stealWork(GetNextJoinNodePair command) {
+        int targetNodeId = this.history.getLastNodeHandlingAJoin(partitionManagers.indexOf(command.requestingManager));
+        command.responseTo.tell(new StealWork(partitionManagers.get(targetNodeId), command.requestingManager));
+    }
+
     private void sendNextJoinPair(ActorRef<ADBPartitionManager.Command> left,
                                   ActorRef<ADBPartitionManager.Command> right,
                                   ActorRef<ADBPartitionManager.Command> executor,
-                                  ActorRef<NextJoinNodePair> respondTo) {
+                                  ActorRef<Response> respondTo) {
         respondTo.tell(NextJoinNodePair.builder()
                                        .hasNode(true)
                                        .requestingPartitionManager(executor)

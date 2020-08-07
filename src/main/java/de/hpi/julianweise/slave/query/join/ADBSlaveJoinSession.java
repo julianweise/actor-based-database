@@ -10,23 +10,25 @@ import de.hpi.julianweise.master.query.join.ADBMasterJoinSession;
 import de.hpi.julianweise.slave.ADBSlave;
 import de.hpi.julianweise.slave.partition.ADBPartitionManager;
 import de.hpi.julianweise.slave.query.ADBSlaveQuerySession;
-import de.hpi.julianweise.slave.query.join.node.ADBNodeJoinContext;
 import de.hpi.julianweise.slave.query.join.node.ADBNodeJoin;
+import de.hpi.julianweise.slave.query.join.node.ADBNodeJoinContext;
 import de.hpi.julianweise.slave.query.join.node.ADBNodeJoinFactory;
+import de.hpi.julianweise.slave.query.join.node.ADBPartitionJoinTask;
+import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.serialization.CborSerializable;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.val;
 
 import java.time.Duration;
-import java.util.Set;
 
 public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
 
-    private final Set<ActorRef<ADBNodeJoin.Command>> activeJoinSessions = new ObjectOpenHashSet<>();
+    private final ObjectList<ActorRef<ADBNodeJoin.Command>> activeJoinSessions = new ObjectArrayList<>();
 
     @NoArgsConstructor
     @Getter
@@ -40,6 +42,13 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     @Getter
     public static class NoMoreNodesToJoinWith implements ADBSlaveQuerySession.Command, CborSerializable {
         private int transactionId;
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    public static class StealWorkFrom implements Command, CborSerializable {
+        private ActorRef<ADBSlaveQuerySession.Command> target;
     }
 
     @NoArgsConstructor
@@ -62,6 +71,21 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     public static class Conclude implements Command {
     }
 
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class HandOverWork implements Command, CborSerializable {
+        private ActorRef<ADBSlaveQuerySession.Command> respondTo;
+    }
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    public static class TakeOverWork implements Command, CborSerializable {
+        ADBNodeJoinContext context;
+        ObjectList<ADBPartitionJoinTask> joinTasks;
+    }
+
     public ADBSlaveJoinSession(ActorContext<Command> context,
                                ActorRef<ADBMasterQuerySession.Command> client,
                                ADBJoinQueryContext joinQueryContext) {
@@ -76,7 +100,10 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
                    .onMessage(JoinPartitionsResults.class, this::handleJoinWithNodeResults)
                    .onMessage(NoMoreNodesToJoinWith.class, this::handleNoMoreNodeToJoinWith)
                    .onMessage(InterNodeSessionTerminated.class, this::handleInterNodeSessionTerminated)
+                   .onMessage(StealWorkFrom.class, this::handleStealWorkFrom)
                    .onMessage(RequestNextPartitions.class, this::handleRequestNextPartition)
+                   .onMessage(HandOverWork.class, this::handleHandOverWork)
+                   .onMessage(TakeOverWork.class, this::handleTakeOverWork)
                    .onMessage(Conclude.class, this::handleConclude)
                    .build();
     }
@@ -94,15 +121,32 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private Behavior<Command> handleJoinWithNode(JoinWithNode message) {
-        ADBNodeJoinContext context = message.getContext();
-        this.getContext().getLog().info("Requested to execute "  + context.toString());
+        ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(message.context);
+        session.tell(new ADBNodeJoin.Execute());
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleTakeOverWork(TakeOverWork command) {
+        this.getContext().getLog().info("Taking over work of executor "  + command.context.getExecutorNodeId());
+        ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(command.context);
+        session.tell(new ADBNodeJoin.Execute());
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleHandOverWork(HandOverWork command) {
+        this.activeJoinSessions.get(this.activeJoinSessions.size() - 1)
+                               .tell(new ADBNodeJoin.HandOverWork(command.respondTo));
+        return Behaviors.same();
+    }
+
+    private ActorRef<ADBNodeJoin.Command> spawnNodeJoin(ADBNodeJoinContext context) {
         String sessionName = ADBNodeJoinFactory.sessionName(context);
         val behavior = ADBNodeJoinFactory.createDefault((ADBJoinQueryContext) this.queryContext,
                 this.getContext().getSelf(), context);
         ActorRef<ADBNodeJoin.Command> session = this.getContext().spawn(behavior, sessionName);
         this.getContext().watchWith(session, new InterNodeSessionTerminated(session));
         this.activeJoinSessions.add(session);
-        return Behaviors.same();
+        return session;
     }
 
     private Behavior<Command> handleJoinWithNodeResults(JoinPartitionsResults command) {
@@ -145,6 +189,11 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
         if (this.openTransferSessions.get() > 0) {
             this.getContext().getLog().info("Unable to conclude - waiting for open transfer sessions");
         }
+        return Behaviors.same();
+    }
+
+    private Behavior<Command> handleStealWorkFrom(StealWorkFrom command) {
+        command.target.tell(new HandOverWork(this.getContext().getSelf()));
         return Behaviors.same();
     }
 

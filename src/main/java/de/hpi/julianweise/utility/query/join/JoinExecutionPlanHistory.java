@@ -26,7 +26,18 @@ public class JoinExecutionPlanHistory {
         private final int executionNodeId;
 
         public String toString() {
-            return "[" + this.getTimestamp() + "-#" + executionNodeId + " ] #" + leftNodeId + ":" + "#" + rightNodeId;
+            return "[" + this.getTimestamp() + "-#" + executionNodeId + "] #" + leftNodeId + " : " + "#" + rightNodeId;
+        }
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private static class NextWorkStealingEntry extends HistoryEntry {
+        private final int targetNodeId;
+        private final int executionNodeId;
+
+        public String toString() {
+            return String.format("[%s-#%d] Stealing from #%d", this.getTimestamp(), executionNodeId, targetNodeId);
         }
     }
 
@@ -53,6 +64,10 @@ public class JoinExecutionPlanHistory {
 
     public void logFinalizedNodeJoin(int executionNodeId) {
         this.history.add(new FinalizedNodeJoinHistoryEntry(executionNodeId));
+    }
+
+    public void logWorkStealing(int executionNodeId, int targetNodeId) {
+        this.history.add(new NextWorkStealingEntry(targetNodeId, executionNodeId));
     }
 
     public float getAverageNodeJoinExecutionTime(int nodeId) {
@@ -93,6 +108,17 @@ public class JoinExecutionPlanHistory {
             return Optional.empty();
         }
         return Optional.of(lastJoinStartTimestamp - lastJoinConclusionTimestamp.getAsLong());
+    }
+
+    public int getLastNodeHandlingAJoin(int excludeNodeId) {
+        Optional<HistoryEntry> lastNodeJoin =  this.history.stream()
+                .filter(entry -> entry instanceof NextNodeHistoryEntry)
+                .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId != excludeNodeId)
+                .filter(entry -> this.history.stream()
+                                             .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
+                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).executionNodeId == ((NextNodeHistoryEntry) entry).executionNodeId))
+                .max(Comparator.comparingLong(e -> e.timestamp));
+        return lastNodeJoin.map(historyEntry -> ((NextNodeHistoryEntry) historyEntry).executionNodeId).orElse(-1);
     }
 
     public String toString() {

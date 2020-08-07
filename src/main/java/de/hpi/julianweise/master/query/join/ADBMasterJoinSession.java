@@ -58,7 +58,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
 
     @AllArgsConstructor
     public static class JoinExecutionPlanWrapper implements Command {
-        JoinExecutionPlan.NextJoinNodePair response;
+        JoinExecutionPlan.Response response;
     }
 
     public ADBMasterJoinSession(ActorContext<ADBMasterQuerySession.Command> context,
@@ -68,8 +68,7 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
                                 ActorRef<ADBPartitionInquirer.Command> parent,
                                 ADBJoinQuery query) {
         super(context, queryManagers, partitionManagers, transactionId, parent);
-        this.joinExecutionPlan = getContext().spawn(JoinExecutionPlan.createDefault(partitionManagers, transactionId),
-                "JoinExecPlan");
+        this.joinExecutionPlan = getContext().spawn(JoinExecutionPlan.createDefault(partitionManagers), "JoinExecPlan");
         this.materializer = this.initializeMaterializer();
         this.query = query;
 
@@ -101,25 +100,32 @@ public class ADBMasterJoinSession extends ADBMasterQuerySession {
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleRequestNextNodeComparison(RequestNextNodeToJoin command) {
-        val respondTo = getContext().messageAdapter(JoinExecutionPlan.NextJoinNodePair.class, JoinExecutionPlanWrapper::new);
+        val respondTo = getContext().messageAdapter(JoinExecutionPlan.Response.class, JoinExecutionPlanWrapper::new);
         this.joinExecutionPlan.tell(new JoinExecutionPlan.GetNextJoinNodePair(this.handlersToManager.get(command.respondTo), respondTo));
         return Behaviors.same();
     }
 
     private Behavior<ADBMasterQuerySession.Command> handleJoinExecutionPlanResponse(JoinExecutionPlanWrapper wrapper) {
-        JoinExecutionPlan.NextJoinNodePair response = wrapper.response;
-        if (!response.isHasNode()) {
-            this.managerToHandlers.get(response.getRequestingPartitionManager()).tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
-            return Behaviors.same();
+        if (wrapper.response instanceof JoinExecutionPlan.NextJoinNodePair) {
+            JoinExecutionPlan.NextJoinNodePair response = (JoinExecutionPlan.NextJoinNodePair) wrapper.response;
+            if (!response.isHasNode()) {
+                this.managerToHandlers.get(response.getRequestingPartitionManager()).tell(new ADBSlaveJoinSession.NoMoreNodesToJoinWith(this.transactionId));
+                return Behaviors.same();
+            }
+            if (!this.managerToHandlers.containsKey(response.getRequestingPartitionManager())) {
+                this.getContext().getLog().warn("No Node-Session mapping for {}", response.getRightQueryManager());
+                this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), wrapper);
+                return Behaviors.same();
+            }
+            this.scheduleNextInterNodeJoin(this.managerToHandlers.get(response.getRequestingPartitionManager()),
+                    response.getLeftQueryManager(),
+                    response.getRightQueryManager());
+        } else if (wrapper.response instanceof JoinExecutionPlan.StealWork) {
+            JoinExecutionPlan.StealWork response = (JoinExecutionPlan.StealWork) wrapper.response;
+            val source = this.managerToHandlers.get(response.getRequestingPartitionManager());
+            val target = this.managerToHandlers.get(response.getTarget());
+            source.tell(new ADBSlaveJoinSession.StealWorkFrom(target));
         }
-        if (!this.managerToHandlers.containsKey(response.getRequestingPartitionManager())) {
-            this.getContext().getLog().warn("No Node-Session mapping for {}",  response.getRightQueryManager());
-            this.getContext().scheduleOnce(Duration.ofSeconds(1), this.getContext().getSelf(), wrapper);
-            return Behaviors.same();
-        }
-        this.scheduleNextInterNodeJoin(this.managerToHandlers.get(response.getRequestingPartitionManager()),
-                response.getLeftQueryManager(),
-                response.getRightQueryManager());
         return Behaviors.same();
     }
 

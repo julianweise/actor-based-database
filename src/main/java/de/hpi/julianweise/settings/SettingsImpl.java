@@ -16,6 +16,7 @@ public class SettingsImpl implements Extension {
     public final double THRESHOLD_NEXT_NODE_COMPARISON;
     public final int NUMBER_ENTITY_CONVERTER;
     public final int DISTRIBUTION_CHUNK_SIZE;
+    public final double WORK_STEALING_AMOUNT;
 
     public SettingsImpl(Config config) {
         CSV_CHUNK_SIZE = config.getInt("actor-db.data-loading.csv.chunk-size");
@@ -29,5 +30,6 @@ public class SettingsImpl implements Extension {
         THRESHOLD_NEXT_NODE_COMPARISON = config.getDouble("actor-db.join.strategy.threshold-request-next-node");
         NUMBER_ENTITY_CONVERTER = config.getInt("actor-db.data-loading.entity-converter.number");
         DISTRIBUTION_CHUNK_SIZE = config.getInt("actor-db.data-loading.distributor.chunk-size");
+        WORK_STEALING_AMOUNT = config.getDouble("actor-db.work-stealing.amount");
     }
 }
