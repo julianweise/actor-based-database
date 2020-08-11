@@ -111,12 +111,17 @@ public class JoinExecutionPlanHistory {
     }
 
     public int getLastNodeHandlingAJoin(int excludeNodeId) {
-        Optional<HistoryEntry> lastNodeJoin =  this.history.stream()
+        Optional<HistoryEntry> lastNodeJoin = this.history
+                .stream()
                 .filter(entry -> entry instanceof NextNodeHistoryEntry)
                 .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId != excludeNodeId)
                 .filter(entry -> this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
                                              .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) entry).executionNodeId))
+                .filter(entry -> this.history.stream()
+                                             .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
+                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).executionNodeId == ((NextNodeHistoryEntry) entry).executionNodeId && ((NextWorkStealingEntry) entry2).targetNodeId == excludeNodeId))
+
                 .max(Comparator.comparingLong(e -> e.timestamp));
         return lastNodeJoin.map(historyEntry -> ((NextNodeHistoryEntry) historyEntry).executionNodeId).orElse(-1);
     }
