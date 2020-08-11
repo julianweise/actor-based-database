@@ -215,9 +215,9 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_LOWER_BOUND) {
             this.handleRowBasedJoin();
         } else if (this.costModels.get(0).getRelativeCost() <= this.settings.JOIN_STRATEGY_UPPER_BOUND) {
-            this.handleColumnBasedJoin();
+            this.tryToMitigateJoin();
         } else {
-            this.handleRowBasedJoin();
+            this.tryToMitigateJoin();
         }
     }
 
@@ -237,9 +237,9 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
         this.joinRowBased(candidates, this.costModels.subList(1, this.costModels.size()));
     }
 
-    private void handleColumnBasedJoin() {
-        this.costModelsProcessed = this.costModels.size();
-        this.joinColumnBased(this.costModels);
+    private void tryToMitigateJoin() {
+        this.costModelsProcessed = 2;
+        this.joinColumnBased(this.costModels.subList(0, 2));
     }
 
     private void joinRowBased(ADBPartialJoinResult joinCandidates, ObjectList<ADBJoinPredicateCostModel> costModels) {
