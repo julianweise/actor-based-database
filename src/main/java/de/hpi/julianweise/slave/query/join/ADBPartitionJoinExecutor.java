@@ -202,7 +202,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void execute() {
-        this.getContext().getLog().info("Cheapest predicate {}; Most expensive: {}", this.costModels.get(0),
+        this.getContext().getLog().debug("Cheapest predicate {}; Most expensive: {}", this.costModels.get(0),
                 this.costModels.get(costModels.size() - 1));
         if (this.costModels.get(0).getCost() == 0) {
             this.handleNoJoinResultsExpected();
