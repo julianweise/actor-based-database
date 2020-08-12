@@ -25,11 +25,13 @@ public class FlightFactory implements ADBEntityFactory {
                      .WHEELS_ON(record.getString(7))
                      .TAXI_IN(record.getFloat(8))
                      .CRS_ARR_TIME(record.getString(9))
+                     .ARR_TIME(record.getString(10))
                      .ARR_DELAY(record.getFloat(11))
                      .CRS_ELAPSED_TIME(record.getFloat(12))
                      .ACTUAL_ELAPSED_TIME(record.getFloat(13))
                      .DISTANCE(record.getFloat(14))
                      .build();
+
     }
 
     @Override
