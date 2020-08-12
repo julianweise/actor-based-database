@@ -15,7 +15,11 @@ public class ADBNodeJoinFactory {
     }
 
     public static String sessionName(ADBNodeJoinContext ctx) {
-        return String.format("NodeJoin:transactionId:%s-executor:%s-left:%s-right:%s", ctx.getTransactionId(),
-                ctx.getExecutorNodeId(), ctx.getLeftNodeId(), ctx.getRightNodeId());
+        return ADBNodeJoinFactory.sessionName(ctx, "");
+    }
+
+    public static String sessionName(ADBNodeJoinContext ctx, String postfix) {
+        return String.format("NodeJoin:transactionId:%s-executor:%s-left:%s-right:%s-%s", ctx.getTransactionId(),
+                ctx.getExecutorNodeId(), ctx.getLeftNodeId(), ctx.getRightNodeId(), postfix);
     }
 }

@@ -150,7 +150,7 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
                 .left(command.context.getLeft())
                 .right(command.context.getRight())
                 .build();
-        ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(newContext);
+        ActorRef<ADBLargeMessageActor.Command> session = this.spawnNodeJoin(newContext, "stolen");
         session.tell(new ADBNodeJoin.TakeOverWork(this.workToTakeOver));
         this.workToTakeOver = new ObjectArrayList<>();
         return Behaviors.same();
@@ -167,7 +167,11 @@ public class ADBSlaveJoinSession extends ADBSlaveQuerySession {
     }
 
     private ActorRef<ADBNodeJoin.Command> spawnNodeJoin(ADBNodeJoinContext context) {
-        String sessionName = ADBNodeJoinFactory.sessionName(context);
+        return this.spawnNodeJoin(context, "");
+    }
+
+    private ActorRef<ADBNodeJoin.Command> spawnNodeJoin(ADBNodeJoinContext context, String namePostFix) {
+        String sessionName = ADBNodeJoinFactory.sessionName(context, namePostFix);
         val behavior = ADBNodeJoinFactory.createDefault((ADBJoinQueryContext) this.queryContext,
                 this.getContext().getSelf(), context);
         ActorRef<ADBNodeJoin.Command> session = this.getContext().spawn(behavior, sessionName);
