@@ -11,13 +11,16 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
         <file>A2DB_debug.log</file>
         <encoder>
             <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} %c{1} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
     </root>
