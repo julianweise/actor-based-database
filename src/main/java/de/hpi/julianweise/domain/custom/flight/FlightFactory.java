@@ -26,12 +26,16 @@ public class FlightFactory implements ADBEntityFactory {
                      .TAXI_IN(record.getFloat(8))
                      .CRS_ARR_TIME(record.getString(9))
                      .ARR_TIME(record.getString(10))
-                     .ARR_DELAY(record.getFloat(11))
+                     .ARR_DELAY(this.isEmpty(record.getString(11)) ? 0f : record.getFloat(11))
                      .CRS_ELAPSED_TIME(record.getFloat(12))
-                     .ACTUAL_ELAPSED_TIME(record.getFloat(13))
+                     .ACTUAL_ELAPSED_TIME(this.isEmpty(record.getString(11)) ? 0f : record.getFloat(11))
                      .DISTANCE(record.getFloat(14))
                      .build();
 
+    }
+
+    private boolean isEmpty(String value) {
+        return value.isEmpty() || value.equals(" ");
     }
 
     @Override
