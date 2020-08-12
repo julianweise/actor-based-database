@@ -45,6 +45,6 @@ public class LineItemAndPartFactory implements ADBEntityFactory {
 
     @Override
     public JsonDeserializer<? extends ADBEntity> buildDeserializer() {
-        return new LineItemAndPartSerializer();
+        return new LineItemAndPartDeserializer();
     }
 }
