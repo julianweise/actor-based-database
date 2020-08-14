@@ -20,6 +20,7 @@ import static com.fasterxml.jackson.annotation.JsonTypeInfo.Id.NAME;
                       @JsonSubTypes.Type(value = ADBEntityDoubleEntry.class, name = "ADBEntityDoubleEntry"),
                       @JsonSubTypes.Type(value = ADBEntityBooleanEntry.class, name = "ADBEntityBooleanEntry"),
                       @JsonSubTypes.Type(value = ADBEntityByteEntry.class, name = "ADBEntityByteEntry"),
+                      @JsonSubTypes.Type(value = ADBEntityCharEntry.class, name = "ADBEntityCharEntry"),
                       @JsonSubTypes.Type(value = ADBEntityShortEntry.class, name = "ADBEntityShortEntry"),
               })
 public interface ADBEntityEntry {
