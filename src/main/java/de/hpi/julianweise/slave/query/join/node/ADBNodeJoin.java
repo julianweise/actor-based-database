@@ -292,8 +292,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     }
 
     private boolean isReadyToPrepareNextNodeComparison() {
-        double threshold = this.isStolenWork ? 1.0 : this.settings.THRESHOLD_NEXT_NODE_COMPARISON;
-        return this.isAllRelevantHeadersProcessed() && this.process() >= threshold;
+        return this.isAllRelevantHeadersProcessed() && this.joinTasks.size() <= this.settings.NUMBER_OF_THREADS;
     }
 
     private float process() {
