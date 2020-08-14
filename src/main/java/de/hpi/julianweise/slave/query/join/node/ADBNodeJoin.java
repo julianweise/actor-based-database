@@ -293,9 +293,9 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
 
     private boolean isReadyToPrepareNextNodeComparison() {
         if (this.isStolenWork) {
-            return this.joinTasks.isEmpty() && this.executorsPrepared.isEmpty() && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS * (1 - this.settings.THRESHOLD_NEXT_NODE_COMPARISON);
+            return this.joinTasks.isEmpty() && this.executorsPrepared.isEmpty() && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS * 0.1;
         }
-        return this.isAllRelevantHeadersProcessed() && this.joinTasks.isEmpty() &&  this.executorsPrepared.size() < this.settings.NUMBER_OF_THREADS;
+        return this.isAllRelevantHeadersProcessed() && this.joinTasks.isEmpty() &&  this.executorsPrepared.size() <= 1;
     }
 
     private float process() {
