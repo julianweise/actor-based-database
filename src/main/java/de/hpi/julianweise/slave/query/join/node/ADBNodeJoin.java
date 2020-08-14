@@ -292,7 +292,10 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     }
 
     private boolean isReadyToPrepareNextNodeComparison() {
-        return this.isAllRelevantHeadersProcessed() && this.joinTasks.size() <= this.settings.NUMBER_OF_THREADS;
+        if (this.isStolenWork) {
+            return this.joinTasks.isEmpty() && this.executorsPrepared.isEmpty();
+        }
+        return this.isAllRelevantHeadersProcessed() && this.joinTasks.isEmpty() &&  this.executorsPrepared.size() < this.settings.NUMBER_OF_THREADS;
     }
 
     private float process() {
