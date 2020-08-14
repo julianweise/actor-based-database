@@ -1,5 +1,6 @@
 package de.hpi.julianweise;
 
+import de.hpi.julianweise.domain.custom.cloudobservation.CloudObservationFactory;
 import de.hpi.julianweise.domain.custom.sfemployeesalary.SFEmployeeFactory;
 import de.hpi.julianweise.domain.custom.tpch.LineItemAndPartFactory;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
@@ -14,6 +15,6 @@ public class ADBQuickStart {
     }
 
     private static ADBEntityFactory createEntityFactory() {
-        return new LineItemAndPartFactory();
+        return new CloudObservationFactory();
     }
 }
