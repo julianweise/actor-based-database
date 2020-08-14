@@ -48,6 +48,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
     private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsIdle = new ObjectArrayFIFOQueue<>();
     private final ObjectArrayFIFOQueue<ActorRef<ADBPartitionJoinExecutor.Command>> executorsPrepared = new ObjectArrayFIFOQueue<>();
     private final AtomicInteger activeExecutors = new AtomicInteger(0);
+    private final AtomicInteger preparingExecutors = new AtomicInteger(0);
     private ObjectList<ADBPartitionHeader> leftPartitionHeaders = new ObjectArrayList<>();
     private Int2ObjectOpenHashMap<ADBPartitionHeader> rightPartitionHeaders = new Int2ObjectOpenHashMap<>();
     private int actualNumberOfRemotePartitionHeaderResponses = 0;
@@ -222,6 +223,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
             this.handleJoinResults(message.getRespondTo(), message.getJoinTuples());
         } else if (wrapper.response instanceof ADBPartitionJoinExecutor.JoinTaskPrepared) {
             this.executorsPrepared.enqueue(((ADBPartitionJoinExecutor.JoinTaskPrepared) wrapper.response).getRespondTo());
+            this.preparingExecutors.decrementAndGet();
         }
         this.nextExecutionRound();
         return Behaviors.same();
@@ -272,6 +274,7 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
         ADBPartitionJoinTask task = this.joinTasks.dequeue();
         ActorRef<ADBPartitionJoinExecutor.Command> executor = this.executorsIdle.dequeue();
         executor.tell(new ADBPartitionJoinExecutor.Prepare(task));
+        this.preparingExecutors.incrementAndGet();
     }
 
     private Behavior<Command> handleConclude(Conclude command) {
@@ -293,9 +296,9 @@ public class ADBNodeJoin extends ADBLargeMessageActor {
 
     private boolean isReadyToPrepareNextNodeComparison() {
         if (this.isStolenWork) {
-            return this.joinTasks.isEmpty() && this.executorsPrepared.isEmpty() && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS * 0.1;
+            return this.joinTasks.isEmpty() &&  this.executorsPrepared.isEmpty() && this.preparingExecutors.get() < 1 && this.activeExecutors.get() <= this.settings.NUMBER_OF_THREADS * 0.5;
         }
-        return this.isAllRelevantHeadersProcessed() && this.joinTasks.isEmpty() &&  this.executorsPrepared.size() <= 1;
+        return this.isAllRelevantHeadersProcessed() && this.joinTasks.isEmpty() &&  this.executorsPrepared.size() <= 1 && this.preparingExecutors.get() <= 1;
     }
 
     private float process() {
