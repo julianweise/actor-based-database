@@ -115,14 +115,20 @@ public class JoinExecutionPlanHistory {
                 .stream()
                 .filter(entry -> entry instanceof NextNodeHistoryEntry)
                 .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId != excludeNodeId)
+                .sorted((e1, e2) -> Long.compare(e2.timestamp, e1.timestamp)) // sort descending
                 .filter(entry -> this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
-                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) entry).executionNodeId))
+                                             .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) entry).executionNodeId)
+                                            .count() <= 3)
                 .filter(entry -> this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
                                              .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).executionNodeId == ((NextNodeHistoryEntry) entry).executionNodeId && ((NextWorkStealingEntry) entry2).targetNodeId == excludeNodeId))
-
-                .max(Comparator.comparingLong(e -> e.timestamp));
+                .min((e1, e2) -> Long.compare(this.history.stream()
+                                             .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
+                                             .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) e1).executionNodeId)
+                                             .count(), this.history.stream()
+                                                                   .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
+                                                                   .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) e2).executionNodeId).count()));
         return lastNodeJoin.map(historyEntry -> ((NextNodeHistoryEntry) historyEntry).executionNodeId).orElse(-1);
     }
 
