@@ -103,7 +103,11 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
         if (this.joinTasks.parallelStream().anyMatch(pair -> pair.contains(command.requestingManager))) {
             this.returnLocalJoinTask(command);
         } else {
-            this.returnForeignJoinTask(command);
+//            this.returnForeignJoinTask(command);
+            command.responseTo.tell(NextJoinNodePair.builder()
+                                                    .hasNode(false)
+                                                    .requestingPartitionManager(command.requestingManager)
+                                                    .build());
         }
         return Behaviors.same();
     }
@@ -154,11 +158,7 @@ public class JoinExecutionPlan extends AbstractBehavior<JoinExecutionPlan.Comman
             this.logJoinExecution(foreignTask.get().getKey(), foreignTask.get().getValue(), command.requestingManager);
             this.sendNextJoinPair(foreignTask.get().getKey(), foreignTask.get().getValue(), command.requestingManager, command.responseTo);
         } else {
-//            this.stealWork(command);
-            command.responseTo.tell(NextJoinNodePair.builder()
-                                                    .hasNode(false)
-                                                    .requestingPartitionManager(command.requestingManager)
-                                                    .build());
+            this.stealWork(command);
         }
     }
 
