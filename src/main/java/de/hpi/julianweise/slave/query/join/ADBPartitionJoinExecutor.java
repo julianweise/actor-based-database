@@ -26,6 +26,7 @@ import de.hpi.julianweise.slave.worker_pool.GenericWorker;
 import de.hpi.julianweise.slave.worker_pool.workload.JoinQueryRowWorkload;
 import de.hpi.julianweise.utility.largemessage.ADBLargeMessageActor;
 import de.hpi.julianweise.utility.list.ObjectArrayListCollector;
+import de.hpi.julianweise.utility.measurement.StatisticsLogger;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
@@ -204,6 +205,8 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     private void execute() {
         this.getContext().getLog().debug("Cheapest predicate {}; Most expensive: {}", this.costModels.get(0),
                 this.costModels.get(costModels.size() - 1));
+        StatisticsLogger.getInstance().logPredicates(this.costModels, this.settings);
+        StatisticsLogger.getInstance().logPredicate(this.costModels.get(0));
         if (this.costModels.get(0).getCost() == 0) {
             this.handleNoJoinResultsExpected();
             return;
