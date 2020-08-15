@@ -1,6 +1,5 @@
 package de.hpi.julianweise;
 
-import de.hpi.julianweise.domain.custom.flight.FlightFactory;
 import de.hpi.julianweise.domain.custom.tpch.LineItemAndPartFactory;
 import de.hpi.julianweise.slave.partition.data.ADBEntityFactory;
 import de.hpi.julianweise.slave.partition.data.comparator.ADBComparator;
