@@ -4,15 +4,12 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.agrona.collections.Int2ObjectHashMap;
 
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 public class JoinExecutionPlanHistory {
-
-    private Int2ObjectHashMap<NextNodeHistoryEntry> runningNodeJoins = new Int2ObjectHashMap<>();
 
     @Getter
     private abstract static class HistoryEntry {
@@ -62,19 +59,14 @@ public class JoinExecutionPlanHistory {
     }
 
     public void logNodeJoin(int executionNodeId, int leftNodeId, int rightNodeId) {
-        NextNodeHistoryEntry entry = new NextNodeHistoryEntry(leftNodeId, rightNodeId, executionNodeId);
-        this.runningNodeJoins.put(executionNodeId, entry);
-        this.history.add(entry);
+        this.history.add(new NextNodeHistoryEntry(leftNodeId, rightNodeId, executionNodeId));
     }
 
     public void logFinalizedNodeJoin(int executionNodeId) {
-        this.runningNodeJoins.remove(executionNodeId);
         this.history.add(new FinalizedNodeJoinHistoryEntry(executionNodeId));
     }
 
     public void logWorkStealing(int executionNodeId, int targetNodeId) {
-        this.runningNodeJoins.put(executionNodeId, new NextNodeHistoryEntry(targetNodeId, targetNodeId,
-                executionNodeId));
         this.history.add(new NextWorkStealingEntry(targetNodeId, executionNodeId));
     }
 
@@ -118,27 +110,27 @@ public class JoinExecutionPlanHistory {
         return Optional.of(lastJoinStartTimestamp - lastJoinConclusionTimestamp.getAsLong());
     }
 
-    public int getLastNodeHandlingAJoin(int excludeNodeId) {
-        if (this.runningNodeJoins.isEmpty()) {
-            return -1;
-        }
-        Optional<NextNodeHistoryEntry> lastNodeJoin = this.runningNodeJoins.values().stream()
-                .filter(entry -> (entry.executionNodeId != excludeNodeId))
-                .sorted((e1, e2) -> Long.compare(e2.getTimestamp(), e1.getTimestamp())) // sort descending
+    public int getLastNodeHandlingAJoin(int excludeNodeId, int numberOfNodes) {
+        Optional<HistoryEntry> lastNodeJoin = this.history
+                .stream()
+                .filter(entry -> entry instanceof NextNodeHistoryEntry)
+                .filter(entry -> ((NextNodeHistoryEntry) entry).executionNodeId != excludeNodeId)
+                .sorted((e1, e2) -> Long.compare(e2.timestamp, e1.timestamp)) // sort descending
+                .limit(numberOfNodes)
                 .filter(entry -> this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
-                                             .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == entry.executionNodeId)
+                                             .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) entry).executionNodeId)
                                             .count() <= 2)
                 .filter(entry -> this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
-                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).executionNodeId == entry.executionNodeId && ((NextWorkStealingEntry) entry2).targetNodeId == excludeNodeId))
+                                             .noneMatch(entry2 -> ((NextWorkStealingEntry) entry2).executionNodeId == ((NextNodeHistoryEntry) entry).executionNodeId && ((NextWorkStealingEntry) entry2).targetNodeId == excludeNodeId))
                 .min((e1, e2) -> Long.compare(this.history.stream()
                                              .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
-                                             .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == e1.executionNodeId)
+                                             .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) e1).executionNodeId)
                                              .count(), this.history.stream()
                                                                    .filter(entry2 -> entry2 instanceof NextWorkStealingEntry)
-                                                                   .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == e2.executionNodeId).count()));
-        return lastNodeJoin.map(historyEntry -> (historyEntry).executionNodeId).orElse(-1);
+                                                                   .filter(entry2 -> ((NextWorkStealingEntry) entry2).targetNodeId == ((NextNodeHistoryEntry) e2).executionNodeId).count()));
+        return lastNodeJoin.map(historyEntry -> ((NextNodeHistoryEntry) historyEntry).executionNodeId).orElse(-1);
     }
 
     public String toString() {
