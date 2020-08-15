@@ -15,6 +15,6 @@ public class ADBQuickStart {
     }
 
     private static ADBEntityFactory createEntityFactory() {
-        return new CloudObservationFactory();
+        return new LineItemAndPartFactory();
     }
 }
