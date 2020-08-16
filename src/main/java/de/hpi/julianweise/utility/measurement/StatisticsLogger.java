@@ -35,6 +35,11 @@ public class StatisticsLogger {
         this.bufferedWriter = Files.newBufferedWriter(this.getStatsFile().toPath());
     }
 
+    @SneakyThrows
+    public void end() {
+        this.bufferedWriter.flush();
+    }
+
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public File getStatsFile() throws IOException {
         if (!this.ensureResultDirectoryExists()) {

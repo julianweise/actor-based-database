@@ -1,6 +1,7 @@
 package de.hpi.julianweise.slave;
 
 import akka.actor.typed.Behavior;
+import akka.actor.typed.PostStop;
 import akka.actor.typed.javadsl.AbstractBehavior;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
@@ -45,6 +46,10 @@ public class ADBSlave extends AbstractBehavior<ADBSlave.Command> {
     public Receive<Command> createReceive() {
         return newReceiveBuilder()
                 .onMessage(Joined.class, this::handleJoined)
+                .onSignal(PostStop.class, signal ->  {
+                    StatisticsLogger.getInstance().end();
+                    return Behaviors.same();
+                })
                 .build();
     }
 
