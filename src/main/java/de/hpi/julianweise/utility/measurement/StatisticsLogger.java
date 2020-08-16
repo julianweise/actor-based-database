@@ -78,4 +78,9 @@ public class StatisticsLogger {
         }
         this.bufferedWriter.write("predicate-buckets," + low + "," + mid + "," + high);
     }
+
+    @SneakyThrows
+    public void logMinMaxFiltering(int originalSize, int transferred) {
+        this.bufferedWriter.write("min-max," + originalSize + "," + transferred);
+    }
 }

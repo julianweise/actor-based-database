@@ -6,6 +6,7 @@ import de.hpi.julianweise.slave.partition.column.sorted.ADBColumnSorted;
 import de.hpi.julianweise.slave.partition.data.ADBEntity;
 import de.hpi.julianweise.slave.partition.data.entry.ADBEntityEntry;
 import de.hpi.julianweise.utility.internals.ADBInternalIDHelper;
+import de.hpi.julianweise.utility.measurement.StatisticsLogger;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 
@@ -58,4 +59,10 @@ public abstract class ADBColumn {
     public abstract boolean satisfy(int index, ADBPredicateConstant constant);
 
     public abstract ADBColumnSorted getSortedColumn(ADBEntityEntry min, ADBEntityEntry max);
+
+    public ADBColumnSorted getSortedColumnAndLogStatistics(ADBEntityEntry min, ADBEntityEntry max) {
+        ADBColumnSorted column = this.getSortedColumn(min, max);
+        StatisticsLogger.getInstance().logMinMaxFiltering(this.size(), column.size());
+        return column;
+    }
 }
