@@ -79,13 +79,11 @@ public class StatisticsLogger {
                 high++;
             }
         }
-        this.bufferedWriter.write("predicate-buckets," + low + "," + mid + "," + high);
-        this.bufferedWriter.newLine();
+        this.bufferedWriter.write("predicate-buckets," + low + "," + mid + "," + high + "\n");
     }
 
     @SneakyThrows
     public void logMinMaxFiltering(int originalSize, int transferred, String type) {
-        this.bufferedWriter.write("min-max," + originalSize + "," + transferred + "," + type);
-        this.bufferedWriter.newLine();
+        this.bufferedWriter.write("min-max," + originalSize + "," + transferred + "," + type +"\n");
     }
 }
