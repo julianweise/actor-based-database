@@ -138,7 +138,7 @@ public class ADBPartition extends AbstractBehavior<ADBPartition.Command> {
     }
 
     private ADBColumnSorted getFilteredValuesOf(String attribute, ADBEntityEntry min, ADBEntityEntry max) {
-        return this.columns.get(attribute).getSortedColumn(min, max);
+        return this.columns.get(attribute).getSortedColumnAndLogStatistics(min, max);
     }
 
     private Behavior<Command> handleMaterialize(MaterializeToEntities command) {
