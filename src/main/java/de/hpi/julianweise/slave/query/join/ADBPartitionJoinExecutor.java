@@ -202,8 +202,8 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
     }
 
     private void execute() {
-        this.getContext().getLog().info("Cheapest predicate {}; Most expensive: {}", this.costModels.get(0),
-                this.costModels.get(costModels.size() - 1));
+//        this.getContext().getLog().info("Cheapest predicate {}; Most expensive: {}", this.costModels.get(0),
+//                this.costModels.get(costModels.size() - 1));
 //        StatisticsLogger.getInstance().logPredicates(this.costModels, this.settings);
 //        StatisticsLogger.getInstance().logPredicate(this.costModels.get(0));
         if (this.costModels.get(0).getCost() == 0) {
@@ -269,8 +269,8 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private Behavior<Command> handleADBColumnJoinExecutorWrapper(ADBColumnJoinExecutorWrapper wrapper) {
         ADBPartialJoinResult results = wrapper.response.getResults();
-        this.getContext().getLog().info("[AFTER COLUMN] Absolute cost {} Relative cost {}", results.size(),
-                (results.size() / (this.costModels.get(0).getOriginalSizeLeft() * this.costModels.get(0).getOriginalSizeRight())));
+//        this.getContext().getLog().info("[AFTER COLUMN] Absolute cost {} Relative cost {}", results.size(),
+//                (results.size() / (this.costModels.get(0).getOriginalSizeLeft() * this.costModels.get(0).getOriginalSizeRight())));
         if (this.costModelsProcessed == this.costModels.size()) {
             this.returnResults(results);
             return Behaviors.same();
