@@ -62,7 +62,7 @@ public abstract class ADBColumn {
 
     public ADBColumnSorted getSortedColumnAndLogStatistics(ADBEntityEntry min, ADBEntityEntry max) {
         ADBColumnSorted column = this.getSortedColumn(min, max);
-        StatisticsLogger.getInstance().logMinMaxFiltering(this.size(), column.size());
+        StatisticsLogger.getInstance().logMinMaxFiltering(this.size(), column.size(), this.entityField.getType().getSimpleName());
         return column;
     }
 }

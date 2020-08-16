@@ -17,7 +17,10 @@ import java.util.UUID;
 
 public class StatisticsLogger {
 
-    private static final StatisticsLogger INSTANCE = new StatisticsLogger();
+    private static StatisticsLogger INSTANCE;
+    public static void setInstance(StatisticsLogger instance) {
+        StatisticsLogger.INSTANCE = instance;
+    }
     private final static Logger LOG = LoggerFactory.getLogger(StatisticsLogger.class);
     private static final String statsDir = "a2db_stats/";
 
@@ -80,7 +83,7 @@ public class StatisticsLogger {
     }
 
     @SneakyThrows
-    public void logMinMaxFiltering(int originalSize, int transferred) {
-        this.bufferedWriter.write("min-max," + originalSize + "," + transferred);
+    public void logMinMaxFiltering(int originalSize, int transferred, String type) {
+        this.bufferedWriter.write("min-max," + originalSize + "," + transferred + "," + type);
     }
 }

@@ -9,6 +9,7 @@ import akka.actor.typed.receptionist.Receptionist;
 import akka.actor.typed.receptionist.ServiceKey;
 import de.hpi.julianweise.slave.partition.ADBPartitionManagerFactory;
 import de.hpi.julianweise.slave.query.ADBQueryManagerFactory;
+import de.hpi.julianweise.utility.measurement.StatisticsLogger;
 import de.hpi.julianweise.utility.serialization.KryoSerializable;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,7 @@ public class ADBSlave extends AbstractBehavior<ADBSlave.Command> {
         super(context);
         context.getLog().info("DBSlave started");
         ADBPartitionManagerFactory.createSingleton(context);
+        StatisticsLogger.setInstance(new StatisticsLogger());
         ADBQueryManagerFactory.createSingleton(context);
         this.getContext().getSystem().receptionist().tell(Receptionist.register(SERVICE_KEY, getContext().getSelf()));
     }
