@@ -269,7 +269,7 @@ public class ADBPartitionJoinExecutor extends ADBLargeMessageActor {
 
     private Behavior<Command> handleADBColumnJoinExecutorWrapper(ADBColumnJoinExecutorWrapper wrapper) {
         ADBPartialJoinResult results = wrapper.response.getResults();
-        this.getContext().getLog().info("[AFTER COLUMN] Relative cost {}",
+        this.getContext().getLog().info("[AFTER COLUMN] Absolute cost {} Relative cost {}", results.size(),
                 (results.size() / (this.costModels.get(0).getOriginalSizeLeft() * this.costModels.get(0).getOriginalSizeRight())));
         if (this.costModelsProcessed == this.costModels.size()) {
             this.returnResults(results);
