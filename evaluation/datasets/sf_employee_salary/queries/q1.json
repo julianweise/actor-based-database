@@ -1,0 +1,16 @@
+{
+    "@type": "ADBJoinQuery",
+    "shouldBeMaterialized": false,
+    "predicates": [
+      {
+        "leftHandSideAttribute": "jobCode",
+        "rightHandSideAttribute": "jobCode",
+        "operator": "EQUALITY"
+      },
+      {
+        "leftHandSideAttribute": "jobFamilyCode",
+        "rightHandSideAttribute": "jobFamilyCode",
+        "operator": "INEQUALITY"
+      }
+    ]
+  }

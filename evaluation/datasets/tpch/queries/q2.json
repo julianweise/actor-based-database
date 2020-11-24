@@ -1,0 +1,16 @@
+{
+    "@type": "ADBJoinQuery",
+    "shouldBeMaterialized": false,
+    "predicates": [
+      {
+        "leftHandSideAttribute": "p_retailprice",
+        "rightHandSideAttribute": "l_extendedprice",
+        "operator": "GREATER_OR_EQUAL"
+      },
+      {
+        "leftHandSideAttribute": "l_quantity",
+        "rightHandSideAttribute": "l_quantity",
+      	"operator": "LESS"
+      }
+    ]
+  }

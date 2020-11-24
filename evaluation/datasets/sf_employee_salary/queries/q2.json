@@ -1,0 +1,26 @@
+{
+    "@type": "ADBJoinQuery",
+    "shouldBeMaterialized": false,
+    "predicates": [
+        {
+            "leftHandSideAttribute": "salaries",
+            "rightHandSideAttribute": "salaries",
+            "operator": "LESS"
+        },
+        {
+            "leftHandSideAttribute": "overtime",
+            "rightHandSideAttribute": "overtime",
+            "operator": "LESS"
+        },
+        {
+            "leftHandSideAttribute": "otherSalaries",
+            "rightHandSideAttribute": "otherSalaries",
+            "operator": "LESS"
+        },
+        {
+            "leftHandSideAttribute": "totalSalary",
+            "rightHandSideAttribute": "totalSalary",
+            "operator": "GREATER"
+        }
+    ]
+}

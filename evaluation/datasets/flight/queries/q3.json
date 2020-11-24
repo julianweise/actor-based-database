@@ -1,0 +1,31 @@
+{
+   "@type": "ADBJoinQuery",
+   "shouldBeMaterialized": false,
+   "predicates": [
+      {
+         "leftHandSideAttribute": "CRS_ELAPSED_TIME",
+         "rightHandSideAttribute": "ARR_DELAY",
+         "operator": "LESS"
+      },
+      {
+         "leftHandSideAttribute": "DISTANCE",
+         "rightHandSideAttribute": "DISTANCE",
+         "operator": "GREATER"
+      },
+      {
+         "leftHandSideAttribute": "DEP_DELAY",
+         "rightHandSideAttribute": "DEP_DELAY",
+         "operator": "GREATER"
+      },
+      {
+         "leftHandSideAttribute": "ACTUAL_ELAPSED_TIME",
+         "rightHandSideAttribute": "ACTUAL_ELAPSED_TIME",
+         "operator": "GREATER"
+      },
+      {
+         "leftHandSideAttribute": "TAXI_IN",
+         "rightHandSideAttribute": "TAXI_IN",
+         "operator": "LESS"
+      }
+   ]
+}

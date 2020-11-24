@@ -1,0 +1,31 @@
+{
+    "@type": "ADBJoinQuery",
+    "shouldBeMaterialized": false,
+    "predicates": [
+      {
+        "leftHandSideAttribute": "totalCloudCover",
+        "rightHandSideAttribute": "totalCloudCover",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "lowerCloudAmount",
+        "rightHandSideAttribute": "lowerCloudAmount",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "middleCloudAmount",
+        "rightHandSideAttribute": "middleCloudAmount",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "highCloudAmount",
+        "rightHandSideAttribute": "highCloudAmount",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "nonOverheadHighCloudAmount",
+        "rightHandSideAttribute": "nonOverheadHighCloudAmount",
+        "operator": "LESS"
+      }
+    ]
+  }

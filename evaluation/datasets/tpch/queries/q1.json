@@ -1,0 +1,31 @@
+{
+    "@type": "ADBJoinQuery",
+    "shouldBeMaterialized": false,
+    "predicates": [
+      {
+        "leftHandSideAttribute": "l_extendedprice",
+        "rightHandSideAttribute": "l_extendedprice",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "p_retailprice",
+        "rightHandSideAttribute": "p_retailprice",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "l_quantity",
+        "rightHandSideAttribute": "l_quantity",
+        "operator": "GREATER_OR_EQUAL"
+      },
+      {
+        "leftHandSideAttribute": "l_tax",
+        "rightHandSideAttribute": "l_tax",
+        "operator": "GREATER_OR_EQUAL"
+      },
+      {
+        "leftHandSideAttribute": "l_discount",
+        "rightHandSideAttribute": "l_discount",
+        "operator": "LESS_OR_EQUAL"
+      }
+    ]
+  }

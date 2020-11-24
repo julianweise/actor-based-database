@@ -1,0 +1,71 @@
+{
+    "@type": "ADBJoinQuery",
+    "shouldBeMaterialized": false,
+    "predicates": [
+      {
+        "leftHandSideAttribute": "seaLevelPressure",
+        "rightHandSideAttribute": "seaLevelPressure",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "windSpeed",
+        "rightHandSideAttribute": "windSpeed",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "airTemperature",
+        "rightHandSideAttribute": "airTemperature",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "_timestamp",
+        "rightHandSideAttribute": "_timestamp",
+        "operator": "INEQUALITY"
+      },
+      {
+        "leftHandSideAttribute": "solarAltitude",
+        "rightHandSideAttribute": "solarAltitude",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "relativeLunarIlluminance",
+        "rightHandSideAttribute": "relativeLunarIlluminance",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "stationElevation",
+        "rightHandSideAttribute": "stationElevation",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "dewPointDepression",
+        "rightHandSideAttribute": "dewPointDepression",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "highCloudAmount",
+        "rightHandSideAttribute": "highCloudAmount",
+        "operator": "LESS"
+      },
+      {
+        "leftHandSideAttribute": "lowerCloudAmount",
+        "rightHandSideAttribute": "lowerCloudAmount",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "totalCloudCover",
+        "rightHandSideAttribute": "totalCloudCover",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "lowerCloudBasedHeight",
+        "rightHandSideAttribute": "lowerCloudBasedHeight",
+        "operator": "GREATER"
+      },
+      {
+        "leftHandSideAttribute": "middleCloudAmount",
+        "rightHandSideAttribute": "middleCloudAmount",
+        "operator": "GREATER"
+      }
+    ]
+}
