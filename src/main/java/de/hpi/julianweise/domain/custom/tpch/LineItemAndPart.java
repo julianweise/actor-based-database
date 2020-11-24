@@ -40,7 +40,7 @@ public class LineItemAndPart extends ADBEntity {
 
     @Override
     public ADBKey getPrimaryKey() {
-        return new ADBIntegerKey(Integer.parseInt(this.l_orderkey + "" + this.l_linenumber));
+        return new ADBIntegerKey(100 * this.l_orderkey + this.l_linenumber);
     }
 
     @Override
